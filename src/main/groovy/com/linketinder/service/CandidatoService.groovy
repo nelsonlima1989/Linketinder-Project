@@ -1,0 +1,25 @@
+package com.linketinder.service
+import com.linketinder.model.Candidato
+import com.linketinder.data.DataInicializador
+
+class CandidatoService {
+
+    private List<Candidato> candidatos
+
+    CandidatoService(DataInicializador inicializador){
+        this.candidatos = inicializador.criarCandidatos()
+    }
+
+    List<Candidato> listarTodosCandidatos(){
+        return candidatos
+    }
+
+    Optional<Candidato> buscarCandidatoPorNome(String nome){
+        def candidato = candidatos.find{
+            it.informacoes.nome.equalsIgnoreCase(nome)
+        }
+
+        return Optional.ofNullable(candidato)
+    }
+
+}
