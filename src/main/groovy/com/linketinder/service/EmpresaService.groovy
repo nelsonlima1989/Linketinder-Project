@@ -2,6 +2,7 @@ package com.linketinder.service
 
 import com.linketinder.data.DataInicializador
 import com.linketinder.model.Empresa
+import com.linketinder.model.EmpresaAnonima
 
 class EmpresaService {
 
@@ -22,4 +23,20 @@ class EmpresaService {
 
         return Optional.ofNullable(empresa)
     }
+
+    List<EmpresaAnonima> listarEmpresasAnonimas() {
+
+        return empresas.collect { empresa ->
+
+            new EmpresaAnonima(
+                    id: empresa.id,
+                    pais: empresa.pais,
+                    estado: empresa.estado,
+                    descricaoEmpresarial: empresa.descricaoEmpresarial,
+                    vagas: empresa.vagas
+            )
+        }
+    }
+
+
 }

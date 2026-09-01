@@ -10,7 +10,7 @@ A proposta do Linketinder é aproximar **candidatos** e **empresas** com base em
 
 # 📌 Sobre o projeto
 
-O Linketinder surgiu a partir de uma ideia apresentada pelo empresário **Dr. Antônio Paçoca**, que identificou uma dificuldade nos processos tradicionais de recrutamento: encontrar profissionais com competências relevantes sem depender exclusivamente de perfis com maior visibilidade.
+O Linketinder surgiu como um **MVP (Minimum Viable Product)** para o desafio **ZG-HERO / Acelera ZG**, que identificou uma dificuldade nos processos tradicionais de recrutamento: encontrar profissionais com competências relevantes sem depender exclusivamente de perfis com maior visibilidade.
 
 A proposta combina:
 
@@ -19,7 +19,7 @@ A proposta combina:
 * O conceito de **Like e Match** inspirado em aplicativos de relacionamento;
 * Uma experiência de interação que deverá priorizar o **anonimato antes do Match**.
 
-Neste momento, o projeto encontra-se em sua primeira versão funcional, com foco na estruturação do domínio, carregamento dos dados, serviços e menu de terminal.
+Neste momento, o projeto possui um MVP funcional com estruturação do domínio, carregamento dos dados, serviços, menu de terminal, sistema de curtidas e geração de Matches.
 
 ---
 
@@ -34,8 +34,13 @@ O objetivo atual é construir um MVP funcional capaz de:
 * associar vagas às empresas;
 * disponibilizar serviços para consulta dos dados;
 * disponibilizar um menu no terminal;
-* permitir a visualização dos candidatos;
-* permitir a visualização das empresas;
+* permitir a visualização anônima dos candidatos;
+* permitir a visualização anônima das vagas;
+* permitir curtidas de candidatos em vagas;
+* permitir curtidas de empresas em candidatos;
+* identificar curtidas mútuas;
+* criar e listar Matches;
+* liberar os dados completos após o Match;
 * validar a integridade dos dados carregados.
 
 A arquitetura foi construída pensando também na evolução futura do projeto.
@@ -114,11 +119,18 @@ src/
                 │   ├── Empresa.groovy
                 │   ├── Informacoes.groovy
                 │   ├── Skill.groovy
-                │   └── Vaga.groovy
+                │   ├── Vaga.groovy
+                │   ├── Curtida.groovy
+                │   ├── Match.groovy
+                │   ├── TipoCurtida.groovy
+                │   ├── CandidatoAnonimo.groovy
+                │   └── EmpresaAnonima.groovy
                 │
                 ├── service/
                 │   ├── CandidatoService.groovy
-                │   └── EmpresaService.groovy
+                │   ├── EmpresaService.groovy
+                │   ├── CurtidaService.groovy
+                │   └── MatchService.groovy
                 │
                 └── ui/
                     └── Menu.groovy
@@ -134,7 +146,7 @@ A camada `model` representa as entidades principais do domínio.
 
 ## Pessoa
 
-`Pessoa` representa atributos gerais utilizados pelo candidato.
+`Pessoa` representa atributos gerais compartilhados pelo candidato.
 
 Atualmente:
 
@@ -311,6 +323,41 @@ Responsável pelas operações relacionadas às empresas.
 
 Assim como o `CandidatoService`, o serviço atua como camada intermediária entre os dados e a interface da aplicação.
 
+Também disponibiliza a listagem de empresas em formato anônimo, ocultando informações de identificação e contato.
+
+---
+
+## CurtidaService
+
+Responsável pelo registro das curtidas realizadas por candidatos e empresas.
+
+O serviço permite:
+
+* candidato curtir uma vaga;
+* empresa curtir um candidato;
+* armazenar as curtidas realizadas;
+* solicitar ao `MatchService` a verificação de uma possível curtida mútua.
+
+A curtida do candidato é relacionada à vaga, enquanto a curtida da empresa é relacionada ao candidato.
+
+---
+
+## MatchService
+
+Responsável por verificar e registrar Matches.
+
+Um Match é criado quando:
+
+1. o candidato curtiu uma vaga pertencente à empresa;
+2. a empresa curtiu o candidato;
+3. ainda não existe um Match entre aquele candidato e aquela empresa.
+
+O Match é estabelecido entre **candidato e empresa**, e não diretamente entre candidato e vaga.
+
+Isso permite que uma empresa possua várias vagas e que, após o Match, candidato e empresa possam discutir qual oportunidade faz mais sentido.
+
+O serviço também disponibiliza a listagem dos Matches registrados.
+
 ---
 
 # 🖥️ Interface de usuário
@@ -324,39 +371,76 @@ O menu principal apresenta:
           LINKETINDER
 ================================
 1 - Listar candidatos
-2 - Listar empresas
+2 - Listar vagas
+3 - Curtir vaga
+4 - Curtir candidato
+5 - Listar matches
 0 - Sair
 ================================
 ```
 
 ## Listar candidatos
 
-A opção `1` apresenta os candidatos cadastrados, incluindo informações necessárias para validação do MVP, como:
+A opção `1` apresenta os candidatos de forma anônima.
+
+São exibidos:
 
 * ID;
-* Nome;
 * Estado;
-* Idade;
+* Descrição pessoal;
 * Skills.
 
-## Listar empresas
+Informações de identificação e contato, como nome, CPF, idade, CEP, e-mail e WhatsApp, permanecem ocultas.
 
-A opção `2` apresenta as empresas cadastradas, incluindo:
+## Listar vagas
 
-* ID;
-* Nome;
-* País;
-* Estado;
+A opção `2` apresenta as vagas disponíveis de forma anônima.
+
+São exibidos:
+
+* ID da vaga;
+* Título;
 * Descrição;
-* Vagas.
+* País da empresa;
+* Estado da empresa;
+* Skills.
 
-O CNPJ existe no modelo da empresa, mas não é apresentado na listagem atual.
+O nome e os dados de contato da empresa permanecem ocultos.
+
+## Curtir vaga
+
+A opção `3` permite que um candidato escolha uma vaga e demonstre interesse.
+
+O fluxo é:
+
+```text
+Candidato
+    │
+    │ curte
+    ▼
+  Vaga
+    │
+    ▼
+ Empresa
+```
+
+A vaga é selecionada pela posição apresentada na lista.
+
+## Curtir candidato
+
+A opção `4` permite que uma empresa escolha um candidato e demonstre interesse.
+
+O candidato é apresentado de forma anônima durante a seleção.
+
+## Listar matches
+
+A opção `5` apresenta os Matches registrados.
+
+Após o Match, são exibidas as informações completas do candidato e da empresa, incluindo dados de identificação e contato.
 
 ## Sair
 
 A opção `0` encerra a aplicação.
-
----
 
 # ▶️ Como executar
 
@@ -421,8 +505,14 @@ Também foram realizados testes dos serviços e do menu, incluindo:
 * carregamento das cinco empresas;
 * busca de candidato por nome;
 * tratamento de candidato não encontrado através de `Optional`;
-* listagem de candidatos;
-* listagem de empresas;
+* listagem anônima de candidatos;
+* listagem anônima de vagas;
+* curtida de candidato em vaga;
+* curtida de empresa em candidato;
+* identificação de curtida mútua;
+* criação de Match;
+* listagem de Matches;
+* liberação das informações completas após o Match;
 * navegação pelo menu;
 * encerramento da aplicação.
 
@@ -430,52 +520,62 @@ Também foram realizados testes dos serviços e do menu, incluindo:
 
 # 🔐 Anonimato
 
-Uma das principais decisões de negócio do Linketinder é trabalhar com **anonimato antes do Match**.
+Uma das principais regras de negócio do Linketinder é trabalhar com **anonimato antes do Match**.
 
-A ideia é permitir que candidato e empresa avaliem oportunidades sem conhecer inicialmente a identidade da outra parte.
+O MVP atual já aplica essa regra nas principais listagens.
 
-## Experiência do candidato
+## Candidato anônimo
 
-O candidato deverá visualizar informações relacionadas à vaga, como:
-
-```text
-Vaga
-├── Título
-├── Descrição
-└── Skills necessárias
-```
-
-Sem visualizar inicialmente informações que identifiquem diretamente a empresa.
-
-## Experiência da empresa
-
-A empresa deverá visualizar candidatos de maneira semelhante:
+Antes do Match, são apresentados:
 
 ```text
 Candidato
-├── Skills
+├── ID
 ├── Estado
-├── Idade
-└── Descrição
+├── Descrição pessoal
+└── Skills
 ```
 
-Sem expor inicialmente informações pessoais de contato ou identificação.
+Ficam ocultos:
 
-Dados como **CPF, CNPJ, CEP, e-mail, WhatsApp e outras informações identificadoras** deverão ser protegidos de acordo com as regras de negócio da aplicação.
+```text
+Nome
+CPF
+Idade
+CEP
+E-mail
+WhatsApp
+```
 
-O objetivo é que a identificação das partes aconteça somente após uma interação que resulte em Match.
+## Empresa e vaga anônimas
 
-> **Importante:** o mecanismo completo de anonimização ainda não está implementado nesta versão. A arquitetura atual está sendo preparada para suportar essa regra de negócio futuramente.
+Na visualização das vagas, são apresentados:
 
----
+```text
+Vaga
+├── ID
+├── Título
+├── Descrição
+├── País da empresa
+├── Estado da empresa
+└── Skills
+```
+
+O nome e os dados de identificação e contato da empresa permanecem ocultos.
+
+## Após o Match
+
+Quando candidato e empresa demonstram interesse mútuo, o sistema cria um `Match`.
+
+Nesse momento, o MVP libera a visualização das informações completas das duas partes.
 
 # ❤️ Sistema de Likes
 
-O sistema de Likes será baseado em uma relação de **muitos-para-muitos**.
-
-Um candidato poderá demonstrar interesse em **uma ou várias vagas**, assim como uma empresa poderá demonstrar interesse em **um ou vários candidatos**.
+O MVP possui um sistema de curtidas que permite que os dois lados demonstrem interesse.
 
 ## Candidato curtindo vagas
+
+Um candidato pode curtir uma ou várias vagas:
 
 ```text
 Candidato
@@ -485,17 +585,11 @@ Candidato
    └── Like ──► Vaga 3
 ```
 
-Uma mesma vaga também poderá receber Likes de diversos candidatos:
-
-```text
-Candidato 1 ──► Vaga 1
-Candidato 2 ──► Vaga 1
-Candidato 3 ──► Vaga 1
-```
+A curtida registra o candidato, a vaga, a empresa relacionada e o tipo de curtida.
 
 ## Empresa curtindo candidatos
 
-Da mesma forma, uma empresa poderá demonstrar interesse em diversos candidatos:
+Uma empresa pode curtir um ou vários candidatos:
 
 ```text
 Empresa
@@ -505,50 +599,71 @@ Empresa
    └── Like ──► Candidato 3
 ```
 
-Um candidato também poderá receber interesse de diversas empresas:
-
-```text
-Empresa 1 ──► Candidato 1
-Empresa 2 ──► Candidato 1
-Empresa 3 ──► Candidato 1
-```
-
-Dessa forma, o sistema não estabelece uma relação limitada a apenas um candidato e uma vaga.
-
----
+As curtidas são armazenadas pelo `CurtidaService`.
 
 # 🤝 Match
 
-O Match acontecerá quando houver **interesse mútuo na mesma relação**.
+O Match acontece quando existe **interesse mútuo entre um candidato e uma empresa**.
 
-Por exemplo:
+O fluxo implementado é:
 
 ```text
 Candidato
     │
-    │ Like
+    │ curte uma vaga
     ▼
-   Vaga
-    ▲
-    │ Like
+  Vaga
     │
+    │ pertence à
+    ▼
  Empresa
+    │
+    │ curte o candidato
+    ▼
+Candidato
 
       ↓
 
     MATCH
 ```
 
-Nesse cenário:
+Quando o `MatchService` identifica as duas curtidas:
 
-1. O candidato demonstra interesse na vaga;
-2. A empresa demonstra interesse no candidato relacionado àquela vaga;
-3. O sistema identifica o interesse mútuo;
-4. A relação é considerada um Match.
+1. verifica a curtida do candidato;
+2. verifica a curtida da empresa;
+3. verifica se o Match já existe;
+4. cria o Match caso ainda não exista;
+5. armazena o Match para consulta posterior.
 
-O Match poderá ser utilizado posteriormente para permitir a comunicação entre as partes e liberar determinadas informações que permanecem protegidas durante a etapa anônima.
+### Regra importante
 
----
+O Match é estabelecido entre:
+
+```text
+Candidato ↔ Empresa
+```
+
+e não entre:
+
+```text
+Candidato ↔ Vaga
+```
+
+A vaga é utilizada para registrar o interesse inicial do candidato e identificar a empresa relacionada.
+
+Isso permite que uma empresa possua várias vagas. Depois do Match, candidato e empresa podem discutir qual vaga é mais adequada.
+
+### Informações após o Match
+
+Antes do Match, os dados identificadores permanecem ocultos.
+
+Após o Match, o sistema permite visualizar:
+
+* dados completos do candidato;
+* dados completos da empresa;
+* skills;
+* vagas da empresa;
+* informações de contato.
 
 # 🚀 Evolução planejada
 
@@ -609,7 +724,7 @@ A identidade das partes deverá permanecer protegida durante essa etapa.
 
 ## 3. Likes múltiplos
 
-O sistema permitirá que os dois lados avaliem diversas oportunidades.
+O sistema já permite que os dois lados avaliem diversas oportunidades.
 
 ```text
 Candidato ──► várias vagas
@@ -622,7 +737,7 @@ Isso permitirá que candidatos e empresas tenham liberdade para demonstrar inter
 
 ## 4. Match
 
-Quando houver interesse mútuo:
+O sistema já identifica o interesse mútuo:
 
 ```text
 Candidato
@@ -708,9 +823,9 @@ Essas funcionalidades serão implementadas gradualmente.
 | Validação do MVP               | ✅ Implementado |
 | Cadastro de novos usuários     | ⏳ Futuro       |
 | Filtro por Skills              | ⏳ Futuro       |
-| Anonimização completa          | ⏳ Futuro       |
-| Sistema de Likes               | ⏳ Futuro       |
-| Match                          | ⏳ Futuro       |
+| Anonimização básica            | ✅ Implementado |
+| Sistema de Likes               | ✅ Implementado |
+| Match                          | ✅ Implementado |
 
 
 ---
@@ -857,9 +972,9 @@ Projeto desenvolvido durante o **Acelera ZG / ZG-HERO 2026**.
 
 # 📌 Status
 
-**MVP em desenvolvimento**
+**MVP funcional**
 
-A primeira versão funcional do Linketinder já possui:
+O MVP funcional do Linketinder já possui:
 
 * estrutura de domínio;
 * candidatos;
@@ -869,10 +984,16 @@ A primeira versão funcional do Linketinder já possui:
 * informações de contato;
 * carregamento dos dados;
 * serviços;
+* anonimização nas listagens;
+* sistema de curtidas;
+* verificação de curtidas mútuas;
+* criação de Matches;
+* listagem de Matches;
+* liberação das informações completas após o Match;
 * validações;
 * interface de terminal.
 
-O próximo estágio será evoluir essa estrutura para uma experiência de contratação baseada em:
+O próximo estágio será evoluir essa estrutura para uma experiência de contratação mais completa baseada em:
 
 **Skills → Filtros → Anonimato → Likes → Match → Comunicação**
 
@@ -882,4 +1003,4 @@ O objetivo é transformar gradualmente o MVP em um sistema de recrutamento inspi
 
 # 📄 Licença
 
-Este projeto foi desenvolvido para fins educacionais no contexto do **Acelera ZG / ZG-HERO 2026**.
+Este projeto foi desenvolvido por Nelson Lima para fins educacionais no contexto do **Acelera ZG / ZG-HERO 2026**.

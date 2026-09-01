@@ -1,25 +1,40 @@
 package com.linketinder.service
+
 import com.linketinder.model.Candidato
+import com.linketinder.model.CandidatoAnonimo
 import com.linketinder.data.DataInicializador
 
 class CandidatoService {
 
     private List<Candidato> candidatos
 
-    CandidatoService(DataInicializador inicializador){
+    CandidatoService(DataInicializador inicializador) {
         this.candidatos = inicializador.criarCandidatos()
     }
 
-    List<Candidato> listarTodosCandidatos(){
+    List<Candidato> listarTodosCandidatos() {
         return candidatos
     }
 
-    Optional<Candidato> buscarCandidatoPorNome(String nome){
-        def candidato = candidatos.find{
+    Optional<Candidato> buscarCandidatoPorNome(String nome) {
+
+        def candidato = candidatos.find {
             it.informacoes.nome.equalsIgnoreCase(nome)
         }
 
         return Optional.ofNullable(candidato)
     }
 
+    List<CandidatoAnonimo> listarCandidatosAnonimos() {
+
+        return candidatos.collect { candidato ->
+
+            new CandidatoAnonimo(
+                    id: candidato.id,
+                    estado: candidato.estado,
+                    descricaoPessoal: candidato.descricaoPessoal,
+                    skills: candidato.skills
+            )
+        }
+    }
 }
