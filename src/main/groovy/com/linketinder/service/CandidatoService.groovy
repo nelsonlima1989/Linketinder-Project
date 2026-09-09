@@ -16,6 +16,12 @@ class CandidatoService {
         return candidatos
     }
 
+    void cadastrarCandidato(Candidato candidato){
+        candidatos.add(candidato)
+    }
+
+/*
+    #### Futura implementação ####
     Optional<Candidato> buscarCandidatoPorNome(String nome) {
 
         def candidato = candidatos.find {
@@ -24,6 +30,9 @@ class CandidatoService {
 
         return Optional.ofNullable(candidato)
     }
+
+    #### Futura implementação ####
+ */
 
     List<CandidatoAnonimo> listarCandidatosAnonimos() {
 

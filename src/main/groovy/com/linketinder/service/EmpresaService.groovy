@@ -16,6 +16,12 @@ class EmpresaService {
         return empresas
     }
 
+    void cadastrarEmpresa(Empresa empresa){
+        empresas.add(empresa)
+    }
+
+    /*
+    #### Futura implementação ####
     Optional<Empresa> buscarEmpresaPorNome(String nome) {
         def empresa = empresas.find {
             it.informacoes.nome.equalsIgnoreCase(nome)
@@ -23,6 +29,9 @@ class EmpresaService {
 
         return Optional.ofNullable(empresa)
     }
+
+    #### Futura implementação ####
+     */
 
     List<EmpresaAnonima> listarEmpresasAnonimas() {
 
