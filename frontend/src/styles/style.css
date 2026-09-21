@@ -1,0 +1,1071 @@
+/* Layout principal */
+
+body {
+
+    padding: 0;
+
+}
+
+#app {
+
+    display: flex;
+
+    min-height: 100vh;
+
+    max-width: none;
+
+    margin: 0;
+
+}
+
+.conteudo {
+
+    flex: 1;
+
+    min-width: 0;
+
+    padding: 40px;
+
+}
+
+
+
+/* Sidebar */
+
+.sidebar {
+
+    width: 260px;
+
+    min-height: 100vh;
+
+    padding: 30px 20px;
+
+    background: #111827;
+
+    color: #fff;
+
+    flex-shrink: 0;
+
+}
+
+
+
+/* Logo */
+
+.sidebar-logo {
+
+    margin-bottom: 40px;
+
+    padding: 0 10px;
+
+}
+
+.sidebar-logo h1 {
+
+    margin: 0;
+
+    font-size: 24px;
+
+}
+
+.sidebar-logo span {
+
+    display: block;
+
+    margin-top: 6px;
+
+    font-size: 12px;
+
+    color: #9ca3af;
+
+}
+
+
+
+/* Menu */
+
+.sidebar-menu {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+
+}
+
+.menu-item {
+
+    width: 100%;
+
+    padding: 12px 14px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: transparent;
+
+    color: #d1d5db;
+
+    text-align: left;
+
+    font-size: 14px;
+
+    cursor: pointer;
+
+    transition: background 0.2s ease, color 0.2s ease;
+
+}
+
+.menu-item:hover {
+
+    background: #1f2937;
+
+    color: #fff;
+
+}
+
+.menu-item.ativo {
+
+    background: #2563eb;
+
+    color: #fff;
+
+}
+
+.menu-separador {
+
+    height: 1px;
+
+    margin: 20px 10px 12px;
+
+    background: #374151;
+
+}
+
+.menu-titulo {
+
+    padding: 0 14px;
+
+    margin-bottom: 4px;
+
+    font-size: 11px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
+
+    color: #6b7280;
+
+}
+
+
+
+/* Estilos gerais */
+
+* {
+
+    box-sizing: border-box;
+
+}
+
+body {
+
+    margin: 0;
+
+    padding: 0;
+
+    font-family: Arial, sans-serif;
+
+    background: #f5f7fa;
+
+    color: #1f2937;
+
+}
+
+#app {
+
+    width: 100%;
+
+    max-width: none;
+
+    margin: 0;
+
+}
+
+
+
+/* Cabeçalho da empresa */
+
+.cabecalho-empresa {
+
+    margin-bottom: 40px;
+
+    padding: 30px;
+
+    border-bottom: 1px solid #ddd;
+
+    border-radius: 12px;
+
+    background: #fff;
+
+}
+
+.cabecalho-empresa h1 {
+
+    margin: 0 0 12px;
+
+    font-size: 32px;
+
+}
+
+.cabecalho-empresa p {
+
+    margin: 8px 0;
+
+    line-height: 1.5;
+
+}
+
+
+
+/* Seção de candidatos */
+
+.candidatos {
+
+    width: 100%;
+
+    margin-top: 40px;
+
+    padding: 30px;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 12px;
+
+    background: #fff;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+}
+
+.candidatos h2 {
+
+    margin: 0 0 20px;
+
+    font-size: 24px;
+
+    color: #111827;
+
+}
+
+
+
+/* Lista de candidatos */
+
+#lista-candidatos {
+
+    display: grid;
+
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+
+    gap: 20px;
+
+}
+
+
+
+/* Cards dos candidatos */
+
+.card-candidato {
+
+    padding: 20px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 12px;
+
+    background: #fff;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+}
+
+.card-candidato:hover {
+
+    transform: translateY(-3px);
+
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+
+}
+
+.card-candidato h3 {
+
+    margin-top: 0;
+
+    margin-bottom: 16px;
+
+    font-size: 18px;
+
+}
+
+.card-candidato p {
+
+    margin: 8px 0;
+
+    line-height: 1.5;
+
+}
+
+.card-candidato p:last-child {
+
+    margin-top: 16px;
+
+}
+
+.card-candidato strong {
+
+    font-weight: 600;
+
+}
+
+
+
+/* Gráfico de skills */
+
+.grafico-skills {
+
+    width: 100%;
+
+    max-width: 1000px;
+
+    height: 500px;
+
+    margin: 40px auto 0;
+
+    padding: 25px;
+
+    position: relative;
+
+    border: 1px solid #ddd;
+
+    border-radius: 12px;
+
+    background: #fff;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+}
+
+.grafico-skills h2 {
+
+    margin: 0 0 20px;
+
+    font-size: 24px;
+
+}
+
+
+
+/* Perfil */
+
+.perfil-candidato,
+
+.perfil-empresa {
+
+    width: 100%;
+
+    max-width: 900px;
+
+    margin: 0 auto;
+
+    padding: 30px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 12px;
+
+    background: #fff;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+}
+
+.perfil-candidato h1,
+
+.perfil-empresa h1 {
+
+    margin: 0 0 24px;
+
+    font-size: 30px;
+
+}
+
+.perfil-candidato p,
+
+.perfil-empresa p {
+
+    margin: 12px 0;
+
+    line-height: 1.6;
+
+}
+
+.perfil-candidato strong,
+
+.perfil-empresa strong {
+
+    font-weight: 600;
+
+}
+
+
+
+/* Ações do perfil */
+
+.acoes-perfil {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 12px;
+
+    margin-top: 30px;
+
+    padding-top: 20px;
+
+    border-top: 1px solid #e5e7eb;
+
+}
+
+.acoes-perfil button {
+
+    padding: 11px 18px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: #2563eb;
+
+    color: #fff;
+
+    font-size: 14px;
+
+    cursor: pointer;
+
+    transition: background 0.2s ease, transform 0.2s ease;
+
+}
+
+.acoes-perfil button:hover {
+
+    background: #1d4ed8;
+
+    transform: translateY(-1px);
+
+}
+
+#botao-excluir-candidato,
+
+#botao-excluir-empresa {
+
+    background: #dc2626;
+
+}
+
+#botao-excluir-candidato:hover,
+
+#botao-excluir-empresa:hover {
+
+    background: #b91c1c;
+
+}
+
+
+
+/* Formulários */
+
+.cadastro-candidato,
+
+.cadastro-empresa,
+
+.cadastro-vaga {
+
+    width: 100%;
+
+    max-width: 800px;
+
+    margin: 0 auto;
+
+    padding: 30px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 12px;
+
+    background: #fff;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+}
+
+.cadastro-candidato h1,
+
+.cadastro-empresa h1,
+
+.cadastro-vaga h1 {
+
+    margin: 0 0 30px;
+
+    font-size: 28px;
+
+}
+
+
+
+/* Campos dos formulários */
+
+.campo {
+
+    display: flex;
+
+    flex-direction: column;
+
+    margin-bottom: 20px;
+
+}
+
+.campo label {
+
+    margin-bottom: 8px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    color: #374151;
+
+}
+
+.campo input,
+
+.campo textarea,
+
+.campo select {
+
+    width: 100%;
+
+    padding: 11px 12px;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 8px;
+
+    background: #fff;
+
+    color: #1f2937;
+
+    font-family: Arial, sans-serif;
+
+    font-size: 14px;
+
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+}
+
+.campo textarea {
+
+    resize: vertical;
+
+    min-height: 100px;
+
+}
+
+.campo input:focus,
+
+.campo textarea:focus,
+
+.campo select:focus {
+
+    outline: none;
+
+    border-color: #2563eb;
+
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+
+}
+
+
+
+/* Ações dos formulários */
+
+.acoes-formulario {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 12px;
+
+    margin-top: 30px;
+
+    padding-top: 20px;
+
+    border-top: 1px solid #e5e7eb;
+
+}
+
+.acoes-formulario button {
+
+    padding: 11px 20px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: #2563eb;
+
+    color: #fff;
+
+    font-size: 14px;
+
+    cursor: pointer;
+
+    transition: background 0.2s ease, transform 0.2s ease;
+
+}
+
+.acoes-formulario button:hover {
+
+    background: #1d4ed8;
+
+    transform: translateY(-1px);
+
+}
+
+.acoes-formulario button[type="button"] {
+
+    background: #6b7280;
+
+}
+
+.acoes-formulario button[type="button"]:hover {
+
+    background: #4b5563;
+
+}
+
+
+
+/* Vagas disponíveis */
+
+.vagas-disponiveis {
+
+    margin-top: 40px;
+
+    padding: 30px;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 12px;
+
+    background: #fff;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+}
+
+.vagas-disponiveis h2 {
+
+    margin: 0 0 20px;
+
+    font-size: 24px;
+
+    color: #111827;
+
+}
+
+
+
+/* Lista de vagas */
+
+#lista-vagas {
+
+    display: grid;
+
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+
+    gap: 20px;
+
+}
+
+
+
+/* Cards das vagas */
+
+.card-vaga {
+
+    padding: 20px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 12px;
+
+    background: #fff;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+}
+
+.card-vaga:hover {
+
+    transform: translateY(-3px);
+
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+
+}
+
+.card-vaga h3 {
+
+    margin: 0 0 14px;
+
+    font-size: 18px;
+
+}
+
+.card-vaga p {
+
+    margin: 8px 0;
+
+    line-height: 1.5;
+
+}
+
+.card-vaga strong {
+
+    font-weight: 600;
+
+}
+
+
+
+/* Ações dos cards */
+
+.acoes-card {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin-top: 20px;
+
+}
+
+.acoes-card button {
+
+    padding: 9px 14px;
+
+    border: none;
+
+    border-radius: 7px;
+
+    background: #2563eb;
+
+    color: #fff;
+
+    font-size: 13px;
+
+    cursor: pointer;
+
+    transition: background 0.2s ease;
+
+}
+
+.acoes-card button:hover {
+
+    background: #1d4ed8;
+
+}
+
+.acoes-card button.excluir {
+
+    background: #dc2626;
+
+}
+
+.acoes-card button.excluir:hover {
+
+    background: #b91c1c;
+
+}
+
+
+
+/* Minhas vagas */
+
+.minhas-vagas {
+
+    margin-top: 40px;
+
+    padding: 30px;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 12px;
+
+    background: #fff;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+}
+
+.minhas-vagas h2 {
+
+    margin: 0 0 20px;
+
+    font-size: 24px;
+
+    color: #111827;
+
+}
+
+
+
+/* Lista de minhas vagas */
+
+#lista-vagas-empresa {
+
+    display: grid;
+
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+
+    gap: 20px;
+
+}
+
+
+
+/* Cards das minhas vagas */
+
+.card-vaga-empresa {
+
+    padding: 20px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 12px;
+
+    background: #fff;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+}
+
+.card-vaga-empresa h3 {
+
+    margin: 0 0 14px;
+
+    font-size: 18px;
+
+}
+
+.card-vaga-empresa p {
+
+    margin: 8px 0;
+
+    line-height: 1.5;
+
+}
+
+.card-vaga-empresa strong {
+
+    font-weight: 600;
+
+}
+
+
+
+/* Ações das minhas vagas */
+
+.acoes-vaga-empresa {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin-top: 20px;
+
+    padding-top: 15px;
+
+    border-top: 1px solid #e5e7eb;
+
+}
+
+.acoes-vaga-empresa button {
+
+    padding: 9px 14px;
+
+    border: none;
+
+    border-radius: 7px;
+
+    background: #2563eb;
+
+    color: #fff;
+
+    font-size: 13px;
+
+    cursor: pointer;
+
+    transition: background 0.2s ease;
+
+}
+
+.acoes-vaga-empresa button:hover {
+
+    background: #1d4ed8;
+
+}
+
+.acoes-vaga-empresa button.excluir {
+
+    background: #dc2626;
+
+}
+
+.acoes-vaga-empresa button.excluir:hover {
+
+    background: #b91c1c;
+
+}
+
+
+
+/* Responsividade */
+
+@media (max-width: 768px) {
+
+    .sidebar {
+
+        width: 220px;
+
+    }
+
+    .conteudo {
+
+        padding: 25px;
+
+    }
+
+    .perfil-candidato,
+
+    .perfil-empresa,
+
+    .cadastro-candidato,
+
+    .cadastro-empresa,
+
+    .cadastro-vaga {
+
+        padding: 25px;
+
+    }
+
+    .cabecalho-empresa {
+
+        padding: 25px;
+
+    }
+
+}
+
+@media (max-width: 600px) {
+
+    #app {
+
+        flex-direction: column;
+
+    }
+
+    .sidebar {
+
+        width: 100%;
+
+        min-height: auto;
+
+    }
+
+    .sidebar-menu {
+
+        flex-direction: row;
+
+        flex-wrap: wrap;
+
+    }
+
+    .menu-item {
+
+        width: auto;
+
+        flex: 1 1 150px;
+
+    }
+
+    .conteudo {
+
+        padding: 20px;
+
+    }
+
+    .perfil-candidato,
+
+    .perfil-empresa,
+
+    .cadastro-candidato,
+
+    .cadastro-empresa,
+
+    .cadastro-vaga {
+
+        padding: 20px;
+
+    }
+
+    .candidatos,
+
+    .vagas-disponiveis,
+
+    .minhas-vagas {
+
+        padding: 20px;
+
+    }
+
+    .acoes-perfil,
+
+    .acoes-formulario {
+
+        flex-direction: column;
+
+    }
+
+    .acoes-perfil button,
+
+    .acoes-formulario button {
+
+        width: 100%;
+
+    }
+
+}

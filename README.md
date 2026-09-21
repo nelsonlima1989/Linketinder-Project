@@ -2,7 +2,7 @@
 
 Sistema de contratação de profissionais inspirado na combinação das principais ideias do **LinkedIn** e do **Tinder**.
 
-O projeto foi desenvolvido como um **MVP (Minimum Viable Product)** para o desafio **ZG-HERO / Acelera ZG**, utilizando **Groovy**, com foco na aplicação prática de conceitos de **Programação Orientada a Objetos (POO)** e **Estruturas de Dados**.
+O projeto foi desenvolvido como um **MVP (Minimum Viable Product)** para o desafio **ZG-HERO / Acelera ZG**, utilizando **Groovy** no backend e uma interface web em **TypeScript**, com foco na aplicação prática de conceitos de **Programação Orientada a Objetos (POO)**, **Estruturas de Dados**, organização em camadas e desenvolvimento de uma interface funcional.
 
 A proposta do Linketinder é aproximar **candidatos** e **empresas** com base em suas **Skills**, reduzindo a influência de popularidade e priorizando a compatibilidade entre as competências do candidato e as necessidades da vaga.
 
@@ -14,92 +14,114 @@ O Linketinder surgiu como um **MVP (Minimum Viable Product)** para o desafio **Z
 
 A proposta combina:
 
-* O conceito de **Skills** utilizado em plataformas profissionais;
-* A relação entre **candidato e empresa**;
-* O conceito de **Like e Match** inspirado em aplicativos de relacionamento;
-* Uma experiência de interação que deverá priorizar o **anonimato antes do Match**.
+- O conceito de **Skills** utilizado em plataformas profissionais;
+- A relação entre **candidato e empresa**;
+- O conceito de **Like e Match** inspirado em aplicativos de relacionamento;
+- Uma experiência de interação que prioriza o **anonimato antes do Match**;
+- Uma interface web para cadastro, visualização e gerenciamento de candidatos, empresas e vagas.
 
-Neste momento, o projeto possui um MVP funcional com estruturação do domínio, carregamento dos dados, serviços, menu de terminal, sistema de curtidas e geração de Matches.
+O projeto atualmente possui:
+
+- domínio estruturado;
+- dados iniciais;
+- serviços;
+- interface de terminal no backend;
+- interface web em TypeScript;
+- cadastro de candidatos, empresas e vagas;
+- edição e exclusão de registros;
+- persistência local no frontend;
+- controle de edição entre abas;
+- visualização de perfis;
+- gerenciamento das vagas das empresas;
+- visualização anônima de candidatos;
+- sistema de Skills;
+- gráfico de Skills;
+- sistema de curtidas e Matches no backend.
 
 ---
 
 # 🎯 Objetivo
 
-O objetivo atual é construir um MVP funcional capaz de:
+O objetivo do projeto é construir uma plataforma de recrutamento capaz de:
 
-* manter candidatos pré-cadastrados;
-* manter empresas pré-cadastradas;
-* associar Skills aos candidatos;
-* associar Skills às vagas;
-* associar vagas às empresas;
-* disponibilizar serviços para consulta dos dados;
-* disponibilizar um menu no terminal;
-* permitir a visualização anônima dos candidatos;
-* permitir a visualização anônima das vagas;
-* permitir curtidas de candidatos em vagas;
-* permitir curtidas de empresas em candidatos;
-* identificar curtidas mútuas;
-* criar e listar Matches;
-* liberar os dados completos após o Match;
-* validar a integridade dos dados carregados.
-
-A arquitetura foi construída pensando também na evolução futura do projeto.
+- manter candidatos cadastrados;
+- manter empresas cadastradas;
+- associar Skills aos candidatos;
+- associar Skills às vagas;
+- associar vagas às empresas;
+- disponibilizar serviços para consulta dos dados;
+- disponibilizar uma interface de terminal;
+- disponibilizar uma interface web;
+- permitir cadastro e gerenciamento de candidatos;
+- permitir cadastro e gerenciamento de empresas;
+- permitir cadastro e gerenciamento de vagas;
+- permitir a visualização anônima dos candidatos;
+- permitir a visualização das vagas;
+- permitir curtidas de candidatos em vagas;
+- permitir curtidas de empresas em candidatos;
+- identificar curtidas mútuas;
+- criar e listar Matches;
+- liberar os dados completos após o Match;
+- validar a integridade dos dados carregados;
+- manter uma arquitetura preparada para futuras evoluções.
 
 ---
 
 # 🛠️ Tecnologias utilizadas
 
-* **Groovy**
-* **Java**
-* **Gradle**
-* **IntelliJ IDEA**
+## Backend
 
-O projeto utiliza Groovy como linguagem principal, conforme especificado no desafio.
+- **Groovy**
+- **Java**
+- **Gradle**
+- **IntelliJ IDEA**
+
+## Frontend
+
+- **TypeScript**
+- **HTML**
+- **CSS**
+- **JavaScript / DOM API**
+- **Chart.js**
+- **LocalStorage**
+
+O backend utiliza Groovy como linguagem principal, conforme especificado no desafio.
+
+O frontend foi desenvolvido separadamente utilizando TypeScript, com organização por **models**, **services**, **components**, **data** e controle de navegação.
 
 ---
 
 # 🏗️ Arquitetura
 
-O projeto utiliza uma organização baseada na separação de responsabilidades:
+O projeto está dividido em duas partes principais:
 
 ```text
-                    ┌───────────────┐
-                    │     Main      │
-                    └───────┬───────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │      UI       │
-                    │     Menu      │
-                    └───────┬───────┘
-                            │
-                ┌───────────┴───────────┐
-                ▼                       ▼
-        ┌───────────────┐       ┌───────────────┐
-        │ Candidato     │       │    Empresa    │
-        │   Service     │       │    Service    │
-        └───────┬───────┘       └───────┬───────┘
-                │                       │
-                └───────────┬───────────┘
-                            ▼
-                    ┌───────────────┐
-                    │     Data      │
-                    │Inicializador  │
-                    └───────┬───────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │     Model     │
-                    └───────────────┘
+Linketinder
+│
+├── Backend
+│   └── Groovy
+│       ├── Main
+│       ├── UI
+│       ├── Services
+│       ├── Data
+│       └── Model
+│
+└── Frontend
+    └── TypeScript
+        ├── Components
+        ├── Services
+        ├── Models
+        ├── Data
+        └── Main
 ```
 
-A intenção é evitar concentrar toda a lógica no `Main`, mantendo cada parte do sistema responsável por uma função específica.
+A intenção é evitar concentrar toda a lógica em um único arquivo, mantendo cada parte do sistema responsável por uma função específica.
 
 ---
 
 # 📁 Estrutura do projeto
 
-A estrutura atual do projeto está organizada da seguinte maneira:
+## Backend
 
 ```text
 src/
@@ -107,7 +129,6 @@ src/
     └── groovy/
         └── com/
             └── linketinder/
-                │
                 ├── Main.groovy
                 │
                 ├── data/
@@ -136,19 +157,72 @@ src/
                     └── Menu.groovy
 ```
 
-A estrutura poderá receber novos componentes conforme novas funcionalidades forem implementadas.
+## Frontend
+
+```text
+frontend/
+├── index.html
+├── package.json
+├── package-lock.json
+├── tsconfig.json
+│
+├── public/
+│
+└── src/
+    ├── components/
+    │   ├── candidatos/
+    │   │   ├── renderizarCardsCandidatos.ts
+    │   │   ├── renderizarPerfilCandidato.ts
+    │   │   └── renderizarFormularioCandidato.ts
+    │   │
+    │   ├── empresas/
+    │   │   ├── renderizarPerfilEmpresa.ts
+    │   │   ├── renderizarGraficoSkills.ts
+    │   │   └── renderizarFormularioEmpresa.ts
+    │   │
+    │   ├── vagas/
+    │   │   ├── renderizarCardsVagas.ts
+    │   │   ├── renderizarCardsVagasEmpresa.ts
+    │   │   └── renderizarFormularioVaga.ts
+    │   │
+    │   └── layout/
+    │       ├── renderizarSidebar.ts
+    │       └── renderizarTela.ts
+    │
+    ├── data/
+    │   └── dados.ts
+    │
+    ├── models/
+    │   ├── Candidato.ts
+    │   ├── Empresa.ts
+    │   └── Vaga.ts
+    │
+    ├── services/
+    │   ├── candidatoService.ts
+    │   ├── empresaService.ts
+    │   ├── edicaoCandidatoService.ts
+    │   ├── edicaoEmpresaService.ts
+    │   ├── edicaoVagaService.ts
+    │   ├── idService.ts
+    │   ├── navegacaoService.ts
+    │   ├── skillService.ts
+    │   ├── storage.ts
+    │   └── vagaService.ts
+    │
+    └── main.ts
+```
 
 ---
 
-# 🧩 Model
+# 🧩 Backend
+
+## Model
 
 A camada `model` representa as entidades principais do domínio.
 
-## Pessoa
+### Pessoa
 
 `Pessoa` representa atributos gerais compartilhados pelo candidato.
-
-Atualmente:
 
 ```text
 Pessoa
@@ -195,15 +269,11 @@ Empresa
 
 O CNPJ é mantido no modelo da empresa porque faz parte da identificação da entidade.
 
-Entretanto, o CNPJ **não é exposto na experiência de listagem atual**, considerando a futura regra de anonimato do Linketinder.
-
 ---
 
 ## Informacoes
 
 A classe `Informacoes` concentra informações de identificação e contato utilizadas pelos perfis.
-
-Atualmente:
 
 ```text
 Informacoes
@@ -215,15 +285,13 @@ Informacoes
 
 A concentração dessas informações permite maior controle sobre quais dados poderão ser apresentados em cada contexto da aplicação.
 
-O `nome` foi colocado em `Informacoes` para que a arquitetura possa evoluir futuramente para uma experiência em que determinadas informações sejam ocultadas antes do Match.
-
 ---
 
 ## Skill
 
 Representa uma competência que pode ser associada a candidatos e vagas.
 
-Skills utilizadas atualmente:
+Skills utilizadas inicialmente:
 
 ```text
 Java
@@ -254,40 +322,37 @@ Cada vaga possui uma lista de Skills que representam as competências desejadas 
 
 # 💾 DataInicializador
 
-A classe `DataInicializador` é responsável pelo carregamento dos dados iniciais utilizados pelo MVP.
+A classe `DataInicializador` é responsável pelo carregamento dos dados iniciais utilizados pelo backend.
 
 Atualmente são criados:
 
-* **6 Skills**
-* **5 candidatos**
-* **5 empresas**
-* **5 vagas**
+- **6 Skills**
+- **5 candidatos**
+- **5 empresas**
+- **5 vagas**
 
-Cada empresa possui atualmente uma vaga.
+Cada empresa possui inicialmente uma vaga.
 
 As principais relações do modelo são:
 
 ```text
 Empresa
-   │
-   └── List<Vaga>
-            │
-            └── List<Skill>
+└── List<Vaga>
+    └── List<Skill>
 ```
 
 E:
 
 ```text
 Candidato
-   │
-   └── List<Skill>
+└── List<Skill>
 ```
 
 O `DataInicializador` também disponibiliza uma operação para localizar uma Skill pelo nome.
 
 ---
 
-# ⚙️ Services
+# ⚙️ Services do backend
 
 A camada `service` concentra as operações relacionadas ao domínio.
 
@@ -295,15 +360,10 @@ A camada `service` concentra as operações relacionadas ao domínio.
 
 Responsável pelas operações relacionadas aos candidatos.
 
-Atualmente disponibiliza operações como:
+Exemplos:
 
 ```groovy
 listarTodosCandidatos()
-```
-
-e:
-
-```groovy
 buscarCandidatoPorNome(String nome)
 ```
 
@@ -321,7 +381,7 @@ def resultado = candidatoService.buscarCandidatoPorNome("Nelson")
 
 Responsável pelas operações relacionadas às empresas.
 
-Assim como o `CandidatoService`, o serviço atua como camada intermediária entre os dados e a interface da aplicação.
+O serviço atua como camada intermediária entre os dados e a interface da aplicação.
 
 Também disponibiliza a listagem de empresas em formato anônimo, ocultando informações de identificação e contato.
 
@@ -333,10 +393,10 @@ Responsável pelo registro das curtidas realizadas por candidatos e empresas.
 
 O serviço permite:
 
-* candidato curtir uma vaga;
-* empresa curtir um candidato;
-* armazenar as curtidas realizadas;
-* solicitar ao `MatchService` a verificação de uma possível curtida mútua.
+- candidato curtir uma vaga;
+- empresa curtir um candidato;
+- armazenar as curtidas realizadas;
+- solicitar ao `MatchService` a verificação de uma possível curtida mútua.
 
 A curtida do candidato é relacionada à vaga, enquanto a curtida da empresa é relacionada ao candidato.
 
@@ -356,13 +416,156 @@ O Match é estabelecido entre **candidato e empresa**, e não diretamente entre 
 
 Isso permite que uma empresa possua várias vagas e que, após o Match, candidato e empresa possam discutir qual oportunidade faz mais sentido.
 
-O serviço também disponibiliza a listagem dos Matches registrados.
+---
+
+# 🌐 Frontend
+
+O frontend foi desenvolvido em **TypeScript**, utilizando uma abordagem modular com separação entre modelos, componentes, serviços, dados e navegação.
+
+A interface permite trabalhar com candidatos, empresas e vagas de forma independente.
 
 ---
 
-# 🖥️ Interface de usuário
+# 👤 Funcionalidades do candidato
 
-O projeto atualmente utiliza uma interface simples baseada em terminal.
+O frontend permite:
+
+- cadastrar candidato;
+- visualizar perfil;
+- editar perfil;
+- excluir conta;
+- visualizar vagas disponíveis;
+- visualizar detalhes das vagas;
+- manter Skills;
+- persistir os dados no `localStorage`;
+- bloquear a edição do mesmo candidato em outra aba;
+- liberar o bloqueio ao salvar ou cancelar;
+- utilizar heartbeat para manter o bloqueio durante a edição;
+- expirar automaticamente bloqueios abandonados.
+
+Os candidatos podem ser apresentados para as empresas de forma anônima, exibindo informações como:
+
+- formação;
+- Skills;
+- descrição;
+- estado.
+
+Dados de identificação permanecem ocultos nos contextos de visualização anônima.
+
+---
+
+# 🏢 Funcionalidades da empresa
+
+O frontend permite:
+
+- cadastrar empresa;
+- visualizar perfil;
+- editar perfil;
+- excluir conta;
+- cadastrar novas vagas;
+- visualizar suas próprias vagas;
+- editar vagas;
+- excluir vagas;
+- visualizar candidatos de forma anônima;
+- visualizar Skills dos candidatos;
+- visualizar formação dos candidatos;
+- visualizar gráfico de Skills;
+- bloquear a edição da mesma empresa em outra aba;
+- liberar o bloqueio ao salvar ou cancelar;
+- utilizar heartbeat para manter o bloqueio durante a edição;
+- expirar automaticamente bloqueios abandonados.
+
+---
+
+# 💼 Funcionalidades das vagas
+
+As empresas podem:
+
+- cadastrar uma vaga;
+- informar título;
+- informar descrição;
+- associar Skills;
+- listar suas vagas;
+- editar uma vaga;
+- excluir uma vaga;
+- cancelar o cadastro ou edição.
+
+Cada vaga possui seu próprio controle de edição.
+
+Isso permite que:
+
+- a mesma vaga não seja editada simultaneamente em duas abas;
+- vagas diferentes possam ser editadas simultaneamente;
+- o bloqueio seja renovado enquanto a edição estiver aberta;
+- o bloqueio seja liberado ao salvar ou cancelar;
+- bloqueios abandonados expirem automaticamente.
+
+---
+
+# 🗄️ Persistência no frontend
+
+O frontend utiliza o `localStorage` do navegador para persistir os dados.
+
+Os serviços responsáveis pelos dados utilizam uma camada própria de armazenamento:
+
+```text
+services/
+└── storage.ts
+```
+
+A aplicação carrega os dados salvos quando disponíveis e utiliza os dados iniciais como base quando ainda não existem registros no `localStorage`.
+
+Essa abordagem permite testar o MVP sem a necessidade de uma API ou banco de dados para o funcionamento da interface.
+
+---
+
+# 🔒 Controle de edição entre abas
+
+O frontend possui mecanismos de bloqueio para evitar que o mesmo registro seja editado simultaneamente em diferentes abas do navegador.
+
+Existem controles independentes para:
+
+```text
+Candidato
+Empresa
+Vaga
+```
+
+Cada bloqueio possui:
+
+- identificação do registro;
+- timestamp;
+- heartbeat;
+- tempo de expiração;
+- liberação manual.
+
+O heartbeat atualiza periodicamente o timestamp do registro em edição.
+
+Caso a aba seja fechada ou o bloqueio deixe de ser renovado, ele poderá expirar automaticamente.
+
+Esse mecanismo foi testado para garantir que:
+
+- o mesmo registro não seja editado simultaneamente;
+- registros diferentes possam ser editados ao mesmo tempo;
+- salvar libere o bloqueio;
+- cancelar libere o bloqueio;
+- bloqueios abandonados expirem.
+
+---
+
+# 📊 Gráfico de Skills
+
+O frontend possui uma visualização gráfica das Skills cadastradas.
+
+O gráfico permite visualizar a quantidade de ocorrências de cada Skill entre os candidatos.
+
+Essa funcionalidade utiliza **Chart.js**.
+
+---
+
+# 🖥️ Interface de usuário do backend
+
+O backend possui uma interface simples baseada em terminal.
 
 O menu principal apresenta:
 
@@ -370,159 +573,22 @@ O menu principal apresenta:
 ================================
           LINKETINDER
 ================================
+
 1 - Listar candidatos
 2 - Listar vagas
 3 - Curtir vaga
 4 - Curtir candidato
 5 - Listar matches
 0 - Sair
+
 ================================
 ```
 
-## Listar candidatos
-
-A opção `1` apresenta os candidatos de forma anônima.
-
-São exibidos:
-
-* ID;
-* Estado;
-* Descrição pessoal;
-* Skills.
-
-Informações de identificação e contato, como nome, CPF, idade, CEP, e-mail e WhatsApp, permanecem ocultas.
-
-## Listar vagas
-
-A opção `2` apresenta as vagas disponíveis de forma anônima.
-
-São exibidos:
-
-* ID da vaga;
-* Título;
-* Descrição;
-* País da empresa;
-* Estado da empresa;
-* Skills.
-
-O nome e os dados de contato da empresa permanecem ocultos.
-
-## Curtir vaga
-
-A opção `3` permite que um candidato escolha uma vaga e demonstre interesse.
-
-O fluxo é:
-
-```text
-Candidato
-    │
-    │ curte
-    ▼
-  Vaga
-    │
-    ▼
- Empresa
-```
-
-A vaga é selecionada pela posição apresentada na lista.
-
-## Curtir candidato
-
-A opção `4` permite que uma empresa escolha um candidato e demonstre interesse.
-
-O candidato é apresentado de forma anônima durante a seleção.
-
-## Listar matches
-
-A opção `5` apresenta os Matches registrados.
-
-Após o Match, são exibidas as informações completas do candidato e da empresa, incluindo dados de identificação e contato.
-
-## Sair
-
-A opção `0` encerra a aplicação.
-
-# ▶️ Como executar
-
-## Pré-requisitos
-
-Para executar o projeto, é necessário possuir:
-
-* Java instalado;
-* Groovy;
-* Gradle ou Gradle Wrapper;
-* IntelliJ IDEA ou outra IDE compatível.
-
-## Executando pela IDE
-
-Abra o projeto no IntelliJ IDEA e execute o arquivo:
-
-```text
-Main.groovy
-```
-
-O programa iniciará o menu do Linketinder no terminal.
-
-## Executando pelo Gradle
-
-Caso o projeto possua uma configuração de execução pelo Gradle, utilize o comando correspondente definido no `build.gradle`.
-
-Por exemplo:
-
-```bash
-./gradlew run
-```
-
-No Windows:
-
-```bash
-gradlew.bat run
-```
-
 ---
 
-# 🧪 Validação do MVP
+# 👥 Listagem anônima
 
-O projeto possui validações para verificar a integridade dos dados iniciais.
-
-Durante a validação foram confirmados:
-
-```text
-Candidatos cadastrados: 5
-Empresas cadastradas: 5
-
-Todos os candidatos possuem Skills.
-Todas as empresas possuem CNPJ.
-Todas as empresas possuem uma vaga.
-Todas as vagas possuem Skills.
-
-MVP validado com sucesso!
-```
-
-Também foram realizados testes dos serviços e do menu, incluindo:
-
-* carregamento dos cinco candidatos;
-* carregamento das cinco empresas;
-* busca de candidato por nome;
-* tratamento de candidato não encontrado através de `Optional`;
-* listagem anônima de candidatos;
-* listagem anônima de vagas;
-* curtida de candidato em vaga;
-* curtida de empresa em candidato;
-* identificação de curtida mútua;
-* criação de Match;
-* listagem de Matches;
-* liberação das informações completas após o Match;
-* navegação pelo menu;
-* encerramento da aplicação.
-
----
-
-# 🔐 Anonimato
-
-Uma das principais regras de negócio do Linketinder é trabalhar com **anonimato antes do Match**.
-
-O MVP atual já aplica essa regra nas principais listagens.
+Uma das regras de negócio do Linketinder é trabalhar com **anonimato antes do Match**.
 
 ## Candidato anônimo
 
@@ -547,6 +613,8 @@ E-mail
 WhatsApp
 ```
 
+---
+
 ## Empresa e vaga anônimas
 
 Na visualização das vagas, são apresentados:
@@ -563,15 +631,11 @@ Vaga
 
 O nome e os dados de identificação e contato da empresa permanecem ocultos.
 
-## Após o Match
-
-Quando candidato e empresa demonstram interesse mútuo, o sistema cria um `Match`.
-
-Nesse momento, o MVP libera a visualização das informações completas das duas partes.
+---
 
 # ❤️ Sistema de Likes
 
-O MVP possui um sistema de curtidas que permite que os dois lados demonstrem interesse.
+O backend possui um sistema de curtidas que permite que os dois lados demonstrem interesse.
 
 ## Candidato curtindo vagas
 
@@ -587,6 +651,8 @@ Candidato
 
 A curtida registra o candidato, a vaga, a empresa relacionada e o tipo de curtida.
 
+---
+
 ## Empresa curtindo candidatos
 
 Uma empresa pode curtir um ou vários candidatos:
@@ -600,6 +666,8 @@ Empresa
 ```
 
 As curtidas são armazenadas pelo `CurtidaService`.
+
+---
 
 # 🤝 Match
 
@@ -616,15 +684,13 @@ Candidato
     │
     │ pertence à
     ▼
- Empresa
+  Empresa
     │
     │ curte o candidato
     ▼
-Candidato
-
-      ↓
-
-    MATCH
+ Candidato
+    ↓
+  MATCH
 ```
 
 Quando o `MatchService` identifica as duas curtidas:
@@ -651,213 +717,214 @@ Candidato ↔ Vaga
 
 A vaga é utilizada para registrar o interesse inicial do candidato e identificar a empresa relacionada.
 
-Isso permite que uma empresa possua várias vagas. Depois do Match, candidato e empresa podem discutir qual vaga é mais adequada.
-
-### Informações após o Match
-
-Antes do Match, os dados identificadores permanecem ocultos.
-
-Após o Match, o sistema permite visualizar:
-
-* dados completos do candidato;
-* dados completos da empresa;
-* skills;
-* vagas da empresa;
-* informações de contato.
-
-# 🚀 Evolução planejada
-
-O MVP atual representa apenas a primeira etapa do Linketinder.
-
-A arquitetura está sendo construída para permitir a evolução do projeto para uma experiência completa baseada em **Skills, filtros, anonimato, Likes e Match**.
-
-## 1. Filtro por Skills
-
-O candidato poderá visualizar ou filtrar vagas de acordo com suas competências.
-
-Exemplo:
-
-```text
-Candidato possui:
-
-Java
-Groovy
-```
-
-Ao selecionar uma Skill:
-
-```text
-Filtro: Java
-```
-
-O sistema poderá apresentar vagas que necessitem dessa competência.
-
-Da mesma forma, uma empresa poderá filtrar candidatos pelas Skills necessárias para suas vagas.
+Isso permite que uma empresa possua várias vagas.
 
 ---
 
-## 2. Experiência anônima
+# ▶️ Como executar
 
-Antes do Match:
+## Backend
 
-```text
-CANDIDATO
-     │
-     │ visualiza
-     ▼
-VAGA ANÔNIMA
-```
+### Pré-requisitos
 
-E:
+Para executar o backend, é necessário possuir:
 
-```text
-EMPRESA
-     │
-     │ visualiza
-     ▼
-CANDIDATO ANÔNIMO
-```
+- Java instalado;
+- Groovy;
+- Gradle ou Gradle Wrapper;
+- IntelliJ IDEA ou outra IDE compatível.
 
-A identidade das partes deverá permanecer protegida durante essa etapa.
+### Executando pela IDE
 
----
-
-## 3. Likes múltiplos
-
-O sistema já permite que os dois lados avaliem diversas oportunidades.
+Abra o projeto no IntelliJ IDEA e execute:
 
 ```text
-Candidato ──► várias vagas
-Empresa   ──► vários candidatos
+Main.groovy
 ```
 
-Isso permitirá que candidatos e empresas tenham liberdade para demonstrar interesse em diferentes oportunidades antes que qualquer Match aconteça.
+O programa iniciará o menu do Linketinder no terminal.
 
----
+### Executando pelo Gradle
 
-## 4. Match
+Caso o projeto possua uma configuração de execução pelo Gradle, utilize:
 
-O sistema já identifica o interesse mútuo:
-
-```text
-Candidato
-     │
-     │ Like
-     ▼
-    Vaga
-     ▲
-     │ Like
-     │
-  Empresa
-
-     ↓
-
-   MATCH
+```bash
+./gradlew run
 ```
 
-A partir desse momento, poderão ser liberadas informações adicionais de acordo com as regras de negócio.
+No Windows:
+
+```bash
+gradlew.bat run
+```
 
 ---
 
-## 5. Cadastro
+# 💻 Executando o frontend
 
-Como requisito opcional do enunciado, futuramente poderá ser implementado o cadastro de:
+Entre na pasta do frontend:
 
-* novos candidatos;
-* novas empresas;
-* novas vagas;
-* novas Skills.
+```bash
+cd frontend
+```
+
+Instale as dependências:
+
+```bash
+npm install
+```
+
+Para verificar se o TypeScript está compilando corretamente:
+
+```bash
+npx tsc --noEmit
+```
+
+Para executar o frontend em desenvolvimento, utilize o servidor configurado no projeto.
+
+A interface pode então ser acessada pelo navegador.
 
 ---
 
-## 6. Persistência
+# 🧪 Validação
 
-O MVP atual trabalha com dados carregados em memória pelo `DataInicializador`.
+O projeto foi testado em diferentes níveis.
 
-Uma evolução futura poderá substituir esse mecanismo por uma camada de persistência, permitindo armazenar os dados de forma permanente.
+## Backend
 
----
+Foram realizados testes envolvendo:
 
-## 7. Evolução da arquitetura
+- carregamento dos cinco candidatos;
+- carregamento das cinco empresas;
+- carregamento das cinco vagas;
+- busca de candidato por nome;
+- tratamento de candidato não encontrado através de `Optional`;
+- listagem anônima de candidatos;
+- listagem anônima de vagas;
+- curtida de candidato em vaga;
+- curtida de empresa em candidato;
+- identificação de curtida mútua;
+- criação de Match;
+- listagem de Matches;
+- liberação das informações após o Match;
+- navegação pelo menu;
+- encerramento da aplicação.
 
-Conforme o sistema crescer, novas camadas e componentes poderão ser introduzidos para tratar:
+## Frontend
 
-* autenticação;
-* persistência;
-* filtros;
-* Likes;
-* Match;
-* controle de acesso;
-* anonimato;
-* cadastro;
-* gerenciamento de vagas;
-* relacionamento entre candidatos e empresas.
+Foram testados:
 
-Essas funcionalidades serão implementadas gradualmente.
+- cadastro de candidato;
+- edição de candidato;
+- exclusão de candidato;
+- cadastro de empresa;
+- edição de empresa;
+- exclusão de empresa;
+- cadastro de vaga;
+- edição de vaga;
+- exclusão de vaga;
+- cancelamento de cadastro;
+- cancelamento de edição;
+- visualização de perfis;
+- visualização de vagas;
+- visualização anônima de candidatos;
+- visualização das vagas da empresa;
+- persistência através de `localStorage`;
+- gráfico de Skills;
+- bloqueio de edição entre abas;
+- heartbeat dos bloqueios;
+- expiração dos bloqueios;
+- exclusão em cascata das vagas ao excluir uma empresa;
+- possibilidade de editar registros diferentes simultaneamente.
 
 ---
 
 # 📋 Status atual do projeto
 
-| Funcionalidade                 | Status         |
-| ------------------------------ | -------------- |
-| Modelagem de candidatos        | ✅ Implementado |
-| Modelagem de empresas          | ✅ Implementado |
-| Modelagem de Skills            | ✅ Implementado |
-| Modelagem de vagas             | ✅ Implementado |
-| Classe Informacoes             | ✅ Implementado |
-| CPF                            | ✅ Implementado |
-| CNPJ                           | ✅ Implementado |
-| País da empresa                | ✅ Implementado |
-| Estado                         | ✅ Implementado |
-| DataInicializador              | ✅ Implementado |
-| 5 candidatos pré-cadastrados   | ✅ Implementado |
-| 5 empresas pré-cadastradas     | ✅ Implementado |
-| 5 vagas pré-cadastradas        | ✅ Implementado |
-| CandidatoService               | ✅ Implementado |
-| EmpresaService                 | ✅ Implementado |
-| Busca de candidato             | ✅ Implementado |
-| Menu de terminal               | ✅ Implementado |
-| Listagem de candidatos         | ✅ Implementado |
-| Listagem de empresas           | ✅ Implementado |
-| Validação do MVP               | ✅ Implementado |
-| Cadastro de novos usuários     | ⏳ Futuro       |
-| Filtro por Skills              | ⏳ Futuro       |
-| Anonimização básica            | ✅ Implementado |
-| Sistema de Likes               | ✅ Implementado |
-| Match                          | ✅ Implementado |
-
+| Funcionalidade | Status |
+|---|---|
+| Modelagem de candidatos | ✅ Implementado |
+| Modelagem de empresas | ✅ Implementado |
+| Modelagem de Skills | ✅ Implementado |
+| Modelagem de vagas | ✅ Implementado |
+| Classe Informacoes | ✅ Implementado |
+| CPF | ✅ Implementado |
+| CNPJ | ✅ Implementado |
+| País da empresa | ✅ Implementado |
+| Estado | ✅ Implementado |
+| DataInicializador | ✅ Implementado |
+| 5 candidatos pré-cadastrados | ✅ Implementado |
+| 5 empresas pré-cadastradas | ✅ Implementado |
+| 5 vagas pré-cadastradas | ✅ Implementado |
+| CandidatoService | ✅ Implementado |
+| EmpresaService | ✅ Implementado |
+| CurtidaService | ✅ Implementado |
+| MatchService | ✅ Implementado |
+| Busca de candidato | ✅ Implementado |
+| Menu de terminal | ✅ Implementado |
+| Listagem de candidatos | ✅ Implementado |
+| Listagem de empresas | ✅ Implementado |
+| Validação do MVP | ✅ Implementado |
+| Frontend TypeScript | ✅ Implementado |
+| Cadastro de candidatos | ✅ Implementado |
+| Edição de candidatos | ✅ Implementado |
+| Exclusão de candidatos | ✅ Implementado |
+| Cadastro de empresas | ✅ Implementado |
+| Edição de empresas | ✅ Implementado |
+| Exclusão de empresas | ✅ Implementado |
+| Cadastro de vagas | ✅ Implementado |
+| Edição de vagas | ✅ Implementado |
+| Exclusão de vagas | ✅ Implementado |
+| Cancelamento de cadastro/edição | ✅ Implementado |
+| Persistência com LocalStorage | ✅ Implementado |
+| Controle de edição entre abas | ✅ Implementado |
+| Heartbeat dos bloqueios | ✅ Implementado |
+| Expiração dos bloqueios | ✅ Implementado |
+| Exclusão em cascata das vagas | ✅ Implementado |
+| Visualização anônima de candidatos | ✅ Implementado |
+| Visualização das vagas | ✅ Implementado |
+| Gráfico de Skills | ✅ Implementado |
+| Sistema de Likes | ✅ Implementado |
+| Match | ✅ Implementado |
 
 ---
 
-# 📚 Conceitos aplicados
+# 🧠 Conceitos aplicados
 
-O projeto tem como objetivo principal praticar conceitos de **Programação Orientada a Objetos** e **Estruturas de Dados** utilizando Groovy.
+O projeto tem como objetivo principal praticar conceitos de **Programação Orientada a Objetos**, **Estruturas de Dados**, organização de responsabilidades e desenvolvimento frontend.
 
 Entre os conceitos utilizados estão:
 
-* Classes;
-* Objetos;
-* Herança;
-* Composição;
-* Encapsulamento;
-* Listas;
-* Relacionamento entre objetos;
-* Métodos;
-* Construtores;
-* `Optional`;
-* Closures;
-* Busca em coleções;
-* Separação de responsabilidades;
-* Organização em camadas.
+- Classes;
+- Objetos;
+- Herança;
+- Composição;
+- Encapsulamento;
+- Interfaces TypeScript;
+- Tipagem estática;
+- Listas;
+- Arrays;
+- Relacionamento entre objetos;
+- Métodos;
+- Construtores;
+- `Optional`;
+- Closures;
+- Busca em coleções;
+- Separação de responsabilidades;
+- Organização em camadas;
+- Services;
+- Components;
+- Manipulação do DOM;
+- Eventos;
+- LocalStorage;
+- Controle de estado;
+- Controle de edição entre abas.
 
 ---
 
-# 🧠 Decisões de arquitetura
+# 🧱 Decisões de arquitetura
 
-Algumas decisões foram tomadas considerando não apenas o MVP atual, mas também a evolução planejada.
-
-### Candidato e Pessoa
+## Candidato e Pessoa
 
 `Candidato` herda de `Pessoa`, permitindo compartilhar informações gerais.
 
@@ -868,7 +935,7 @@ Pessoa
 Candidato
 ```
 
-### Empresa independente
+## Empresa independente
 
 `Empresa` não herda de `Pessoa`.
 
@@ -879,7 +946,7 @@ Candidato → CPF
 Empresa   → CNPJ
 ```
 
-### Informacoes
+## Informacoes
 
 Os dados de identificação e contato foram concentrados em `Informacoes`.
 
@@ -893,18 +960,18 @@ Informacoes
 
 Essa organização facilita o controle futuro sobre quais informações serão disponibilizadas durante a experiência anônima.
 
-### Vaga pertence à Empresa
+## Vaga pertence à Empresa
 
 Uma empresa possui uma lista de vagas:
 
 ```text
 Empresa
-   └── List<Vaga>
+└── List<Vaga>
 ```
 
-No MVP atual, cada empresa possui uma vaga, mas o modelo permite que uma empresa possua várias vagas futuramente.
+No MVP inicial, cada empresa possui uma vaga, mas o modelo permite que uma empresa possua várias vagas.
 
-### Skills compartilhadas
+## Skills compartilhadas
 
 As Skills são carregadas pelo `DataInicializador` e associadas tanto aos candidatos quanto às vagas.
 
@@ -919,46 +986,113 @@ Skill
 
 Isso permite futuramente comparar as competências dos candidatos com as competências exigidas pelas vagas.
 
+## Separação do frontend
+
+O frontend foi organizado para evitar que toda a lógica fique concentrada no `main.ts`.
+
+A responsabilidade foi distribuída entre:
+
+```text
+models/
+    ↓
+services/
+    ↓
+components/
+    ↓
+main.ts
+```
+
+Os `models` representam os dados, os `services` concentram regras e operações, os `components` cuidam da renderização e o `main.ts` coordena os eventos e a navegação.
+
+---
+
+# 🚀 Evolução planejada
+
+O MVP atual representa uma primeira etapa do Linketinder.
+
+A arquitetura permite evoluções futuras como:
+
+## 1. Integração entre frontend e backend
+
+Substituir gradualmente a persistência local por uma API, permitindo que o frontend TypeScript consuma os serviços do backend.
+
+## 2. Persistência em banco de dados
+
+Substituir os dados em memória por uma camada de persistência permanente.
+
+## 3. Autenticação
+
+Adicionar autenticação para candidatos e empresas.
+
+## 4. Controle de acesso
+
+Restringir funcionalidades de acordo com o tipo de usuário autenticado.
+
+## 5. Filtro por Skills
+
+Permitir que candidatos filtrem vagas e que empresas filtrem candidatos de acordo com competências.
+
+## 6. Evolução do Match
+
+Expandir a experiência de Match e permitir comunicação entre as partes após o interesse mútuo.
+
+## 7. Novos recursos de recrutamento
+
+Adicionar funcionalidades relacionadas a:
+
+- filtros;
+- gerenciamento de vagas;
+- candidaturas;
+- notificações;
+- comunicação;
+- histórico de Matches;
+- recomendações baseadas em Skills.
+
 ---
 
 # 🎓 Requisitos do desafio
 
-O projeto foi desenvolvido considerando os requisitos obrigatórios apresentados no desafio.
+O projeto foi desenvolvido considerando os requisitos apresentados no desafio.
 
-### Candidatos
+## Candidatos
 
-* [x] Array/lista com pelo menos 5 candidatos;
-* [x] Nome;
-* [x] E-mail;
-* [x] CPF;
-* [x] Idade;
-* [x] Estado;
-* [x] CEP;
-* [x] Descrição pessoal;
-* [x] Skills.
+- [x] Array/lista com pelo menos 5 candidatos;
+- [x] Nome;
+- [x] E-mail;
+- [x] CPF;
+- [x] Idade;
+- [x] Estado;
+- [x] CEP;
+- [x] Descrição pessoal;
+- [x] Skills.
 
-### Empresas
+## Empresas
 
-* [x] Array/lista com pelo menos 5 empresas;
-* [x] Nome;
-* [x] E-mail corporativo;
-* [x] CNPJ;
-* [x] País;
-* [x] Estado;
-* [x] CEP;
-* [x] Descrição da empresa;
-* [x] Vagas com Skills.
+- [x] Array/lista com pelo menos 5 empresas;
+- [x] Nome;
+- [x] E-mail corporativo;
+- [x] CNPJ;
+- [x] País;
+- [x] Estado;
+- [x] CEP;
+- [x] Descrição da empresa;
+- [x] Vagas com Skills.
 
-### Interface
+## Interface
 
-* [x] Menu no terminal;
-* [x] Listagem de candidatos;
-* [x] Listagem de empresas.
+- [x] Menu no terminal;
+- [x] Listagem de candidatos;
+- [x] Listagem de empresas;
+- [x] Interface web;
+- [x] Cadastro de candidatos;
+- [x] Cadastro de empresas;
+- [x] Cadastro de vagas.
 
-### Requisito opcional
+## Requisito opcional
 
-* [ ] Cadastro de novos candidatos;
-* [ ] Cadastro de novas empresas.
+- [x] Cadastro de novos candidatos;
+- [x] Cadastro de novas empresas;
+- [x] Cadastro de novas vagas.
 
 ---
 
@@ -972,30 +1106,50 @@ Projeto desenvolvido durante o **Acelera ZG / ZG-HERO 2026**.
 
 # 📌 Status
 
-**MVP funcional**
+## MVP funcional
 
-O MVP funcional do Linketinder já possui:
+O Linketinder possui atualmente:
 
-* estrutura de domínio;
-* candidatos;
-* empresas;
-* vagas;
-* Skills;
-* informações de contato;
-* carregamento dos dados;
-* serviços;
-* anonimização nas listagens;
-* sistema de curtidas;
-* verificação de curtidas mútuas;
-* criação de Matches;
-* listagem de Matches;
-* liberação das informações completas após o Match;
-* validações;
-* interface de terminal.
+- estrutura de domínio;
+- candidatos;
+- empresas;
+- vagas;
+- Skills;
+- informações de contato;
+- carregamento dos dados;
+- serviços;
+- interface de terminal;
+- interface web;
+- cadastro;
+- edição;
+- exclusão;
+- persistência local;
+- anonimização nas listagens;
+- controle de edição entre abas;
+- sistema de curtidas;
+- verificação de curtidas mútuas;
+- criação de Matches;
+- listagem de Matches;
+- liberação das informações completas após o Match;
+- gráfico de Skills;
+- validações;
+- organização modular do frontend.
 
-O próximo estágio será evoluir essa estrutura para uma experiência de contratação mais completa baseada em:
+A evolução planejada do projeto segue a ideia:
 
-**Skills → Filtros → Anonimato → Likes → Match → Comunicação**
+```text
+Skills
+   ↓
+Filtros
+   ↓
+Anonimato
+   ↓
+Likes
+   ↓
+Match
+   ↓
+Comunicação
+```
 
 O objetivo é transformar gradualmente o MVP em um sistema de recrutamento inspirado no conceito do LinkedIn e na mecânica de interação do Tinder.
 
@@ -1003,4 +1157,4 @@ O objetivo é transformar gradualmente o MVP em um sistema de recrutamento inspi
 
 # 📄 Licença
 
-Este projeto foi desenvolvido por Nelson Lima para fins educacionais no contexto do **Acelera ZG / ZG-HERO 2026**.
+Este projeto foi desenvolvido por **Nelson Lima** para fins educacionais no contexto do **Acelera ZG / ZG-HERO 2026**.

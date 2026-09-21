@@ -43,3 +43,30 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+# =========================
+# Frontend
+# =========================
+
+# Dependencies
+frontend/node_modules/
+
+# Production build
+frontend/dist/
+
+# Local environment files
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# Vite cache
+frontend/.vite/
+
+# Logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# OS generated files
+frontend/.DS_Store
