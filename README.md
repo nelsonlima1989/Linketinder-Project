@@ -4,7 +4,7 @@ Sistema de contratação de profissionais inspirado na combinação das principa
 
 O projeto foi desenvolvido como um **MVP (Minimum Viable Product)** para o desafio **ZG-HERO / Acelera ZG**, utilizando **Groovy** no backend e uma interface web em **TypeScript**, com foco na aplicação prática de conceitos de **Programação Orientada a Objetos (POO)**, **Estruturas de Dados**, organização em camadas e desenvolvimento de uma interface funcional.
 
-A proposta do Linketinder é aproximar **candidatos** e **empresas** com base em suas **Skills**, reduzindo a influência de popularidade e priorizando a compatibilidade entre as competências do candidato e as necessidades da vaga.
+A proposta do Linketinder é aproximar **candidatos** e **empresas** com base em suas **Skills**, reduzindo a influência de popularidade e priorizando a compatibilidade entre as competências do candidato e as necessidades das vagas.
 
 ---
 
@@ -18,7 +18,8 @@ A proposta combina:
 - A relação entre **candidato e empresa**;
 - O conceito de **Like e Match** inspirado em aplicativos de relacionamento;
 - Uma experiência de interação que prioriza o **anonimato antes do Match**;
-- Uma interface web para cadastro, visualização e gerenciamento de candidatos, empresas e vagas.
+- Uma interface web para cadastro, visualização e gerenciamento de candidatos, empresas e vagas;
+- Um **índice de afinidade** entre o candidato e cada vaga, calculado a partir das Skills em comum.
 
 O projeto atualmente possui:
 
@@ -36,6 +37,7 @@ O projeto atualmente possui:
 - visualização anônima de candidatos;
 - sistema de Skills;
 - gráfico de Skills;
+- cálculo de afinidade entre candidato e vaga;
 - sistema de curtidas e Matches no backend.
 
 ---
@@ -57,6 +59,7 @@ O objetivo do projeto é construir uma plataforma de recrutamento capaz de:
 - permitir cadastro e gerenciamento de vagas;
 - permitir a visualização anônima dos candidatos;
 - permitir a visualização das vagas;
+- calcular o índice de afinidade entre candidato e vaga;
 - permitir curtidas de candidatos em vagas;
 - permitir curtidas de empresas em candidatos;
 - identificar curtidas mútuas;
@@ -159,13 +162,14 @@ src/
 
 ## Frontend
 
+A estrutura atual do frontend TypeScript é organizada da seguinte forma:
+
 ```text
 frontend/
 ├── index.html
 ├── package.json
 ├── package-lock.json
 ├── tsconfig.json
-│
 ├── public/
 │
 └── src/
@@ -207,7 +211,8 @@ frontend/
     │   ├── navegacaoService.ts
     │   ├── skillService.ts
     │   ├── storage.ts
-    │   └── vagaService.ts
+    │   ├── vagaService.ts
+    │   └── afinidadeService.ts
     │
     └── main.ts
 ```
@@ -364,6 +369,7 @@ Exemplos:
 
 ```groovy
 listarTodosCandidatos()
+
 buscarCandidatoPorNome(String nome)
 ```
 
@@ -424,6 +430,8 @@ O frontend foi desenvolvido em **TypeScript**, utilizando uma abordagem modular 
 
 A interface permite trabalhar com candidatos, empresas e vagas de forma independente.
 
+A implementação do frontend atende aos fluxos de CRUD e gerenciamento local previstos para esta etapa do projeto.
+
 ---
 
 # 👤 Funcionalidades do candidato
@@ -475,6 +483,10 @@ O frontend permite:
 - utilizar heartbeat para manter o bloqueio durante a edição;
 - expirar automaticamente bloqueios abandonados.
 
+Quando uma empresa é excluída, suas vagas também são removidas.
+
+Esse comportamento mantém a relação entre empresas e vagas consistente no frontend.
+
 ---
 
 # 💼 Funcionalidades das vagas
@@ -502,6 +514,145 @@ Isso permite que:
 
 ---
 
+# 📊 Índice de afinidade entre candidato e vaga
+
+Foi adicionada ao frontend uma nova funcionalidade do desafio: o **índice de afinidade** entre o candidato e a vaga.
+
+O índice é exibido diretamente no **card da vaga apresentado ao candidato**.
+
+A empresa não possui um campo de Skills no frontend. As Skills pertencem à vaga.
+
+A relação utilizada é:
+
+```text
+Candidato
+├── skills
+│   ├── Java
+│   ├── SQL
+│   └── Git
+│
+└──────────────┐
+               │ comparação
+               ▼
+             Vaga
+             ├── skills
+             │   ├── Java
+             │   ├── SQL
+             │   └── Docker
+             │
+             └── empresaId → Empresa
+```
+
+Dessa forma, o cálculo é realizado entre:
+
+```text
+Candidato ↔ Vaga
+```
+
+e não:
+
+```text
+Candidato ↔ Empresa
+```
+
+A empresa é responsável pela vaga através do `empresaId`, mas suas próprias informações não são utilizadas como uma lista de Skills.
+
+## Regra de cálculo
+
+A afinidade considera quantas Skills da vaga também estão presentes no candidato.
+
+A fórmula utilizada é:
+
+```text
+afinidade = (quantidade de Skills em comum / quantidade de Skills da vaga) × 100
+```
+
+### Exemplo
+
+Candidato:
+
+```text
+Java
+SQL
+Git
+```
+
+Vaga:
+
+```text
+Java
+SQL
+Docker
+React
+```
+
+Skills em comum:
+
+```text
+Java
+SQL
+```
+
+Cálculo:
+
+```text
+2 / 4 × 100 = 50%
+```
+
+O card da vaga apresenta:
+
+```text
+Afinidade: 50%
+```
+
+A comparação normaliza as Skills para evitar diferenças de maiúsculas/minúsculas e espaços.
+
+Vagas sem Skills retornam `0%`, evitando divisão por zero.
+
+## Implementação
+
+A regra de negócio foi isolada no serviço:
+
+```text
+src/services/afinidadeService.ts
+```
+
+O serviço recebe o candidato e a vaga, identifica as Skills em comum e retorna o percentual de afinidade.
+
+A renderização do percentual é realizada no componente responsável pelos cards de vagas:
+
+```text
+src/components/vagas/renderizarCardsVagas.ts
+```
+
+A lista de vagas é renderizada considerando o candidato atualmente selecionado.
+
+O requisito obrigatório do desafio, de adicionar um campo de índice de afinidade ao anúncio de cada vaga, está implementado.
+
+---
+
+# 📊 Gráfico de Skills
+
+O frontend possui uma visualização gráfica das Skills cadastradas.
+
+O gráfico permite visualizar a quantidade de ocorrências de cada Skill entre os candidatos.
+
+Essa funcionalidade utiliza **Chart.js**.
+
+A lógica de contagem das Skills fica no serviço:
+
+```text
+skillService.ts
+```
+
+A renderização do gráfico fica em:
+
+```text
+renderizarGraficoSkills.ts
+```
+
+---
+
 # 🗄️ Persistência no frontend
 
 O frontend utiliza o `localStorage` do navegador para persistir os dados.
@@ -516,6 +667,14 @@ services/
 A aplicação carrega os dados salvos quando disponíveis e utiliza os dados iniciais como base quando ainda não existem registros no `localStorage`.
 
 Essa abordagem permite testar o MVP sem a necessidade de uma API ou banco de dados para o funcionamento da interface.
+
+Os principais conjuntos de dados persistidos são:
+
+```text
+candidatos
+empresas
+vagas
+```
 
 ---
 
@@ -553,13 +712,23 @@ Esse mecanismo foi testado para garantir que:
 
 ---
 
-# 📊 Gráfico de Skills
+# 🗑️ Exclusão em cascata
 
-O frontend possui uma visualização gráfica das Skills cadastradas.
+Quando uma empresa é excluída no frontend, suas vagas também são excluídas.
 
-O gráfico permite visualizar a quantidade de ocorrências de cada Skill entre os candidatos.
+Fluxo:
 
-Essa funcionalidade utiliza **Chart.js**.
+```text
+Excluir empresa
+       ↓
+Excluir empresa
+       ↓
+Localizar vagas pelo empresaId
+       ↓
+Excluir vagas vinculadas
+```
+
+Isso evita que permaneçam vagas associadas a uma empresa inexistente.
 
 ---
 
@@ -571,14 +740,21 @@ O menu principal apresenta:
 
 ```text
 ================================
+
           LINKETINDER
+
 ================================
 
 1 - Listar candidatos
+
 2 - Listar vagas
+
 3 - Curtir vaga
+
 4 - Curtir candidato
+
 5 - Listar matches
+
 0 - Sair
 
 ================================
@@ -630,6 +806,8 @@ Vaga
 ```
 
 O nome e os dados de identificação e contato da empresa permanecem ocultos.
+
+No frontend atual, o índice de afinidade é calculado sem necessidade de expor a identidade da empresa ao candidato.
 
 ---
 
@@ -831,6 +1009,8 @@ Foram testados:
 - visualização das vagas da empresa;
 - persistência através de `localStorage`;
 - gráfico de Skills;
+- cálculo de afinidade;
+- exibição da afinidade no card de cada vaga;
 - bloqueio de edição entre abas;
 - heartbeat dos bloqueios;
 - expiração dos bloqueios;
@@ -884,6 +1064,8 @@ Foram testados:
 | Visualização anônima de candidatos | ✅ Implementado |
 | Visualização das vagas | ✅ Implementado |
 | Gráfico de Skills | ✅ Implementado |
+| Índice de afinidade candidato/vaga | ✅ Implementado |
+| Exibição da afinidade no card da vaga | ✅ Implementado |
 | Sistema de Likes | ✅ Implementado |
 | Match | ✅ Implementado |
 
@@ -918,7 +1100,8 @@ Entre os conceitos utilizados estão:
 - Eventos;
 - LocalStorage;
 - Controle de estado;
-- Controle de edição entre abas.
+- Controle de edição entre abas;
+- Cálculo de métricas.
 
 ---
 
@@ -971,9 +1154,9 @@ Empresa
 
 No MVP inicial, cada empresa possui uma vaga, mas o modelo permite que uma empresa possua várias vagas.
 
-## Skills compartilhadas
+## Skills compartilhadas no domínio
 
-As Skills são carregadas pelo `DataInicializador` e associadas tanto aos candidatos quanto às vagas.
+No backend, as Skills são carregadas pelo `DataInicializador` e associadas tanto aos candidatos quanto às vagas.
 
 ```text
 Skill
@@ -984,7 +1167,25 @@ Skill
  └──── Vaga
 ```
 
-Isso permite futuramente comparar as competências dos candidatos com as competências exigidas pelas vagas.
+Isso permite comparar as competências dos candidatos com as competências exigidas pelas vagas.
+
+## Afinidade no frontend
+
+No frontend, a empresa não possui uma coleção de Skills.
+
+A regra é mantida na relação:
+
+```text
+Candidato
+    │
+    │ skills
+    ▼
+   Vaga
+    │
+    └── empresaId → Empresa
+```
+
+Assim, o índice de afinidade representa a compatibilidade entre as Skills do candidato e as Skills exigidas pela vaga.
 
 ## Separação do frontend
 
@@ -1086,7 +1287,8 @@ O projeto foi desenvolvido considerando os requisitos apresentados no desafio.
 - [x] Interface web;
 - [x] Cadastro de candidatos;
 - [x] Cadastro de empresas;
-- [x] Cadastro de vagas.
+- [x] Cadastro de vagas;
+- [x] Índice de afinidade no anúncio de cada vaga.
 
 ## Requisito opcional
 
@@ -1094,13 +1296,11 @@ O projeto foi desenvolvido considerando os requisitos apresentados no desafio.
 - [x] Cadastro de novas empresas;
 - [x] Cadastro de novas vagas.
 
----
+## Requisito opcional de afinidade
 
-# 👨‍💻 Autor
+O desafio também apresenta como requisito opcional a exibição do índice de afinidade entre candidato e empresa na lista de candidatos do perfil de empresa.
 
-**Nelson Lima da Costa Júnior**
-
-Projeto desenvolvido durante o **Acelera ZG / ZG-HERO 2026**.
+Essa funcionalidade não foi necessária para o requisito obrigatório implementado nesta etapa.
 
 ---
 
@@ -1132,6 +1332,7 @@ O Linketinder possui atualmente:
 - listagem de Matches;
 - liberação das informações completas após o Match;
 - gráfico de Skills;
+- índice de afinidade entre candidato e vaga;
 - validações;
 - organização modular do frontend.
 
@@ -1139,6 +1340,8 @@ A evolução planejada do projeto segue a ideia:
 
 ```text
 Skills
+   ↓
+Afinidade
    ↓
 Filtros
    ↓
@@ -1152,6 +1355,14 @@ Comunicação
 ```
 
 O objetivo é transformar gradualmente o MVP em um sistema de recrutamento inspirado no conceito do LinkedIn e na mecânica de interação do Tinder.
+
+---
+
+# 👨‍💻 Autor
+
+**Nelson Lima da Costa Júnior**
+
+Projeto desenvolvido durante o **Acelera ZG / ZG-HERO 2026**.
 
 ---
 
