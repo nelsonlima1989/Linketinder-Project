@@ -1,7 +1,7 @@
 import type { Candidato } from "../../models/Candidato";
 import { candidatos } from "../../data/dados";
 import { candidatoEstaBloqueado } from "./edicaoCandidatoService";
-import { salvarDados, carregarDados } from "../ui/storage";
+import { salvarDados, carregarDados } from "../utils/storage";
 
 type DadosFormularioCandidato = {
     nome: string;

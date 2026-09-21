@@ -1,6 +1,6 @@
 import type { Candidato } from "../../models/Candidato";
 import { candidatos } from "../../data/dados";
-import { salvarDados, carregarDados } from "../ui/storage";
+import { salvarDados, carregarDados } from "../utils/storage";
 
 const CHAVE = "candidatos";
 

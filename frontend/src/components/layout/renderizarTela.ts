@@ -1,4 +1,4 @@
-import type { Tela } from "../../services/ui/navegacaoService";
+import type { Tela } from "../../services/utils/navegacaoService";
 
 import { renderizarPerfilEmpresa } from "../empresas/renderizarPerfilEmpresa";
 import { renderizarPerfilCandidato } from "../candidatos/renderizarPerfilCandidato";

@@ -1,6 +1,6 @@
 import type { Empresa } from "../../models/Empresa";
 import { empresas } from "../../data/dados";
-import { salvarDados, carregarDados } from "../ui/storage";
+import { salvarDados, carregarDados } from "../utils/storage";
 
 const CHAVE = "empresas";
 

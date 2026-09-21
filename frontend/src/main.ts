@@ -5,6 +5,7 @@ import {
   criarCandidato,
   editarCandidato,
   excluirCandidato,
+  obterCandidatoPorId,
 } from "./services/candidato/candidatoService";
 
 import {
@@ -52,7 +53,7 @@ import {
   obterTelaInicial,
   obterTelaDoMenu,
   type Tela,
-} from "./services/ui/navegacaoService";
+} from "./services/utils/navegacaoService";
 
 const candidatos = listarCandidatos();
 
@@ -368,8 +369,12 @@ function atualizarConteudo(
 
     const listaVagas = document.querySelector<HTMLDivElement>("#lista-vagas");
 
-    if (listaVagas) {
-      listaVagas.innerHTML = renderizarCardsVagas(vagas);
+    if (listaVagas && candidatoAtualId !== undefined) {
+      const candidato = obterCandidatoPorId(candidatoAtualId);
+
+      if (candidato) {
+        listaVagas.innerHTML = renderizarCardsVagas(vagas, candidato);
+      }
     }
   }
 

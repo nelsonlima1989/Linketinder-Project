@@ -6,7 +6,7 @@ import { vagas } from "../../data/dados";
 import {
     salvarDados,
     carregarDados
-} from "../ui/storage";
+} from "../utils/storage";
 
 const CHAVE = "vagas";
 

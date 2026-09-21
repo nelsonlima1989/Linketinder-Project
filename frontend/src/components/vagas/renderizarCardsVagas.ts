@@ -1,24 +1,36 @@
 import type { Vaga } from "../../models/Vaga";
+import type { Candidato } from "../../models/Candidato";
+import { calcularAfinidade } from "../../services/utils/afinidadeService";
 
 export function renderizarCardsVagas(
-    vagas: Vaga[]
+    vagas: Vaga[],
+    candidato: Candidato
 ): string {
 
-    return vagas.map(vaga => `
-        <article class="card-vaga">
+    return vagas.map(vaga => {
+        const afinidade = calcularAfinidade(candidato, vaga);
 
-            <h3>${vaga.titulo}</h3>
+        return `
+            <article class="card-vaga">
 
-            <p>
-                <strong>Descrição:</strong>
-                ${vaga.descricao}
-            </p>
+                <h3>${vaga.titulo}</h3>
 
-            <p>
-                <strong>Skills:</strong>
-                ${vaga.skills.join(" • ")}
-            </p>
+                <p>
+                    <strong>Descrição:</strong>
+                    ${vaga.descricao}
+                </p>
 
-        </article>
-    `).join("");
+                <p>
+                    <strong>Skills:</strong>
+                    ${vaga.skills.join(" • ")}
+                </p>
+
+                <p>
+                    <strong>Afinidade:</strong>
+                    ${afinidade}%
+                </p>
+
+            </article>
+        `;
+    }).join("");
 }
