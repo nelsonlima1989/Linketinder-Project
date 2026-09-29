@@ -2,7 +2,7 @@
 
 Sistema de contratação de profissionais inspirado na combinação das principais ideias do **LinkedIn** e do **Tinder**.
 
-O projeto foi desenvolvido como um **MVP (Minimum Viable Product)** para o desafio **ZG-HERO / Acelera ZG**, utilizando **Groovy** no backend e uma interface web em **TypeScript**, com foco na aplicação prática de conceitos de **Programação Orientada a Objetos (POO)**, **Estruturas de Dados**, organização em camadas e desenvolvimento de uma interface funcional.
+O projeto foi desenvolvido como um **MVP (Minimum Viable Product)** para o desafio **ZG-HERO / Acelera ZG**, utilizando **Groovy** no backend, **PostgreSQL/SQL** na camada de persistência relacional e uma interface web em **TypeScript**, com foco na aplicação prática de conceitos de **Programação Orientada a Objetos (POO)**, **Modelagem de Dados Relacional**, **Estruturas de Dados**, organização em camadas e desenvolvimento de uma interface funcional.
 
 A proposta do Linketinder é aproximar **candidatos** e **empresas** com base em suas **Skills**, reduzindo a influência de popularidade e priorizando a compatibilidade entre as competências do candidato e as necessidades das vagas.
 
@@ -15,15 +15,17 @@ O Linketinder surgiu como um **MVP (Minimum Viable Product)** para o desafio **Z
 A proposta combina:
 
 - O conceito de **Skills** utilizado em plataformas profissionais;
-- A relação entre **candidato e empresa**;
+- A relação entre **candidato, vaga e empresa**;
 - O conceito de **Like e Match** inspirado em aplicativos de relacionamento;
 - Uma experiência de interação que prioriza o **anonimato antes do Match**;
+- Estruturação relacional em banco de dados com scripts de tabelas e consultas consolidadas de matches;
 - Uma interface web para cadastro, visualização e gerenciamento de candidatos, empresas e vagas;
 - Um **índice de afinidade** entre o candidato e cada vaga, calculado a partir das Skills em comum.
 
 O projeto atualmente possui:
 
-- domínio estruturado;
+- domínio estruturado e modelagem relacional de dados;
+- scripts SQL para criação de schema e execução de consultas analíticas;
 - dados iniciais;
 - serviços;
 - interface de terminal no backend;
@@ -34,11 +36,11 @@ O projeto atualmente possui:
 - controle de edição entre abas;
 - visualização de perfis;
 - gerenciamento das vagas das empresas;
-- visualização anônima de candidatos;
+- visualização anônima de candidatos e empresas;
 - sistema de Skills;
 - gráfico de Skills;
-- cálculo de afinidade entre candidato e vaga;
-- sistema de curtidas e Matches no backend.
+- cálculo de afinidade entre candidato e vaga com regras formais de interseção;
+- sistema de curtidas e Matches consolidando candidato, vaga e empresa.
 
 ---
 
@@ -51,6 +53,8 @@ O objetivo do projeto é construir uma plataforma de recrutamento capaz de:
 - associar Skills aos candidatos;
 - associar Skills às vagas;
 - associar vagas às empresas;
+- estruturar o armazenamento relacional via scripts SQL (`database.sql`);
+- executar consultas especializadas de matches e compatibilidade (`queries.sql`);
 - disponibilizar serviços para consulta dos dados;
 - disponibilizar uma interface de terminal;
 - disponibilizar uma interface web;
@@ -59,11 +63,11 @@ O objetivo do projeto é construir uma plataforma de recrutamento capaz de:
 - permitir cadastro e gerenciamento de vagas;
 - permitir a visualização anônima dos candidatos;
 - permitir a visualização das vagas;
-- calcular o índice de afinidade entre candidato e vaga;
+- calcular o índice de afinidade percentual entre candidato e vaga;
 - permitir curtidas de candidatos em vagas;
 - permitir curtidas de empresas em candidatos;
 - identificar curtidas mútuas;
-- criar e listar Matches;
+- criar e listar Matches com o vínculo completo entre candidato, vaga e empresa;
 - liberar os dados completos após o Match;
 - validar a integridade dos dados carregados;
 - manter uma arquitetura preparada para futuras evoluções.
@@ -71,6 +75,12 @@ O objetivo do projeto é construir uma plataforma de recrutamento capaz de:
 ---
 
 # 🛠️ Tecnologias utilizadas
+
+## Banco de Dados
+
+- **PostgreSQL / SQL ANSI**
+- Scripts DDL/DML (`database.sql`)
+- Consultas relacionais e relatórios (`queries.sql`)
 
 ## Backend
 
@@ -96,10 +106,14 @@ O frontend foi desenvolvido separadamente utilizando TypeScript, com organizaç�
 
 # 🏗️ Arquitetura
 
-O projeto está dividido em duas partes principais:
+O projeto está dividido em três partes principais:
 
 ```text
 Linketinder
+│
+├── database
+│   ├── database.sql
+│   └── queries.sql
 │
 ├── Backend
 │   └── Groovy
@@ -124,98 +138,133 @@ A intenção é evitar concentrar toda a lógica em um único arquivo, mantendo 
 
 # 📁 Estrutura do projeto
 
-## Backend
+## Estrutura Geral e Banco de Dados
 
 ```text
-src/
-└── main/
-    └── groovy/
-        └── com/
-            └── linketinder/
-                ├── Main.groovy
-                │
-                ├── data/
-                │   └── DataInicializador.groovy
-                │
-                ├── model/
-                │   ├── Pessoa.groovy
-                │   ├── Candidato.groovy
-                │   ├── Empresa.groovy
-                │   ├── Informacoes.groovy
-                │   ├── Skill.groovy
-                │   ├── Vaga.groovy
-                │   ├── Curtida.groovy
-                │   ├── Match.groovy
-                │   ├── TipoCurtida.groovy
-                │   ├── CandidatoAnonimo.groovy
-                │   └── EmpresaAnonima.groovy
-                │
-                ├── service/
-                │   ├── CandidatoService.groovy
-                │   ├── EmpresaService.groovy
-                │   ├── CurtidaService.groovy
-                │   └── MatchService.groovy
-                │
-                └── ui/
-                    └── Menu.groovy
-```
-
-## Frontend
-
-A estrutura atual do frontend TypeScript é organizada da seguinte forma:
-
-```text
-frontend/
-├── index.html
-├── package.json
-├── package-lock.json
-├── tsconfig.json
-├── public/
+linketinder/
 │
-└── src/
-    ├── components/
-    │   ├── candidatos/
-    │   │   ├── renderizarCardsCandidatos.ts
-    │   │   ├── renderizarPerfilCandidato.ts
-    │   │   └── renderizarFormularioCandidato.ts
-    │   │
-    │   ├── empresas/
-    │   │   ├── renderizarPerfilEmpresa.ts
-    │   │   ├── renderizarGraficoSkills.ts
-    │   │   └── renderizarFormularioEmpresa.ts
-    │   │
-    │   ├── vagas/
-    │   │   ├── renderizarCardsVagas.ts
-    │   │   ├── renderizarCardsVagasEmpresa.ts
-    │   │   └── renderizarFormularioVaga.ts
-    │   │
-    │   └── layout/
-    │       ├── renderizarSidebar.ts
-    │       └── renderizarTela.ts
+├── database/
+│   ├── database.sql
+│   └── queries.sql
+│
+├── src/
+│   └── main/
+│       └── groovy/
+│           └── com/
+│               └── linketinder/
+│                   ├── Main.groovy
+│                   │
+│                   ├── data/
+│                   │   └── DataInicializador.groovy
+│                   │
+│                   ├── model/
+│                   │   ├── Pessoa.groovy
+│                   │   ├── Candidato.groovy
+│                   │   ├── Empresa.groovy
+│                   │   ├── Informacoes.groovy
+│                   │   ├── Skill.groovy
+│                   │   ├── Vaga.groovy
+│                   │   ├── Curtida.groovy
+│                   │   ├── Match.groovy
+│                   │   ├── TipoCurtida.groovy
+│                   │   ├── CandidatoAnonimo.groovy
+│                   │   └── EmpresaAnonima.groovy
+│                   │
+│                   ├── service/
+│                   │   ├── CandidatoService.groovy
+│                   │   ├── EmpresaService.groovy
+│                   │   ├── CurtidaService.groovy
+│                   │   └── MatchService.groovy
+│                   │
+│                   └── ui/
+│                       └── Menu.groovy
+│
+└── frontend/
+    ├── index.html
+    ├── package.json
+    ├── package-lock.json
+    ├── tsconfig.json
+    ├── public/
     │
-    ├── data/
-    │   └── dados.ts
-    │
-    ├── models/
-    │   ├── Candidato.ts
-    │   ├── Empresa.ts
-    │   └── Vaga.ts
-    │
-    ├── services/
-    │   ├── candidatoService.ts
-    │   ├── empresaService.ts
-    │   ├── edicaoCandidatoService.ts
-    │   ├── edicaoEmpresaService.ts
-    │   ├── edicaoVagaService.ts
-    │   ├── idService.ts
-    │   ├── navegacaoService.ts
-    │   ├── skillService.ts
-    │   ├── storage.ts
-    │   ├── vagaService.ts
-    │   └── afinidadeService.ts
-    │
-    └── main.ts
+    └── src/
+        ├── components/
+        │   ├── candidatos/
+        │   │   ├── renderizarCardsCandidatos.ts
+        │   │   ├── renderizarPerfilCandidato.ts
+        │   │   └── renderizarFormularioCandidato.ts
+        │   │
+        │   ├── empresas/
+        │   │   ├── renderizarPerfilEmpresa.ts
+        │   │   ├── renderizarGraficoSkills.ts
+        │   │   └── renderizarFormularioEmpresa.ts
+        │   │
+        │   ├── vagas/
+        │   │   ├── renderizarCardsVagas.ts
+        │   │   ├── renderizarCardsVagasEmpresa.ts
+        │   │   └── renderizarFormularioVaga.ts
+        │   │
+        │   └── layout/
+        │       ├── renderizarSidebar.ts
+        │       └── renderizarTela.ts
+        │
+        ├── data/
+        │   └── dados.ts
+        │
+        ├── models/
+        │   ├── Candidato.ts
+        │   ├── Empresa.ts
+        │   └── Vaga.ts
+        │
+        ├── services/
+        │   ├── candidatoService.ts
+        │   ├── empresaService.ts
+        │   ├── edicaoCandidatoService.ts
+        │   ├── edicaoEmpresaService.ts
+        │   ├── edicaoVagaService.ts
+        │   ├── idService.ts
+        │   ├── navegacaoService.ts
+        │   ├── skillService.ts
+        │   ├── storage.ts
+        │   ├── vagaService.ts
+        │   └── afinidadeService.ts
+        │
+        └── main.ts
 ```
+
+---
+
+# 🗄️ Camada de Banco de Dados
+
+A pasta `database/` reúne os ficheiros de definição de esquema e consultas SQL:
+
+- **`database.sql`**: Script DDL com a criação de tabelas para candidatos, empresas, vagas, competências e relacionamentos (curtidas e matches), contendo chaves primárias, estrangeiras e constraints de integridade.
+- **`queries.sql`**: Script DML com consultas para relatórios, agregações de competências mais procuradas e listagem de correspondências confirmadas entre candidatos, vagas e empresas.
+
+### Consulta e Consolidação de Matches
+
+Exemplo de consulta executada em `queries.sql` para recuperar as correspondências estabelecidas:
+
+```sql
+SELECT 
+    c.nome AS candidato,
+    v.titulo AS vaga,
+    e.nome AS empresa
+FROM matches m
+INNER JOIN candidatos c ON m.candidato_id = c.id
+INNER JOIN vagas v ON m.vaga_id = v.id
+INNER JOIN empresas e ON v.empresa_id = e.id;
+```
+
+#### Resultado das correspondências:
+
+| candidato | vaga | empresa |
+| :--- | :--- | :--- |
+| Carlos | Desenvolvedor Java | Pastelsoft |
+| João | Desenvolvedor Backend | TechBrasil |
+| João | Desenvolvedor Java | Pastelsoft |
+| Maria | Desenvolvedor Full Stack | CodeMais |
+| Maria | Desenvolvedor Frontend | SanduTech |
+| Pedro | Desenvolvedor C# | DevHouse |
 
 ---
 
@@ -296,7 +345,7 @@ A concentração dessas informações permite maior controle sobre quais dados p
 
 Representa uma competência que pode ser associada a candidatos e vagas.
 
-Skills utilizadas inicialmente:
+Skills utilizadas:
 
 ```text
 Java
@@ -305,6 +354,8 @@ Python
 Spring Framework
 Angular
 JavaScript
+C#
+SQL
 ```
 
 ---
@@ -331,12 +382,10 @@ A classe `DataInicializador` é responsável pelo carregamento dos dados iniciai
 
 Atualmente são criados:
 
-- **6 Skills**
+- **Skills no domínio**
 - **5 candidatos**
 - **5 empresas**
-- **5 vagas**
-
-Cada empresa possui inicialmente uma vaga.
+- **Vagas associadas**
 
 As principais relações do modelo são:
 
@@ -418,9 +467,7 @@ Um Match é criado quando:
 2. a empresa curtiu o candidato;
 3. ainda não existe um Match entre aquele candidato e aquela empresa.
 
-O Match é estabelecido entre **candidato e empresa**, e não diretamente entre candidato e vaga.
-
-Isso permite que uma empresa possua várias vagas e que, após o Match, candidato e empresa possam discutir qual oportunidade faz mais sentido.
+O Match conecta o **candidato, a vaga de interesse e a empresa contratante**, permitindo identificar com precisão a oportunidade correspondida.
 
 ---
 
@@ -516,118 +563,87 @@ Isso permite que:
 
 # 📊 Índice de afinidade entre candidato e vaga
 
-Foi adicionada ao frontend uma nova funcionalidade do desafio: o **índice de afinidade** entre o candidato e a vaga.
+O **Índice de Afinidade** é uma métrica percentual de compatibilidade que mensura o quanto o perfil técnico de um candidato atende aos requisitos exigidos por uma determinada vaga. 
 
-O índice é exibido diretamente no **card da vaga apresentado ao candidato**.
+Na arquitetura da plataforma, a empresa cadastra vagas com competências obrigatórias/desejáveis, e o candidato registra suas próprias competências. Portanto, a comparação ocorre na relação direta:
 
-A empresa não possui um campo de Skills no frontend. As Skills pertencem à vaga.
+$$\text{Candidato} \longleftrightarrow \text{Vaga}$$
 
-A relação utilizada é:
-
-```text
-Candidato
-├── skills
-│   ├── Java
-│   ├── SQL
-│   └── Git
-│
-└──────────────┐
-               │ comparação
-               ▼
-             Vaga
-             ├── skills
-             │   ├── Java
-             │   ├── SQL
-             │   └── Docker
-             │
-             └── empresaId → Empresa
-```
-
-Dessa forma, o cálculo é realizado entre:
+A empresa atua como provedora da vaga através do `empresaId`, mantendo a neutralidade do anonimato pré-match.
 
 ```text
-Candidato ↔ Vaga
+Candidato (Perfil Ativo)
+ └── Skills: [Java, SQL, Git]
+         │
+         │ (Interseção das coleções)
+         ▼
+       Vaga (Anúncio)
+        ├── Skills Requeridas: [Java, SQL, Docker, React]
+        └── empresaId ──► Empresa (oculta)
 ```
 
-e não:
+---
 
-```text
-Candidato ↔ Empresa
-```
+## 📐 Formulação Matemática
 
-A empresa é responsável pela vaga através do `empresaId`, mas suas próprias informações não são utilizadas como uma lista de Skills.
+O cálculo baseia-se na cardinalidade da interseção entre o conjunto de competências do candidato ($S_{\text{candidato}}$) e o conjunto de competências requeridas pela vaga ($S_{\text{vaga}}$), ponderada pelo total de competências exigidas pela vaga:
 
-## Regra de cálculo
+$$\text{Afinidade (\%)} = \left( \frac{|S_{\text{candidato}} \cap S_{\text{vaga}}|}{|S_{\text{vaga}}|} \right) \times 100$$
 
-A afinidade considera quantas Skills da vaga também estão presentes no candidato.
+Onde:
+- $|S_{\text{candidato}} \cap S_{\text{vaga}}|$ representa a quantidade de competências em comum dominadas pelo candidato e demandadas pela vaga;
+- $|S_{\text{vaga}}|$ representa o total de competências exigidas pela vaga anunciada.
 
-A fórmula utilizada é:
+---
 
-```text
-afinidade = (quantidade de Skills em comum / quantidade de Skills da vaga) × 100
-```
+## ⚙️ Regras de Negócio e Casos de Contorno (Edge Cases)
 
-### Exemplo
+1. **Vaga sem Skills cadastradas ($|S_{\text{vaga}}| = 0$):**
+   - Retorna impreterivelmente `0%`, prevenindo divisões por zero ou exceções em tempo de execução.
+2. **Candidato sem Skills cadastradas ($|S_{\text{candidato}}| = 0$):**
+   - Retorna `0%`, indicando ausência de compatibilidade técnica aferível.
+3. **Competências Excedentes do Candidato:**
+   - Habilidades que o candidato possui mas que a vaga não demanda (ex.: candidato domina *Git*, mas a vaga não exige) **não** aumentam a afinidade além de 100% e não alteram o denominador da vaga. O teto máximo é estritamente `100%`.
+4. **Normalização de Dados:**
+   - Antes de realizar o `Set intersection`, os termos são normalizados via `.map(s => s.trim().toLowerCase())`. Dessa forma, variações como `"Java "`, `"java"` e `"JAVA"` são reconhecidas como a mesma competência.
 
-Candidato:
+---
 
-```text
-Java
-SQL
-Git
-```
+## 💡 Exemplos Práticos de Cálculo
 
-Vaga:
+### Cenário 1: Compatibilidade Parcial (50%)
+- **Candidato:** `['Java', 'SQL', 'Git']`
+- **Vaga:** `['Java', 'SQL', 'Docker', 'React']`
+- **Skills em Comum ($S_{\text{candidato}} \cap S_{\text{vaga}}$):** `['Java', 'SQL']` (Total = 2)
+- **Total da Vaga ($|S_{\text{vaga}}|$):** 4
+- **Cálculo:**
+  $$\text{Afinidade} = \left(\frac{2}{4}\right) \times 100 = 50\%$$
 
-```text
-Java
-SQL
-Docker
-React
-```
+### Cenário 2: Compatibilidade Total com Excedente (100%)
+- **Candidato:** `['Java', 'Spring Framework', 'Docker', 'AWS', 'PostgreSQL']`
+- **Vaga:** `['Java', 'Spring Framework', 'Docker']`
+- **Skills em Comum:** `['Java', 'Spring Framework', 'Docker']` (Total = 3)
+- **Total da Vaga:** 3
+- **Cálculo:**
+  $$\text{Afinidade} = \left(\frac{3}{3}\right) \times 100 = 100\%$$
 
-Skills em comum:
+---
 
-```text
-Java
-SQL
-```
+## 🛠️ Implementação Modular no Frontend
 
-Cálculo:
+A lógica de afinidade é isolada e desacoplada da camada visual:
 
-```text
-2 / 4 × 100 = 50%
-```
-
-O card da vaga apresenta:
-
-```text
-Afinidade: 50%
-```
-
-A comparação normaliza as Skills para evitar diferenças de maiúsculas/minúsculas e espaços.
-
-Vagas sem Skills retornam `0%`, evitando divisão por zero.
-
-## Implementação
-
-A regra de negócio foi isolada no serviço:
-
-```text
-src/services/afinidadeService.ts
-```
-
-O serviço recebe o candidato e a vaga, identifica as Skills em comum e retorna o percentual de afinidade.
-
-A renderização do percentual é realizada no componente responsável pelos cards de vagas:
-
-```text
-src/components/vagas/renderizarCardsVagas.ts
-```
-
-A lista de vagas é renderizada considerando o candidato atualmente selecionado.
-
-O requisito obrigatório do desafio, de adicionar um campo de índice de afinidade ao anúncio de cada vaga, está implementado.
+- **Serviço de Regra de Negócio (`src/services/afinidadeService.ts`):**  
+  Recebe as entidades `Candidato` e `Vaga`, extrai as listas de competências, aplica a normalização e executa a fórmula matemática retornando o valor numérico inteiro/arredondado.
+- **Renderizador de Interface (`src/components/vagas/renderizarCardsVagas.ts`):**  
+  Identifica o candidato autenticado/selecionado na sessão, aciona o `afinidadeService` para cada vaga iterada na listagem e injeta no DOM o selo informativo (badge) de afinidade:
+  ```text
+  ┌────────────────────────────────────────────────────────┐
+  │ [Pastelsoft] Desenvolvedor Java                        │
+  │ Afinidade: 50% ★                                       │
+  │ Requisitos: Java, SQL, Docker, React                   │
+  └────────────────────────────────────────────────────────┘
+  ```
 
 ---
 
@@ -666,7 +682,7 @@ services/
 
 A aplicação carrega os dados salvos quando disponíveis e utiliza os dados iniciais como base quando ainda não existem registros no `localStorage`.
 
-Essa abordagem permite testar o MVP sem a necessidade de uma API ou banco de dados para o funcionamento da interface.
+Essa abordagem permite testar o MVP sem a dependência imediata de uma API ativa para o funcionamento visual da interface.
 
 Os principais conjuntos de dados persistidos são:
 
@@ -702,7 +718,7 @@ O heartbeat atualiza periodicamente o timestamp do registro em edição.
 
 Caso a aba seja fechada ou o bloqueio deixe de ser renovado, ele poderá expirar automaticamente.
 
-Esse mecanismo foi testado para garantir que:
+Esse mecanismo garante que:
 
 - o mesmo registro não seja editado simultaneamente;
 - registros diferentes possam ser editados ao mesmo tempo;
@@ -719,8 +735,6 @@ Quando uma empresa é excluída no frontend, suas vagas também são excluídas.
 Fluxo:
 
 ```text
-Excluir empresa
-       ↓
 Excluir empresa
        ↓
 Localizar vagas pelo empresaId
@@ -805,9 +819,7 @@ Vaga
 └── Skills
 ```
 
-O nome e os dados de identificação e contato da empresa permanecem ocultos.
-
-No frontend atual, o índice de afinidade é calculado sem necessidade de expor a identidade da empresa ao candidato.
+O nome e os dados de identificação e contato da empresa permanecem ocultos até o estabelecimento do match mútuo.
 
 ---
 
@@ -868,7 +880,7 @@ Candidato
     ▼
  Candidato
     ↓
-  MATCH
+  MATCH (Candidato ↔ Vaga ↔ Empresa)
 ```
 
 Quando o `MatchService` identifica as duas curtidas:
@@ -879,27 +891,21 @@ Quando o `MatchService` identifica as duas curtidas:
 4. cria o Match caso ainda não exista;
 5. armazena o Match para consulta posterior.
 
-### Regra importante
-
-O Match é estabelecido entre:
-
-```text
-Candidato ↔ Empresa
-```
-
-e não entre:
-
-```text
-Candidato ↔ Vaga
-```
-
-A vaga é utilizada para registrar o interesse inicial do candidato e identificar a empresa relacionada.
-
-Isso permite que uma empresa possua várias vagas.
-
 ---
 
 # ▶️ Como executar
+
+## Banco de Dados
+
+1. Conecte-se ao seu SGBD relacional (PostgreSQL).
+2. Execute o script de estrutura e dados iniciais:
+   ```bash
+   psql -U postgres -d linketinder -f database/database.sql
+   ```
+3. Execute o script de consultas para validar os matches e afinidades:
+   ```bash
+   psql -U postgres -d linketinder -f database/queries.sql
+   ```
 
 ## Backend
 
@@ -907,7 +913,7 @@ Isso permite que uma empresa possua várias vagas.
 
 Para executar o backend, é necessário possuir:
 
-- Java instalado;
+- Java JDK instalado;
 - Groovy;
 - Gradle ou Gradle Wrapper;
 - IntelliJ IDEA ou outra IDE compatível.
@@ -958,9 +964,11 @@ Para verificar se o TypeScript está compilando corretamente:
 npx tsc --noEmit
 ```
 
-Para executar o frontend em desenvolvimento, utilize o servidor configurado no projeto.
+Para executar o frontend em desenvolvimento:
 
-A interface pode então ser acessada pelo navegador.
+```bash
+npm run dev
+```
 
 ---
 
@@ -968,13 +976,18 @@ A interface pode então ser acessada pelo navegador.
 
 O projeto foi testado em diferentes níveis.
 
+## Banco de Dados
+
+Foram validados:
+- integridade referencial das chaves primárias e estrangeiras;
+- inserção de dados de candidatos, empresas, vagas e competências;
+- consultas de correspondência cruzando candidatos, vagas e empresas com `INNER JOIN`.
+
 ## Backend
 
 Foram realizados testes envolvendo:
 
-- carregamento dos cinco candidatos;
-- carregamento das cinco empresas;
-- carregamento das cinco vagas;
+- carregamento dos candidatos, empresas e vagas iniciais;
 - busca de candidato por nome;
 - tratamento de candidato não encontrado através de `Optional`;
 - listagem anônima de candidatos;
@@ -992,30 +1005,19 @@ Foram realizados testes envolvendo:
 
 Foram testados:
 
-- cadastro de candidato;
-- edição de candidato;
-- exclusão de candidato;
-- cadastro de empresa;
-- edição de empresa;
-- exclusão de empresa;
-- cadastro de vaga;
-- edição de vaga;
-- exclusão de vaga;
-- cancelamento de cadastro;
-- cancelamento de edição;
-- visualização de perfis;
-- visualização de vagas;
+- cadastro, edição e exclusão de candidato;
+- cadastro, edição e exclusão de empresa;
+- cadastro, edição e exclusão de vaga;
+- cancelamento de ações de formulário;
+- visualização de perfis e detalhes de vagas;
 - visualização anônima de candidatos;
 - visualização das vagas da empresa;
 - persistência através de `localStorage`;
-- gráfico de Skills;
-- cálculo de afinidade;
-- exibição da afinidade no card de cada vaga;
-- bloqueio de edição entre abas;
-- heartbeat dos bloqueios;
-- expiração dos bloqueios;
+- gráfico de Skills com Chart.js;
+- cálculo de afinidade e exibição no card de cada vaga;
+- bloqueio de edição entre abas, heartbeat e expiração de bloqueios;
 - exclusão em cascata das vagas ao excluir uma empresa;
-- possibilidade de editar registros diferentes simultaneamente.
+- edição simultânea de registros diferentes.
 
 ---
 
@@ -1023,6 +1025,7 @@ Foram testados:
 
 | Funcionalidade | Status |
 |---|---|
+| Estrutura de banco de dados (`database.sql`, `queries.sql`) | ✅ Implementado |
 | Modelagem de candidatos | ✅ Implementado |
 | Modelagem de empresas | ✅ Implementado |
 | Modelagem de Skills | ✅ Implementado |
@@ -1033,9 +1036,7 @@ Foram testados:
 | País da empresa | ✅ Implementado |
 | Estado | ✅ Implementado |
 | DataInicializador | ✅ Implementado |
-| 5 candidatos pré-cadastrados | ✅ Implementado |
-| 5 empresas pré-cadastradas | ✅ Implementado |
-| 5 vagas pré-cadastradas | ✅ Implementado |
+| Dados iniciais pré-cadastrados | ✅ Implementado |
 | CandidatoService | ✅ Implementado |
 | EmpresaService | ✅ Implementado |
 | CurtidaService | ✅ Implementado |
@@ -1046,62 +1047,47 @@ Foram testados:
 | Listagem de empresas | ✅ Implementado |
 | Validação do MVP | ✅ Implementado |
 | Frontend TypeScript | ✅ Implementado |
-| Cadastro de candidatos | ✅ Implementado |
-| Edição de candidatos | ✅ Implementado |
-| Exclusão de candidatos | ✅ Implementado |
-| Cadastro de empresas | ✅ Implementado |
-| Edição de empresas | ✅ Implementado |
-| Exclusão de empresas | ✅ Implementado |
-| Cadastro de vagas | ✅ Implementado |
-| Edição de vagas | ✅ Implementado |
-| Exclusão de vagas | ✅ Implementado |
+| Cadastro, edição e exclusão de candidatos | ✅ Implementado |
+| Cadastro, edição e exclusão de empresas | ✅ Implementado |
+| Cadastro, edição e exclusão de vagas | ✅ Implementado |
 | Cancelamento de cadastro/edição | ✅ Implementado |
 | Persistência com LocalStorage | ✅ Implementado |
 | Controle de edição entre abas | ✅ Implementado |
-| Heartbeat dos bloqueios | ✅ Implementado |
-| Expiração dos bloqueios | ✅ Implementado |
+| Heartbeat e expiração dos bloqueios | ✅ Implementado |
 | Exclusão em cascata das vagas | ✅ Implementado |
-| Visualização anônima de candidatos | ✅ Implementado |
+| Visualização anônima de candidatos e empresas | ✅ Implementado |
 | Visualização das vagas | ✅ Implementado |
 | Gráfico de Skills | ✅ Implementado |
 | Índice de afinidade candidato/vaga | ✅ Implementado |
 | Exibição da afinidade no card da vaga | ✅ Implementado |
-| Sistema de Likes | ✅ Implementado |
-| Match | ✅ Implementado |
+| Sistema de Likes e Matches | ✅ Implementado |
+| Tabela de Matches (candidato ↔ vaga ↔ empresa) | ✅ Implementado |
 
 ---
 
 # 🧠 Conceitos aplicados
 
-O projeto tem como objetivo principal praticar conceitos de **Programação Orientada a Objetos**, **Estruturas de Dados**, organização de responsabilidades e desenvolvimento frontend.
+O projeto tem como objetivo principal praticar conceitos de **Programação Orientada a Objetos**, **Estruturas de Dados**, modelagem de dados relacionais e desenvolvimento frontend.
 
 Entre os conceitos utilizados estão:
 
-- Classes;
-- Objetos;
-- Herança;
-- Composição;
+- Classes e Objetos;
+- Herança e Composição;
 - Encapsulamento;
+- Modelagem Relacional (DDL/DML);
+- Junções SQL (`INNER JOIN`);
 - Interfaces TypeScript;
 - Tipagem estática;
-- Listas;
-- Arrays;
-- Relacionamento entre objetos;
-- Métodos;
-- Construtores;
+- Listas e Coleções;
+- Métodos e Construtores;
 - `Optional`;
 - Closures;
-- Busca em coleções;
-- Separação de responsabilidades;
-- Organização em camadas;
-- Services;
-- Components;
-- Manipulação do DOM;
-- Eventos;
-- LocalStorage;
-- Controle de estado;
-- Controle de edição entre abas;
-- Cálculo de métricas.
+- Separação de responsabilidades e camadas;
+- Services e Components;
+- Manipulação da API DOM;
+- Persistência e sincronização local;
+- Controle de concorrência entre abas;
+- Cálculo de métricas e afinidade.
 
 ---
 
@@ -1120,9 +1106,7 @@ Candidato
 
 ## Empresa independente
 
-`Empresa` não herda de `Pessoa`.
-
-Essa decisão foi tomada porque candidato e empresa representam entidades diferentes e possuem identificadores próprios:
+`Empresa` não herda de `Pessoa`. Essa decisão foi tomada porque candidato e empresa representam entidades diferentes e possuem identificadores próprios:
 
 ```text
 Candidato → CPF
@@ -1141,7 +1125,7 @@ Informacoes
 └── whatsapp
 ```
 
-Essa organização facilita o controle futuro sobre quais informações serão disponibilizadas durante a experiência anônima.
+Essa organização facilita o controle sobre quais informações serão disponibilizadas durante a experiência anônima.
 
 ## Vaga pertence à Empresa
 
@@ -1152,11 +1136,11 @@ Empresa
 └── List<Vaga>
 ```
 
-No MVP inicial, cada empresa possui uma vaga, mas o modelo permite que uma empresa possua várias vagas.
+O modelo permite que uma empresa possua várias vagas simultâneas.
 
 ## Skills compartilhadas no domínio
 
-No backend, as Skills são carregadas pelo `DataInicializador` e associadas tanto aos candidatos quanto às vagas.
+No backend, as Skills são associadas tanto aos candidatos quanto às vagas.
 
 ```text
 Skill
@@ -1171,83 +1155,29 @@ Isso permite comparar as competências dos candidatos com as competências exigi
 
 ## Afinidade no frontend
 
-No frontend, a empresa não possui uma coleção de Skills.
-
-A regra é mantida na relação:
-
-```text
-Candidato
-    │
-    │ skills
-    ▼
-   Vaga
-    │
-    └── empresaId → Empresa
-```
-
-Assim, o índice de afinidade representa a compatibilidade entre as Skills do candidato e as Skills exigidas pela vaga.
-
-## Separação do frontend
-
-O frontend foi organizado para evitar que toda a lógica fique concentrada no `main.ts`.
-
-A responsabilidade foi distribuída entre:
-
-```text
-models/
-    ↓
-services/
-    ↓
-components/
-    ↓
-main.ts
-```
-
-Os `models` representam os dados, os `services` concentram regras e operações, os `components` cuidam da renderização e o `main.ts` coordena os eventos e a navegação.
+No frontend, as competências pertencem à vaga e são confrontadas com as competências do candidato para calcular a compatibilidade percentual.
 
 ---
 
 # 🚀 Evolução planejada
 
-O MVP atual representa uma primeira etapa do Linketinder.
-
-A arquitetura permite evoluções futuras como:
+A arquitetura estabelecida permite evoluções futuras como:
 
 ## 1. Integração entre frontend e backend
 
-Substituir gradualmente a persistência local por uma API, permitindo que o frontend TypeScript consuma os serviços do backend.
+Consumo direto dos endpoints ou serviços em substituição à manipulação exclusiva em `localStorage`.
 
-## 2. Persistência em banco de dados
+## 2. Persistência permanente conectada
 
-Substituir os dados em memória por uma camada de persistência permanente.
+Integração dos serviços backend diretamente com o PostgreSQL através dos scripts da pasta `database/`.
 
-## 3. Autenticação
+## 3. Autenticação e autorização
 
-Adicionar autenticação para candidatos e empresas.
+Mecanismos de login para restringir acessos e painéis por tipo de usuário (candidato ou empresa).
 
-## 4. Controle de acesso
+## 4. Filtro por Skills e comunicação pós-match
 
-Restringir funcionalidades de acordo com o tipo de usuário autenticado.
-
-## 5. Filtro por Skills
-
-Permitir que candidatos filtrem vagas e que empresas filtrem candidatos de acordo com competências.
-
-## 6. Evolução do Match
-
-Expandir a experiência de Match e permitir comunicação entre as partes após o interesse mútuo.
-
-## 7. Novos recursos de recrutamento
-
-Adicionar funcionalidades relacionadas a:
-
-- filtros;
-- gerenciamento de vagas;
-- candidaturas;
-- notificações;
-- comunicação;
-- histórico de Matches;
-- recomendações baseadas em Skills.
+Ferramentas avançadas de busca e módulo de chat/contato direto desbloqueado após o match.
 
 ---
 
@@ -1296,71 +1226,11 @@ O projeto foi desenvolvido considerando os requisitos apresentados no desafio.
 - [x] Cadastro de novas empresas;
 - [x] Cadastro de novas vagas.
 
-## Requisito opcional de afinidade
-
-O desafio também apresenta como requisito opcional a exibição do índice de afinidade entre candidato e empresa na lista de candidatos do perfil de empresa.
-
-Essa funcionalidade não foi necessária para o requisito obrigatório implementado nesta etapa.
-
----
-
-# 📌 Status
-
-## MVP funcional
-
-O Linketinder possui atualmente:
-
-- estrutura de domínio;
-- candidatos;
-- empresas;
-- vagas;
-- Skills;
-- informações de contato;
-- carregamento dos dados;
-- serviços;
-- interface de terminal;
-- interface web;
-- cadastro;
-- edição;
-- exclusão;
-- persistência local;
-- anonimização nas listagens;
-- controle de edição entre abas;
-- sistema de curtidas;
-- verificação de curtidas mútuas;
-- criação de Matches;
-- listagem de Matches;
-- liberação das informações completas após o Match;
-- gráfico de Skills;
-- índice de afinidade entre candidato e vaga;
-- validações;
-- organização modular do frontend.
-
-A evolução planejada do projeto segue a ideia:
-
-```text
-Skills
-   ↓
-Afinidade
-   ↓
-Filtros
-   ↓
-Anonimato
-   ↓
-Likes
-   ↓
-Match
-   ↓
-Comunicação
-```
-
-O objetivo é transformar gradualmente o MVP em um sistema de recrutamento inspirado no conceito do LinkedIn e na mecânica de interação do Tinder.
-
 ---
 
 # 👨‍💻 Autor
 
-**Nelson Lima da Costa Júnior**
+**Nelson Lima da Costa Junior**
 
 Projeto desenvolvido durante o **Acelera ZG / ZG-HERO 2026**.
 
