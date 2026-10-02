@@ -1,29 +1,59 @@
-import com.linketinder.data.DataInicializador
+import com.linketinder.dao.CandidatoCompetenciaDAO
+import com.linketinder.dao.CandidatoDAO
+import com.linketinder.dao.EmpresaDAO
+import com.linketinder.dao.VagaCompetenciaDAO
+import com.linketinder.dao.VagaDAO
 import com.linketinder.service.CandidatoService
-import com.linketinder.service.EmpresaService
 import com.linketinder.service.CurtidaService
+import com.linketinder.service.EmpresaService
 import com.linketinder.service.MatchService
 import com.linketinder.ui.Menu
 
-// Inicializador
-def inicializador = new DataInicializador()
+
+// DAOs
+CandidatoDAO candidatoDAO = new CandidatoDAO()
+
+CandidatoCompetenciaDAO candidatoCompetenciaDAO =
+        new CandidatoCompetenciaDAO()
+
+EmpresaDAO empresaDAO = new EmpresaDAO()
+
+VagaDAO vagaDAO = new VagaDAO()
+
+VagaCompetenciaDAO vagaCompetenciaDAO =
+        new VagaCompetenciaDAO()
+
 
 // Services
-def candidatoService = new CandidatoService(inicializador)
-def empresaService = new EmpresaService(inicializador)
+CandidatoService candidatoService =
+        new CandidatoService(
+                candidatoDAO,
+                candidatoCompetenciaDAO
+        )
 
-def matchService = new MatchService()
+EmpresaService empresaService =
+        new EmpresaService(
+                empresaDAO,
+                vagaDAO,
+                vagaCompetenciaDAO
+        )
 
-def curtidaService = new CurtidaService(
-        empresaService,
-        matchService
-)
+MatchService matchService =
+        new MatchService()
+
+CurtidaService curtidaService =
+        new CurtidaService(
+                empresaService,
+                matchService
+        )
+
 
 // Menu
-def menu = new Menu(
+Menu menu = new Menu(
         candidatoService,
         empresaService,
         curtidaService,
         matchService
 )
+
 menu.iniciarPrograma()

@@ -1,40 +1,72 @@
 package com.linketinder.service
 
+import com.linketinder.dao.CandidatoCompetenciaDAO
+import com.linketinder.dao.CandidatoDAO
 import com.linketinder.model.Candidato
 import com.linketinder.model.CandidatoAnonimo
-import com.linketinder.data.DataInicializador
 
 class CandidatoService {
 
-    private List<Candidato> candidatos
+    private CandidatoDAO candidatoDAO
+    private CandidatoCompetenciaDAO candidatoCompetenciaDAO
 
-    CandidatoService(DataInicializador inicializador) {
-        this.candidatos = inicializador.criarCandidatos()
+    CandidatoService(
+            CandidatoDAO candidatoDAO,
+            CandidatoCompetenciaDAO candidatoCompetenciaDAO
+    ) {
+        this.candidatoDAO = candidatoDAO
+        this.candidatoCompetenciaDAO = candidatoCompetenciaDAO
     }
 
     List<Candidato> listarTodosCandidatos() {
+
+        List<Candidato> candidatos = candidatoDAO.listarTodos()
+
+        candidatos.each { candidato ->
+            candidato.skills =
+                    candidatoCompetenciaDAO
+                            .listarCompetenciasDoCandidato(candidato.id)
+        }
+
         return candidatos
     }
 
-    void cadastrarCandidato(Candidato candidato){
-        candidatos.add(candidato)
+    void cadastrarCandidato(Candidato candidato) {
+
+        candidatoDAO.inserir(candidato)
+
+        candidato.skills.each { skill ->
+            candidatoCompetenciaDAO.adicionarCompetencia(
+                    candidato.id,
+                    skill.id
+            )
+        }
     }
 
-/*
-    #### Futura implementação ####
-    Optional<Candidato> buscarCandidatoPorNome(String nome) {
+    Candidato buscarPorId(Long id) {
 
-        def candidato = candidatos.find {
-            it.informacoes.nome.equalsIgnoreCase(nome)
+        Candidato candidato = candidatoDAO.buscarPorId(id)
+
+        if (candidato != null) {
+            candidato.skills =
+                    candidatoCompetenciaDAO
+                            .listarCompetenciasDoCandidato(candidato.id)
         }
 
-        return Optional.ofNullable(candidato)
+        return candidato
     }
 
-    #### Futura implementação ####
- */
+    void atualizarCandidato(Candidato candidato) {
+        candidatoDAO.atualizar(candidato)
+    }
+
+    void excluirCandidato(Long id) {
+        candidatoDAO.excluir(id)
+    }
 
     List<CandidatoAnonimo> listarCandidatosAnonimos() {
+
+        List<Candidato> candidatos = listarTodosCandidatos()
 
         return candidatos.collect { candidato ->
 

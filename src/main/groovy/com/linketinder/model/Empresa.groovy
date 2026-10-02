@@ -6,6 +6,7 @@ class Empresa {
     String pais
     String estado
     String descricaoEmpresarial
+    String senha
     Informacoes informacoes
     List<Vaga> vagas = []
 }

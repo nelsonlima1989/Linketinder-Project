@@ -2,7 +2,7 @@
 
 Sistema de contratação de profissionais inspirado na combinação das principais ideias do **LinkedIn** e do **Tinder**.
 
-O projeto foi desenvolvido como um **MVP (Minimum Viable Product)** para o desafio **ZG-HERO / Acelera ZG**, utilizando **Groovy** no backend, **PostgreSQL/SQL** na camada de persistência relacional e uma interface web em **TypeScript**, com foco na aplicação prática de conceitos de **Programação Orientada a Objetos (POO)**, **Modelagem de Dados Relacional**, **Estruturas de Dados**, organização em camadas e desenvolvimento de uma interface funcional.
+O projeto foi desenvolvido como um **MVP (Minimum Viable Product)** para o desafio **ZG-HERO / Acelera ZG**, utilizando **Groovy** no backend, **PostgreSQL** como banco de dados relacional, integração via **JDBC** e uma interface web em **TypeScript**. O projeto aplica conceitos de **Programação Orientada a Objetos (POO)**, **DAO**, **Modelagem de Dados Relacional**, **Estruturas de Dados**, organização em camadas e desenvolvimento de uma interface funcional.
 
 A proposta do Linketinder é aproximar **candidatos** e **empresas** com base em suas **Skills**, reduzindo a influência de popularidade e priorizando a compatibilidade entre as competências do candidato e as necessidades das vagas.
 
@@ -25,9 +25,12 @@ A proposta combina:
 O projeto atualmente possui:
 
 - domínio estruturado e modelagem relacional de dados;
-- scripts SQL para criação de schema e execução de consultas analíticas;
-- dados iniciais;
-- serviços;
+- integração do backend com PostgreSQL através de JDBC;
+- camada DAO responsável pelo acesso e persistência dos dados;
+- CRUD de candidatos, empresas, competências e vagas;
+- relacionamentos `Candidato N:N Competência`, `Vaga N:N Competência` e `Empresa 1:N Vaga`;
+- scripts SQL para criação do banco, carga de dados iniciais e consultas de validação;
+- serviços integrados à camada de persistência;
 - interface de terminal no backend;
 - interface web em TypeScript;
 - cadastro de candidatos, empresas e vagas;
@@ -40,7 +43,7 @@ O projeto atualmente possui:
 - sistema de Skills;
 - gráfico de Skills;
 - cálculo de afinidade entre candidato e vaga com regras formais de interseção;
-- sistema de curtidas e Matches consolidando candidato, vaga e empresa.
+- estrutura de banco preparada para curtidas; a integração JDBC das curtidas e a lógica de Match fazem parte da próxima evolução do backend.
 
 ---
 
@@ -53,8 +56,8 @@ O objetivo do projeto é construir uma plataforma de recrutamento capaz de:
 - associar Skills aos candidatos;
 - associar Skills às vagas;
 - associar vagas às empresas;
-- estruturar o armazenamento relacional via scripts SQL (`database.sql`);
-- executar consultas especializadas de matches e compatibilidade (`queries.sql`);
+- estruturar e popular o armazenamento relacional via `database.sql`;
+- executar consultas relacionais e de validação através de `queries.sql`;
 - disponibilizar serviços para consulta dos dados;
 - disponibilizar uma interface de terminal;
 - disponibilizar uma interface web;
@@ -64,11 +67,8 @@ O objetivo do projeto é construir uma plataforma de recrutamento capaz de:
 - permitir a visualização anônima dos candidatos;
 - permitir a visualização das vagas;
 - calcular o índice de afinidade percentual entre candidato e vaga;
-- permitir curtidas de candidatos em vagas;
-- permitir curtidas de empresas em candidatos;
-- identificar curtidas mútuas;
-- criar e listar Matches com o vínculo completo entre candidato, vaga e empresa;
-- liberar os dados completos após o Match;
+- manter a estrutura relacional necessária para curtidas entre candidatos, vagas e empresas;
+- evoluir a integração JDBC para a persistência de curtidas e detecção de Match em uma etapa posterior;
 - validar a integridade dos dados carregados;
 - manter uma arquitetura preparada para futuras evoluções.
 
@@ -86,6 +86,7 @@ O objetivo do projeto é construir uma plataforma de recrutamento capaz de:
 
 - **Groovy**
 - **Java**
+- **JDBC (Java Database Connectivity)**
 - **Gradle**
 - **IntelliJ IDEA**
 
@@ -120,7 +121,8 @@ Linketinder
 │       ├── Main
 │       ├── UI
 │       ├── Services
-│       ├── Data
+│       ├── DAO
+│       ├── Database
 │       └── Model
 │
 └── Frontend
@@ -131,6 +133,24 @@ Linketinder
         ├── Data
         └── Main
 ```
+
+No backend, o fluxo principal de acesso aos dados passou a seguir:
+
+```text
+Main
+  ↓
+Menu
+  ↓
+Service
+  ↓
+DAO
+  ↓
+JDBC
+  ↓
+PostgreSQL
+```
+
+A camada de interface não acessa o banco diretamente. Os `Services` concentram as operações da aplicação e utilizam os `DAOs` para executar os comandos SQL via JDBC.
 
 A intenção é evitar concentrar toda a lógica em um único arquivo, mantendo cada parte do sistema responsável por uma função específica.
 
@@ -154,8 +174,16 @@ linketinder/
 │               └── linketinder/
 │                   ├── Main.groovy
 │                   │
-│                   ├── data/
-│                   │   └── DataInicializador.groovy
+│                   ├── dao/
+│                   │   ├── CandidatoDAO.groovy
+│                   │   ├── CandidatoCompetenciaDAO.groovy
+│                   │   ├── CompetenciaDAO.groovy
+│                   │   ├── EmpresaDAO.groovy
+│                   │   ├── VagaDAO.groovy
+│                   │   └── VagaCompetenciaDAO.groovy
+│                   │
+│                   ├── database/
+│                   │   └── ConexaoDB.groovy
 │                   │
 │                   ├── model/
 │                   │   ├── Pessoa.groovy
@@ -235,36 +263,97 @@ linketinder/
 
 # 🗄️ Camada de Banco de Dados
 
-A pasta `database/` reúne os ficheiros de definição de esquema e consultas SQL:
+A pasta `database/` reúne os scripts SQL utilizados pelo projeto:
 
-- **`database.sql`**: Script DDL com a criação de tabelas para candidatos, empresas, vagas, competências e relacionamentos (curtidas e matches), contendo chaves primárias, estrangeiras e constraints de integridade.
-- **`queries.sql`**: Script DML com consultas para relatórios, agregações de competências mais procuradas e listagem de correspondências confirmadas entre candidatos, vagas e empresas.
+- **`database.sql`**: cria as tabelas, chaves primárias, chaves estrangeiras e constraints, além de inserir os dados iniciais necessários para executar o projeto;
+- **`queries.sql`**: reúne consultas SQL utilizadas para validar e explorar os relacionamentos do banco.
 
-### Consulta e Consolidação de Matches
+As tabelas principais integradas ao backend são:
 
-Exemplo de consulta executada em `queries.sql` para recuperar as correspondências estabelecidas:
-
-```sql
-SELECT 
-    c.nome AS candidato,
-    v.titulo AS vaga,
-    e.nome AS empresa
-FROM matches m
-INNER JOIN candidatos c ON m.candidato_id = c.id
-INNER JOIN vagas v ON m.vaga_id = v.id
-INNER JOIN empresas e ON v.empresa_id = e.id;
+```text
+candidatos
+empresas
+competencias
+vagas
 ```
 
-#### Resultado das correspondências:
+Também são utilizadas tabelas associativas:
 
-| candidato | vaga | empresa |
-| :--- | :--- | :--- |
-| Carlos | Desenvolvedor Java | Pastelsoft |
-| João | Desenvolvedor Backend | TechBrasil |
-| João | Desenvolvedor Java | Pastelsoft |
-| Maria | Desenvolvedor Full Stack | CodeMais |
-| Maria | Desenvolvedor Frontend | SanduTech |
-| Pedro | Desenvolvedor C# | DevHouse |
+```text
+candidato_competencias
+vaga_competencias
+```
+
+A modelagem representa:
+
+```text
+Candidato N:N Competência
+Vaga      N:N Competência
+Empresa   1:N Vaga
+```
+
+O banco também possui as estruturas:
+
+```text
+curtidas_candidato_vaga
+curtidas_empresa_candidato
+```
+
+que serão utilizadas na próxima etapa para persistir curtidas e implementar a lógica de Match via JDBC.
+
+## Integração JDBC e DAO
+
+A Parte 2 introduziu a integração entre o backend Groovy e o PostgreSQL através de **JDBC**, sem utilização de JPA ou Hibernate.
+
+A conexão é centralizada em:
+
+```text
+ConexaoDB.groovy
+```
+
+O acesso às tabelas foi separado em classes DAO:
+
+```text
+CandidatoDAO
+EmpresaDAO
+CompetenciaDAO
+VagaDAO
+CandidatoCompetenciaDAO
+VagaCompetenciaDAO
+```
+
+Os quatro CRUDs obrigatórios foram implementados:
+
+- CRUD de candidatos;
+- CRUD de empresas;
+- CRUD de competências;
+- CRUD de vagas.
+
+Os DAOs utilizam `PreparedStatement` para executar operações de inserção, consulta, atualização e exclusão.
+
+### Relacionamento Candidato x Competência
+
+A associação N:N é persistida através de `candidato_competencias`, com chave primária composta:
+
+```sql
+PRIMARY KEY (candidato_id, competencia_id)
+```
+
+Não existe um `id` artificial nessa tabela.
+
+### Relacionamento Empresa x Vaga
+
+Cada vaga mantém uma FK para sua empresa:
+
+```text
+vagas.empresa_id → empresas.id
+```
+
+permitindo que uma empresa possua diversas vagas.
+
+### Relacionamento Vaga x Competência
+
+As competências exigidas por uma vaga são persistidas em `vaga_competencias`, também com chave primária composta.
 
 ---
 
@@ -297,12 +386,13 @@ A decisão arquitetural atual é que **Empresa não herda de Pessoa**, pois cand
 Candidato
 ├── Pessoa
 ├── cpf
-├── idade
+├── dataNascimento
 ├── descricaoPessoal
+├── senha
 └── skills
 ```
 
-O candidato possui uma lista de `Skill`.
+O candidato possui uma lista de `Skill`. A idade, quando necessária, pode ser calculada a partir de `dataNascimento`.
 
 ---
 
@@ -332,9 +422,11 @@ A classe `Informacoes` concentra informações de identificação e contato util
 ```text
 Informacoes
 ├── nome
+├── sobrenome
 ├── cep
 ├── email
-└── whatsapp
+├── whatsapp
+└── pais
 ```
 
 A concentração dessas informações permite maior controle sobre quais dados poderão ser apresentados em cada contexto da aplicação.
@@ -345,17 +437,19 @@ A concentração dessas informações permite maior controle sobre quais dados p
 
 Representa uma competência que pode ser associada a candidatos e vagas.
 
-Skills utilizadas:
+Skills utilizadas nos dados SQL atuais:
 
 ```text
 Java
 Groovy
-Python
-Spring Framework
-Angular
 JavaScript
+TypeScript
+React
 C#
 SQL
+PostgreSQL
+HTML
+CSS
 ```
 
 ---
@@ -369,6 +463,9 @@ Vaga
 ├── id
 ├── titulo
 ├── descricaoVaga
+├── estado
+├── cidade
+├── empresa
 └── skills
 ```
 
@@ -376,33 +473,33 @@ Cada vaga possui uma lista de Skills que representam as competências desejadas 
 
 ---
 
-# 💾 DataInicializador
+# 💾 Persistência dos dados no backend
 
-A classe `DataInicializador` é responsável pelo carregamento dos dados iniciais utilizados pelo backend.
+Nas etapas iniciais, o projeto utilizava `DataInicializador` para manter candidatos, empresas, vagas e Skills em memória.
 
-Atualmente são criados:
-
-- **Skills no domínio**
-- **5 candidatos**
-- **5 empresas**
-- **Vagas associadas**
-
-As principais relações do modelo são:
+Com a implementação da Parte 2, candidatos e empresas deixaram de depender do `DataInicializador` no fluxo principal. O `Main` passou a criar os DAOs e injetá-los nos Services.
 
 ```text
-Empresa
-└── List<Vaga>
-    └── List<Skill>
+CandidatoDAO
+      │
+CandidatoCompetenciaDAO
+      │
+      ▼
+CandidatoService
 ```
-
-E:
 
 ```text
-Candidato
-└── List<Skill>
+EmpresaDAO
+   │
+VagaDAO
+   │
+VagaCompetenciaDAO
+   │
+   ▼
+EmpresaService
 ```
 
-O `DataInicializador` também disponibiliza uma operação para localizar uma Skill pelo nome.
+As listagens exibidas pelo menu agora são carregadas do PostgreSQL.
 
 ---
 
@@ -412,62 +509,68 @@ A camada `service` concentra as operações relacionadas ao domínio.
 
 ## CandidatoService
 
-Responsável pelas operações relacionadas aos candidatos.
+Responsável pelas operações relacionadas aos candidatos e pela composição das competências persistidas.
 
-Exemplos:
+Principais operações atuais:
 
 ```groovy
 listarTodosCandidatos()
-
-buscarCandidatoPorNome(String nome)
+cadastrarCandidato(Candidato candidato)
+buscarPorId(Long id)
+atualizarCandidato(Candidato candidato)
+excluirCandidato(Long id)
+listarCandidatosAnonimos()
 ```
 
-A busca por nome retorna um `Optional<Candidato>`, permitindo representar o cenário em que um candidato não é encontrado.
-
-Exemplo:
-
-```groovy
-def resultado = candidatoService.buscarCandidatoPorNome("Nelson")
-```
+O serviço utiliza `CandidatoDAO` e `CandidatoCompetenciaDAO`, mantendo a interface desacoplada do JDBC.
 
 ---
 
 ## EmpresaService
 
-Responsável pelas operações relacionadas às empresas.
+Responsável pelas operações relacionadas às empresas, suas vagas e as competências associadas às vagas.
 
-O serviço atua como camada intermediária entre os dados e a interface da aplicação.
+Principais operações atuais:
 
-Também disponibiliza a listagem de empresas em formato anônimo, ocultando informações de identificação e contato.
+```groovy
+listarTodasEmpresas()
+cadastrarEmpresa(Empresa empresa)
+buscarPorId(Long id)
+atualizarEmpresa(Empresa empresa)
+excluirEmpresa(Long id)
+listarEmpresasAnonimas()
+```
+
+O serviço utiliza `EmpresaDAO`, `VagaDAO` e `VagaCompetenciaDAO`.
+
+Ao listar as empresas, as vagas correspondentes são associadas através de `empresa.id`, e as Skills de cada vaga são carregadas da tabela `vaga_competencias`.
 
 ---
 
 ## CurtidaService
 
-Responsável pelo registro das curtidas realizadas por candidatos e empresas.
+O projeto já possui a lógica de curtidas desenvolvida nas etapas anteriores em memória.
 
-O serviço permite:
+O banco de dados também já contém as tabelas necessárias para representar:
 
-- candidato curtir uma vaga;
-- empresa curtir um candidato;
-- armazenar as curtidas realizadas;
-- solicitar ao `MatchService` a verificação de uma possível curtida mútua.
+- candidato curtindo uma vaga;
+- empresa curtindo um candidato.
 
-A curtida do candidato é relacionada à vaga, enquanto a curtida da empresa é relacionada ao candidato.
+A integração dessas operações com JDBC será realizada no próximo desafio.
 
 ---
 
 ## MatchService
 
-Responsável por verificar e registrar Matches.
+A lógica de Match já existe como conceito no domínio da aplicação e será evoluída na próxima etapa para trabalhar com as curtidas persistidas via JDBC.
 
-Um Match é criado quando:
+Um Match ocorre conceitualmente quando:
 
-1. o candidato curtiu uma vaga pertencente à empresa;
-2. a empresa curtiu o candidato;
-3. ainda não existe um Match entre aquele candidato e aquela empresa.
+1. o candidato curte uma vaga;
+2. a vaga pertence a uma determinada empresa;
+3. essa mesma empresa curte o candidato.
 
-O Match conecta o **candidato, a vaga de interesse e a empresa contratante**, permitindo identificar com precisão a oportunidade correspondida.
+A persistência e integração completa dessa regra com o banco fazem parte do próximo desafio.
 
 ---
 
@@ -563,7 +666,7 @@ Isso permite que:
 
 # 📊 Índice de afinidade entre candidato e vaga
 
-O **Índice de Afinidade** é uma métrica percentual de compatibilidade que mensura o quanto o perfil técnico de um candidato atende aos requisitos exigidos por uma determinada vaga. 
+O **Índice de Afinidade** é uma métrica percentual de compatibilidade que mensura o quanto o perfil técnico de um candidato atende aos requisitos exigidos por uma determinada vaga.
 
 Na arquitetura da plataforma, a empresa cadastra vagas com competências obrigatórias/desejáveis, e o candidato registra suas próprias competências. Portanto, a comparação ocorre na relação direta:
 
@@ -599,13 +702,13 @@ Onde:
 ## ⚙️ Regras de Negócio e Casos de Contorno (Edge Cases)
 
 1. **Vaga sem Skills cadastradas ($|S_{\text{vaga}}| = 0$):**
-   - Retorna impreterivelmente `0%`, prevenindo divisões por zero ou exceções em tempo de execução.
+    - Retorna impreterivelmente `0%`, prevenindo divisões por zero ou exceções em tempo de execução.
 2. **Candidato sem Skills cadastradas ($|S_{\text{candidato}}| = 0$):**
-   - Retorna `0%`, indicando ausência de compatibilidade técnica aferível.
+    - Retorna `0%`, indicando ausência de compatibilidade técnica aferível.
 3. **Competências Excedentes do Candidato:**
-   - Habilidades que o candidato possui mas que a vaga não demanda (ex.: candidato domina *Git*, mas a vaga não exige) **não** aumentam a afinidade além de 100% e não alteram o denominador da vaga. O teto máximo é estritamente `100%`.
+    - Habilidades que o candidato possui mas que a vaga não demanda (ex.: candidato domina *Git*, mas a vaga não exige) **não** aumentam a afinidade além de 100% e não alteram o denominador da vaga. O teto máximo é estritamente `100%`.
 4. **Normalização de Dados:**
-   - Antes de realizar o `Set intersection`, os termos são normalizados via `.map(s => s.trim().toLowerCase())`. Dessa forma, variações como `"Java "`, `"java"` e `"JAVA"` são reconhecidas como a mesma competência.
+    - Antes de realizar o `Set intersection`, os termos são normalizados via `.map(s => s.trim().toLowerCase())`. Dessa forma, variações como `"Java "`, `"java"` e `"JAVA"` são reconhecidas como a mesma competência.
 
 ---
 
@@ -855,7 +958,7 @@ Empresa
    └── Like ──► Candidato 3
 ```
 
-As curtidas são armazenadas pelo `CurtidaService`.
+Na versão atual do primeiro desafio, a estrutura relacional das curtidas já existe no PostgreSQL. A persistência das ações do `CurtidaService` via JDBC será implementada na etapa seguinte.
 
 ---
 
@@ -863,7 +966,7 @@ As curtidas são armazenadas pelo `CurtidaService`.
 
 O Match acontece quando existe **interesse mútuo entre um candidato e uma empresa**.
 
-O fluxo implementado é:
+O fluxo de negócio previsto é:
 
 ```text
 Candidato
@@ -883,13 +986,13 @@ Candidato
   MATCH (Candidato ↔ Vaga ↔ Empresa)
 ```
 
-Quando o `MatchService` identifica as duas curtidas:
+Na próxima etapa, o `MatchService` será integrado às curtidas persistidas para:
 
-1. verifica a curtida do candidato;
-2. verifica a curtida da empresa;
-3. verifica se o Match já existe;
-4. cria o Match caso ainda não exista;
-5. armazena o Match para consulta posterior.
+1. verificar a curtida do candidato;
+2. verificar a curtida da empresa;
+3. identificar a reciprocidade;
+4. registrar ou disponibilizar o Match;
+5. liberar os dados previstos pela regra de negócio.
 
 ---
 
@@ -897,15 +1000,22 @@ Quando o `MatchService` identifica as duas curtidas:
 
 ## Banco de Dados
 
-1. Conecte-se ao seu SGBD relacional (PostgreSQL).
+1. Crie um banco PostgreSQL para o projeto.
 2. Execute o script de estrutura e dados iniciais:
+
    ```bash
-   psql -U postgres -d linketinder -f database/database.sql
+   psql -h localhost -U seu_usuario -d linketinder -f database/database.sql
    ```
-3. Execute o script de consultas para validar os matches e afinidades:
+
+3. Para executar as consultas de validação:
+
    ```bash
-   psql -U postgres -d linketinder -f database/queries.sql
+   psql -h localhost -U seu_usuario -d linketinder -f database/queries.sql
    ```
+
+4. Configure em `ConexaoDB.groovy` a URL JDBC, o usuário e a senha correspondentes ao seu ambiente PostgreSQL.
+
+O `database.sql` cria a estrutura e insere os dados iniciais utilizados pelo projeto.
 
 ## Backend
 
@@ -985,21 +1095,24 @@ Foram validados:
 
 ## Backend
 
-Foram realizados testes envolvendo:
+Foram validados:
 
-- carregamento dos candidatos, empresas e vagas iniciais;
-- busca de candidato por nome;
-- tratamento de candidato não encontrado através de `Optional`;
+- conexão do backend com PostgreSQL através de JDBC;
+- CRUD completo de candidatos;
+- CRUD completo de empresas;
+- CRUD completo de competências;
+- CRUD completo de vagas;
+- associação N:N entre candidatos e competências;
+- associação N:N entre vagas e competências;
+- associação 1:N entre empresas e vagas;
+- carregamento das Skills dos candidatos a partir do banco;
+- carregamento das vagas e Skills das empresas a partir do banco;
 - listagem anônima de candidatos;
-- listagem anônima de vagas;
-- curtida de candidato em vaga;
-- curtida de empresa em candidato;
-- identificação de curtida mútua;
-- criação de Match;
-- listagem de Matches;
-- liberação das informações após o Match;
-- navegação pelo menu;
-- encerramento da aplicação.
+- listagem anônima de empresas/vagas;
+- execução do fluxo `Main → Menu → Service → DAO → PostgreSQL`;
+- navegação pelo menu e encerramento da aplicação.
+
+A persistência JDBC das curtidas e a integração do Match serão validadas no desafio seguinte.
 
 ## Frontend
 
@@ -1026,6 +1139,9 @@ Foram testados:
 | Funcionalidade | Status |
 |---|---|
 | Estrutura de banco de dados (`database.sql`, `queries.sql`) | ✅ Implementado |
+| Conexão JDBC com PostgreSQL | ✅ Implementado |
+| Camada DAO | ✅ Implementado |
+| CRUD de candidatos, empresas, competências e vagas | ✅ Implementado |
 | Modelagem de candidatos | ✅ Implementado |
 | Modelagem de empresas | ✅ Implementado |
 | Modelagem de Skills | ✅ Implementado |
@@ -1035,12 +1151,12 @@ Foram testados:
 | CNPJ | ✅ Implementado |
 | País da empresa | ✅ Implementado |
 | Estado | ✅ Implementado |
-| DataInicializador | ✅ Implementado |
+| Persistência PostgreSQL via JDBC | ✅ Implementado |
 | Dados iniciais pré-cadastrados | ✅ Implementado |
 | CandidatoService | ✅ Implementado |
 | EmpresaService | ✅ Implementado |
-| CurtidaService | ✅ Implementado |
-| MatchService | ✅ Implementado |
+| Estrutura SQL para curtidas | ✅ Implementado |
+| Integração JDBC de curtidas e Match | ⏳ Próximo desafio |
 | Busca de candidato | ✅ Implementado |
 | Menu de terminal | ✅ Implementado |
 | Listagem de candidatos | ✅ Implementado |
@@ -1060,8 +1176,8 @@ Foram testados:
 | Gráfico de Skills | ✅ Implementado |
 | Índice de afinidade candidato/vaga | ✅ Implementado |
 | Exibição da afinidade no card da vaga | ✅ Implementado |
-| Sistema de Likes e Matches | ✅ Implementado |
-| Tabela de Matches (candidato ↔ vaga ↔ empresa) | ✅ Implementado |
+| Likes/Matches em memória (legado da etapa anterior) | ✅ Implementado |
+| Match persistido via JDBC | ⏳ Próximo desafio |
 
 ---
 
@@ -1075,6 +1191,10 @@ Entre os conceitos utilizados estão:
 - Herança e Composição;
 - Encapsulamento;
 - Modelagem Relacional (DDL/DML);
+- JDBC (`Connection`, `PreparedStatement`, `ResultSet`);
+- Padrão DAO;
+- CRUD persistente;
+- Chaves estrangeiras e relacionamentos N:N / 1:N;
 - Junções SQL (`INNER JOIN`);
 - Interfaces TypeScript;
 - Tipagem estática;
@@ -1120,9 +1240,11 @@ Os dados de identificação e contato foram concentrados em `Informacoes`.
 ```text
 Informacoes
 ├── nome
+├── sobrenome
 ├── cep
 ├── email
-└── whatsapp
+├── whatsapp
+└── pais
 ```
 
 Essa organização facilita o controle sobre quais informações serão disponibilizadas durante a experiência anônima.
@@ -1167,9 +1289,9 @@ A arquitetura estabelecida permite evoluções futuras como:
 
 Consumo direto dos endpoints ou serviços em substituição à manipulação exclusiva em `localStorage`.
 
-## 2. Persistência permanente conectada
+## 2. Persistência de curtidas e Match
 
-Integração dos serviços backend diretamente com o PostgreSQL através dos scripts da pasta `database/`.
+Integrar `CurtidaService` e `MatchService` ao PostgreSQL via JDBC, utilizando as tabelas de curtidas já existentes.
 
 ## 3. Autenticação e autorização
 
@@ -1181,7 +1303,42 @@ Ferramentas avançadas de busca e módulo de chat/contato direto desbloqueado ap
 
 ---
 
-# 🎓 Requisitos do desafio
+# ✅ Parte 2 — Integração entre BD e Backend
+
+Nesta etapa, o backend deixou de depender exclusivamente de dados em memória e passou a acessar o PostgreSQL através de JDBC.
+
+Foram implementados os quatro CRUDs obrigatórios:
+
+```text
+Candidato
+Empresa
+Competência
+Vaga
+```
+
+Também foram integrados os relacionamentos:
+
+```text
+Candidato N:N Competência
+Vaga      N:N Competência
+Empresa   1:N Vaga
+```
+
+A arquitetura adotada para o acesso aos dados é:
+
+```text
+UI → Service → DAO → JDBC → PostgreSQL
+```
+
+O projeto utiliza apenas JDBC nessa etapa, sem JPA ou Hibernate.
+
+O arquivo `database.sql` permite recriar a estrutura e os dados iniciais do projeto, incluindo cinco candidatos, cinco empresas, competências, vagas e seus relacionamentos.
+
+O arquivo `queries.sql` contém consultas SQL utilizadas para validar a modelagem e os relacionamentos.
+
+---
+
+# 🎓 Requisitos das etapas do projeto
 
 O projeto foi desenvolvido considerando os requisitos apresentados no desafio.
 
@@ -1219,6 +1376,20 @@ O projeto foi desenvolvido considerando os requisitos apresentados no desafio.
 - [x] Cadastro de empresas;
 - [x] Cadastro de vagas;
 - [x] Índice de afinidade no anúncio de cada vaga.
+
+## Parte 2 — JDBC
+
+- [x] Integração do backend com PostgreSQL;
+- [x] Uso de JDBC sem JPA/Hibernate;
+- [x] CRUD de candidatos;
+- [x] CRUD de empresas;
+- [x] CRUD de competências;
+- [x] CRUD de vagas;
+- [x] Relação N:N candidato/competência;
+- [x] Relação 1:N empresa/vaga;
+- [x] Arquivo `database.sql` com dados iniciais;
+- [x] Consultas de validação em `queries.sql`;
+- [x] Main e Services consumindo os dados persistidos.
 
 ## Requisito opcional
 

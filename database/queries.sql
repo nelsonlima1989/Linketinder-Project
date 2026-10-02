@@ -30,7 +30,8 @@ INSERT INTO candidatos (
     pais,
     cep,
     descricao_pessoal,
-    senha
+    senha,
+    estado
 )
 VALUES
     (
@@ -42,53 +43,57 @@ VALUES
         'Brasil',
         '20000000',
         'Desenvolvedor interessado em desenvolvimento web e APIs.',
-        'senha123'
+        'senha123',
+        'RJ'
     ),
     (
         'Maria',
-        'Santos',
-        '1998-07-22',
-        'maria.santos@email.com',
-        '23456789012',
+        'Oliveira',
+        '1997-06-20',
+        'maria.oliveira@email.com',
+        '12345678902',
         'Brasil',
         '21000000',
-        'Desenvolvedora com interesse em aplicações frontend e backend.',
-        'senha456'
+        'Desenvolvedora com interesse em aplicações full stack.',
+        'senha123',
+        'RJ'
     ),
     (
         'Carlos',
-        'Oliveira',
-        '1992-11-08',
-        'carlos.oliveira@email.com',
-        '34567890123',
+        'Souza',
+        '1993-09-10',
+        'carlos.souza@email.com',
+        '12345678903',
         'Brasil',
         '22000000',
-        'Profissional com experiência em desenvolvimento de sistemas.',
-        'senha789'
+        'Desenvolvedor com foco em backend e integração de sistemas.',
+        'senha123',
+        'RJ'
     ),
     (
         'Ana',
         'Costa',
-        '1997-05-30',
+        '1998-01-25',
         'ana.costa@email.com',
-        '45678901234',
+        '12345678904',
         'Brasil',
         '23000000',
-        'Desenvolvedora focada em interfaces web e experiência do usuário.',
-        'ana123'
+        'Desenvolvedora interessada em interfaces web e experiência do usuário.',
+        'senha123',
+        'RJ'
     ),
     (
         'Pedro',
-        'Ferreira',
-        '1994-09-12',
-        'pedro.ferreira@email.com',
-        '56789012345',
+        'Santos',
+        '1994-11-05',
+        'pedro.santos@email.com',
+        '12345678905',
         'Brasil',
         '24000000',
-        'Desenvolvedor interessado em bancos de dados e desenvolvimento backend.',
-        'pedro123'
+        'Desenvolvedor com interesse em C#, SQL e aplicações corporativas.',
+        'senha123',
+        'RJ'
     );
-
 
 
 -- 3. EMPRESAS
@@ -100,53 +105,59 @@ INSERT INTO empresas (
     descricao,
     pais,
     cep,
-    senha
+    senha,
+    estado
 )
 VALUES
     (
         'Pastelsoft',
         '12345678000101',
         'contato@pastelsoft.com',
-        'Empresa de tecnologia especializada em desenvolvimento de sistemas.',
+        'Empresa de tecnologia especializada em soluções de software.',
         'Brasil',
         '20010000',
-        'pastel123'
+        'senha123',
+        'RJ'
     ),
     (
         'SanduTech',
-        '23456789000102',
+        '12345678000102',
         'contato@sandutech.com',
-        'Empresa focada em soluções digitais e aplicações web.',
+        'Empresa focada em produtos digitais e desenvolvimento frontend.',
         'Brasil',
-        '21010000',
-        'sandu123'
+        '01001000',
+        'senha123',
+        'SP'
     ),
     (
         'CodeMais',
-        '34567890000103',
+        '12345678000103',
         'contato@codemais.com',
-        'Empresa especializada em desenvolvimento de software e APIs.',
+        'Empresa especializada em desenvolvimento de aplicações web.',
         'Brasil',
-        '22010000',
-        'code1234'
+        '30110000',
+        'senha123',
+        'MG'
     ),
     (
         'DevHouse',
-        '45678901000104',
+        '12345678000104',
         'contato@devhouse.com',
-        'Empresa de tecnologia voltada para produtos e serviços digitais.',
+        'Empresa de desenvolvimento de sistemas corporativos.',
         'Brasil',
-        '23010000',
-        'devhouse'
+        '80010000',
+        'senha123',
+        'PR'
     ),
     (
         'TechBrasil',
-        '56789012000105',
+        '12345678000105',
         'contato@techbrasil.com',
-        'Empresa de desenvolvimento de soluções corporativas.',
+        'Empresa de tecnologia voltada para APIs e serviços backend.',
         'Brasil',
-        '24010000',
-        'tech1234'
+        '90010000',
+        'senha123',
+        'RS'
     );
 
 

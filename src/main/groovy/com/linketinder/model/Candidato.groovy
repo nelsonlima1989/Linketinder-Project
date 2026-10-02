@@ -1,8 +1,11 @@
 package com.linketinder.model
 
-class Candidato extends  Pessoa{
+import java.time.LocalDate
+
+class Candidato extends Pessoa {
     String cpf
-    Integer idade
+    LocalDate dataNascimento
     String descricaoPessoal
+    String senha
     List<Skill> skills = []
 }

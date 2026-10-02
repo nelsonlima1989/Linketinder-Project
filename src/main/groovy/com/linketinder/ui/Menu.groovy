@@ -5,6 +5,9 @@ import com.linketinder.service.CurtidaService
 import com.linketinder.service.EmpresaService
 import com.linketinder.service.MatchService
 
+import java.time.LocalDate
+import java.time.Period
+
 class Menu {
 
     private CandidatoService candidatoService
@@ -86,6 +89,11 @@ class Menu {
 
         def candidatos = candidatoService.listarCandidatosAnonimos()
 
+        if (!candidatos) {
+            println "Nenhum candidato cadastrado."
+            return
+        }
+
         candidatos.each { candidato ->
 
             println "ID: ${candidato.id}"
@@ -94,8 +102,12 @@ class Menu {
 
             println "Skills:"
 
-            candidato.skills.each { skill ->
-                println "- ${skill.nome}"
+            if (candidato.skills) {
+                candidato.skills.each { skill ->
+                    println "- ${skill.nome}"
+                }
+            } else {
+                println "- Nenhuma competência cadastrada"
             }
 
             println "--------------------------------"
@@ -110,6 +122,11 @@ class Menu {
 
         def empresas = empresaService.listarEmpresasAnonimas()
 
+        if (!empresas) {
+            println "Nenhuma empresa cadastrada."
+            return
+        }
+
         empresas.each { empresa ->
 
             println "País: ${empresa.pais}"
@@ -117,14 +134,28 @@ class Menu {
 
             println "Vagas:"
 
-            empresa.vagas.each { vaga ->
-                println "${vaga.id} - ${vaga.titulo}"
-                println "  Descrição: ${vaga.descricaoVaga}"
-                println "  Skills:"
+            if (empresa.vagas) {
 
-                vaga.skills.each { skill ->
-                    println "  - ${skill.nome}"
+                empresa.vagas.each { vaga ->
+
+                    println "${vaga.id} - ${vaga.titulo}"
+                    println "  Descrição: ${vaga.descricaoVaga}"
+                    println "  Estado: ${vaga.estado}"
+                    println "  Cidade: ${vaga.cidade}"
+
+                    println "  Skills:"
+
+                    if (vaga.skills) {
+                        vaga.skills.each { skill ->
+                            println "  - ${skill.nome}"
+                        }
+                    } else {
+                        println "  - Nenhuma competência cadastrada"
+                    }
                 }
+
+            } else {
+                println "- Nenhuma vaga cadastrada"
             }
 
             println "--------------------------------"
@@ -139,9 +170,14 @@ class Menu {
         println "          CURTIR VAGA"
         println "================================"
 
-        println "Candidatos:"
-
         def candidatos = candidatoService.listarTodosCandidatos()
+
+        if (!candidatos) {
+            println "Nenhum candidato cadastrado."
+            return
+        }
+
+        println "Candidatos:"
 
         candidatos.eachWithIndex { candidato, index ->
             println "${index + 1} - Candidato ${candidato.id}"
@@ -149,6 +185,11 @@ class Menu {
 
         print "Escolha o candidato: "
         int candidatoOpcao = scanner.nextInt()
+
+        if (candidatoOpcao < 1 || candidatoOpcao > candidatos.size()) {
+            println "Candidato inválido."
+            return
+        }
 
         def candidato = candidatos[candidatoOpcao - 1]
 
@@ -158,10 +199,19 @@ class Menu {
 
         def vagas = empresaService.listarTodasEmpresas()
                 .collectMany { empresa ->
+
                     empresa.vagas.collect { vaga ->
-                        [vaga: vaga, empresa: empresa]
+                        [
+                                vaga   : vaga,
+                                empresa: empresa
+                        ]
                     }
                 }
+
+        if (!vagas) {
+            println "Nenhuma vaga cadastrada."
+            return
+        }
 
         vagas.eachWithIndex { item, index ->
 
@@ -170,14 +220,19 @@ class Menu {
 
             println "${index + 1} - ${vaga.titulo}"
             println "Descrição: ${vaga.descricaoVaga}"
+            println "Empresa: ${empresa.informacoes.nome}"
             println "País: ${empresa.pais}"
-            println "Estado: ${empresa.estado}"
+            println "Estado: ${vaga.estado}"
+            println "Cidade: ${vaga.cidade}"
             println "Skills:"
 
-            vaga.skills.each { skill ->
-                println "- ${skill.nome}"
+            if (vaga.skills) {
+                vaga.skills.each { skill ->
+                    println "- ${skill.nome}"
+                }
+            } else {
+                println "- Nenhuma competência cadastrada"
             }
-
 
             println "--------------------------------"
         }
@@ -185,8 +240,12 @@ class Menu {
         print "Escolha a vaga: "
         int vagaOpcao = scanner.nextInt()
 
-        def item = vagas[vagaOpcao - 1]
+        if (vagaOpcao < 1 || vagaOpcao > vagas.size()) {
+            println "Vaga inválida."
+            return
+        }
 
+        def item = vagas[vagaOpcao - 1]
         def vaga = item.vaga
 
         curtidaService.curtirVaga(candidato, vaga)
@@ -200,16 +259,26 @@ class Menu {
         println "       CURTIR CANDIDATO"
         println "================================"
 
-        println "Empresas:"
-
         def empresas = empresaService.listarTodasEmpresas()
 
+        if (!empresas) {
+            println "Nenhuma empresa cadastrada."
+            return
+        }
+
+        println "Empresas:"
+
         empresas.eachWithIndex { empresa, index ->
-            println "${index + 1} - Empresa ${empresa.id}"
+            println "${index + 1} - ${empresa.informacoes.nome}"
         }
 
         print "Escolha a empresa: "
         int empresaOpcao = scanner.nextInt()
+
+        if (empresaOpcao < 1 || empresaOpcao > empresas.size()) {
+            println "Empresa inválida."
+            return
+        }
 
         def empresa = empresas[empresaOpcao - 1]
 
@@ -219,14 +288,24 @@ class Menu {
 
         def candidatos = candidatoService.listarTodosCandidatos()
 
+        if (!candidatos) {
+            println "Nenhum candidato cadastrado."
+            return
+        }
+
         candidatos.eachWithIndex { candidato, index ->
+
             println "${index + 1} - Candidato ${candidato.id}"
             println "Estado: ${candidato.estado}"
             println "Descrição: ${candidato.descricaoPessoal}"
             println "Skills:"
 
-            candidato.skills.each { skill ->
-                println "- ${skill.nome}"
+            if (candidato.skills) {
+                candidato.skills.each { skill ->
+                    println "- ${skill.nome}"
+                }
+            } else {
+                println "- Nenhuma competência cadastrada"
             }
 
             println "--------------------------------"
@@ -235,9 +314,17 @@ class Menu {
         print "Escolha o candidato: "
         int candidatoOpcao = scanner.nextInt()
 
+        if (candidatoOpcao < 1 || candidatoOpcao > candidatos.size()) {
+            println "Candidato inválido."
+            return
+        }
+
         def candidato = candidatos[candidatoOpcao - 1]
 
-        curtidaService.curtirCandidato(empresa, candidato)
+        curtidaService.curtirCandidato(
+                empresa,
+                candidato
+        )
     }
 
     private void listarMatches() {
@@ -255,16 +342,30 @@ class Menu {
                 println "Candidato:"
                 println "Nome: ${match.candidato.informacoes.nome}"
                 println "CPF: ${match.candidato.cpf}"
-                println "Idade: ${match.candidato.idade}"
+
+                if (match.candidato.dataNascimento != null) {
+
+                    int idade = Period.between(
+                            match.candidato.dataNascimento,
+                            LocalDate.now()
+                    ).years
+
+                    println "Idade: ${idade}"
+                }
+
                 println "Estado: ${match.candidato.estado}"
                 println "Descrição: ${match.candidato.descricaoPessoal}"
                 println "CEP: ${match.candidato.informacoes.cep}"
                 println "Email: ${match.candidato.informacoes.email}"
-                println "WhatsApp: ${match.candidato.informacoes.whatsapp}"
 
                 println "Skills:"
-                match.candidato.skills.each { skill ->
-                    println "- ${skill.nome}"
+
+                if (match.candidato.skills) {
+                    match.candidato.skills.each { skill ->
+                        println "- ${skill.nome}"
+                    }
+                } else {
+                    println "- Nenhuma competência cadastrada"
                 }
 
                 println "--------------------------------"
@@ -277,13 +378,19 @@ class Menu {
                 println "Descrição: ${match.empresa.descricaoEmpresarial}"
                 println "CEP: ${match.empresa.informacoes.cep}"
                 println "Email: ${match.empresa.informacoes.email}"
-                println "WhatsApp: ${match.empresa.informacoes.whatsapp}"
 
                 println "Vagas:"
 
-                match.empresa.vagas.each { vaga ->
-                    println "- ${vaga.titulo}"
-                    println "  Descrição: ${vaga.descricaoVaga}"
+                if (match.empresa.vagas) {
+
+                    match.empresa.vagas.each { vaga ->
+
+                        println "- ${vaga.titulo}"
+                        println "  Descrição: ${vaga.descricaoVaga}"
+                    }
+
+                } else {
+                    println "- Nenhuma vaga cadastrada"
                 }
 
                 println "================================"

@@ -1,32 +1,44 @@
 package serviceTest
 
-import com.linketinder.data.DataInicializador
+import com.linketinder.dao.CandidatoCompetenciaDAO
+import com.linketinder.dao.CandidatoDAO
 import com.linketinder.model.Candidato
 import com.linketinder.service.CandidatoService
 import spock.lang.Specification
 
+import java.time.LocalDate
 
-class CandidatoServiceSpec extends Specification{
+class CandidatoServiceSpec extends Specification {
 
-    def "deve cadastrar um novo candidato na lista de candidatos"(){
+    CandidatoDAO candidatoDAO
+    CandidatoCompetenciaDAO candidatoCompetenciaDAO
+    CandidatoService candidatoService
+
+    void setup() {
+        candidatoDAO = Mock(CandidatoDAO)
+        candidatoCompetenciaDAO = Mock(CandidatoCompetenciaDAO)
+
+        candidatoService = new CandidatoService(
+                candidatoDAO,
+                candidatoCompetenciaDAO
+        )
+    }
+
+    void "deve cadastrar um novo candidato"() {
 
         given:
-        def inicializador = new DataInicializador()
-        def candidatoService = new CandidatoService(inicializador)
-
-        def novoCandidato = new Candidato(
-                cpf: "999999999",
-                idade: 25,
-                descricaoPessoal: "Novo candidato"
+        Candidato novoCandidato = new Candidato(
+                cpf: "99999999999",
+                dataNascimento: LocalDate.of(2000, 1, 1),
+                descricaoPessoal: "Novo candidato",
+                skills: []
         )
-
-        def quantidadeInicial = candidatoService.listarTodosCandidatos().size()
 
         when:
         candidatoService.cadastrarCandidato(novoCandidato)
 
         then:
-        candidatoService.listarTodosCandidatos().size() == quantidadeInicial + 1
-        candidatoService.listarTodosCandidatos().contains(novoCandidato)
+        1 * candidatoDAO.inserir(novoCandidato)
+        0 * candidatoCompetenciaDAO._
     }
 }
