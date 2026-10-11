@@ -10,7 +10,7 @@ import java.sql.SQLException
 
 class CandidatoDAO {
 
-    // inserir
+
     void inserir(Candidato candidato) {
 
         String sql = """
@@ -30,69 +30,28 @@ class CandidatoDAO {
             RETURNING id
         """
 
-        Connection conexao = null
-        PreparedStatement statement = null
-        ResultSet resultado = null
+        try (
+                Connection conexao = ConexaoDB.conectar();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
+            preencherParametrosCandidato(statement, candidato)
 
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-
-            statement.setString(1, candidato.informacoes.nome)
-            statement.setString(2, candidato.informacoes.sobrenome)
-
-            statement.setDate(
-                    3,
-                    java.sql.Date.valueOf(candidato.dataNascimento)
-            )
-
-            statement.setString(4, candidato.informacoes.email)
-            statement.setString(5, candidato.cpf)
-            statement.setString(6, candidato.informacoes.pais)
-            statement.setString(7, candidato.estado)
-            statement.setString(8, candidato.informacoes.cep)
-            statement.setString(9, candidato.descricaoPessoal)
-            statement.setString(10, candidato.senha)
-
-            resultado = statement.executeQuery()
-
-            if (resultado.next()) {
-                candidato.id = resultado.getLong("id")
+            try (ResultSet resultado = statement.executeQuery()) {
+                if (resultado.next()) {
+                    candidato.id = resultado.getLong("id")
+                }
             }
 
         } catch (SQLException e) {
-            println "Erro ao inserir candidato: ${e.message}"
-
-        } finally {
-
-            if (resultado != null) {
-                try {
-                    resultado.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar ResultSet: ${e.message}"
-                }
-            }
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+            throw new IllegalStateException(
+                    "Não foi possível inserir o candidato.",
+                    e
+            )
         }
+
     }
 
 
-    // listar todos
     List<Candidato> listarTodos() {
 
         String sql = """
@@ -114,206 +73,88 @@ class CandidatoDAO {
 
         List<Candidato> candidatos = []
 
-        Connection conexao = null
-        PreparedStatement statement = null
-        ResultSet resultado = null
-
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-            resultado = statement.executeQuery()
-
+        try (
+                Connection conexao = ConexaoDB.conectar();
+                PreparedStatement statement = conexao.prepareStatement(sql);
+                ResultSet resultado = statement.executeQuery()
+        ) {
             while (resultado.next()) {
-
-                Informacoes informacoes = new Informacoes(
-                        nome: resultado.getString("nome"),
-                        sobrenome: resultado.getString("sobrenome"),
-                        email: resultado.getString("email"),
-                        pais: resultado.getString("pais"),
-                        cep: resultado.getString("cep")
-                )
-
-                Candidato candidato = new Candidato(
-                        id: resultado.getLong("id"),
-                        estado: resultado.getString("estado"),
-                        informacoes: informacoes,
-                        cpf: resultado.getString("cpf"),
-                        dataNascimento: resultado
-                                .getDate("data_nascimento")
-                                .toLocalDate(),
-                        descricaoPessoal: resultado.getString("descricao_pessoal"),
-                        senha: resultado.getString("senha")
-                )
-
-                candidatos.add(candidato)
+                candidatos.add(construirCandidato(resultado))
             }
 
         } catch (SQLException e) {
-            println "Erro ao listar candidatos: ${e.message}"
-
-        } finally {
-
-            if (resultado != null) {
-                try {
-                    resultado.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar ResultSet: ${e.message}"
-                }
-            }
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+            throw new IllegalStateException(
+                    "Não foi possível listar os candidatos.",
+                    e
+            )
         }
 
         return candidatos
     }
 
 
-    // buscar por ID
     Candidato buscarPorId(Long id) {
-
         String sql = """
-            SELECT
-                id,
-                nome,
-                sobrenome,
-                data_nascimento,
-                email,
-                cpf,
-                pais,
-                estado,
-                cep,
-                descricao_pessoal,
-                senha
-            FROM candidatos
-            WHERE id = ?
-        """
-
-        Connection conexao = null
-        PreparedStatement statement = null
-        ResultSet resultado = null
+        SELECT
+            id,
+            nome,
+            sobrenome,
+            data_nascimento,
+            email,
+            cpf,
+            pais,
+            estado,
+            cep,
+            descricao_pessoal,
+            senha
+        FROM candidatos
+        WHERE id = ?
+    """
 
         Candidato candidato = null
 
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-
+        try (
+                Connection conexao = ConexaoDB.conectar();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
             statement.setLong(1, id)
 
-            resultado = statement.executeQuery()
-
-            if (resultado.next()) {
-
-                Informacoes informacoes = new Informacoes(
-                        nome: resultado.getString("nome"),
-                        sobrenome: resultado.getString("sobrenome"),
-                        email: resultado.getString("email"),
-                        pais: resultado.getString("pais"),
-                        cep: resultado.getString("cep")
-                )
-
-                candidato = new Candidato(
-                        id: resultado.getLong("id"),
-                        estado: resultado.getString("estado"),
-                        informacoes: informacoes,
-                        cpf: resultado.getString("cpf"),
-                        dataNascimento: resultado
-                                .getDate("data_nascimento")
-                                .toLocalDate(),
-                        descricaoPessoal: resultado.getString("descricao_pessoal"),
-                        senha: resultado.getString("senha")
-                )
+            try (ResultSet resultado = statement.executeQuery()) {
+                if (resultado.next()) {
+                    candidato = construirCandidato(resultado)
+                }
             }
 
         } catch (SQLException e) {
             println "Erro ao buscar candidato por ID: ${e.message}"
-
-        } finally {
-
-            if (resultado != null) {
-                try {
-                    resultado.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar ResultSet: ${e.message}"
-                }
-            }
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
         }
 
         return candidato
     }
 
 
-    // atualizar
     void atualizar(Candidato candidato) {
-
         String sql = """
-            UPDATE candidatos
-            SET
-                nome = ?,
-                sobrenome = ?,
-                data_nascimento = ?,
-                email = ?,
-                cpf = ?,
-                pais = ?,
-                estado = ?,
-                cep = ?,
-                descricao_pessoal = ?,
-                senha = ?
-            WHERE id = ?
-        """
+        UPDATE candidatos
+        SET
+            nome = ?,
+            sobrenome = ?,
+            data_nascimento = ?,
+            email = ?,
+            cpf = ?,
+            pais = ?,
+            estado = ?,
+            cep = ?,
+            descricao_pessoal = ?,
+            senha = ?
+        WHERE id = ?
+    """
 
-        Connection conexao = null
-        PreparedStatement statement = null
-
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-
-            statement.setString(1, candidato.informacoes.nome)
-            statement.setString(2, candidato.informacoes.sobrenome)
-
-            statement.setDate(
-                    3,
-                    java.sql.Date.valueOf(candidato.dataNascimento)
-            )
-
-            statement.setString(4, candidato.informacoes.email)
-            statement.setString(5, candidato.cpf)
-            statement.setString(6, candidato.informacoes.pais)
-            statement.setString(7, candidato.estado)
-            statement.setString(8, candidato.informacoes.cep)
-            statement.setString(9, candidato.descricaoPessoal)
-            statement.setString(10, candidato.senha)
+        try (
+                Connection conexao = ConexaoDB.conectar();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
+            preencherParametrosCandidato(statement, candidato)
             statement.setLong(11, candidato.id)
 
             int linhasAfetadas = statement.executeUpdate()
@@ -326,43 +167,20 @@ class CandidatoDAO {
 
         } catch (SQLException e) {
             println "Erro ao atualizar candidato: ${e.message}"
-
-        } finally {
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
         }
     }
 
 
-    // excluir
     void excluir(Long id) {
-
         String sql = """
-            DELETE FROM candidatos
-            WHERE id = ?
-        """
+        DELETE FROM candidatos
+        WHERE id = ?
+    """
 
-        Connection conexao = null
-        PreparedStatement statement = null
-
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-
+        try (
+                Connection conexao = ConexaoDB.conectar();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
             statement.setLong(1, id)
 
             int linhasAfetadas = statement.executeUpdate()
@@ -375,24 +193,45 @@ class CandidatoDAO {
 
         } catch (SQLException e) {
             println "Erro ao excluir candidato: ${e.message}"
-
-        } finally {
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
         }
     }
+
+
+    private void preencherParametrosCandidato(
+            PreparedStatement statement,
+            Candidato candidato
+    ) throws SQLException {
+        statement.setString(1, candidato.informacoes.nome)
+        statement.setString(2, candidato.informacoes.sobrenome)
+        statement.setDate(3, java.sql.Date.valueOf(candidato.dataNascimento))
+        statement.setString(4, candidato.informacoes.email)
+        statement.setString(5, candidato.cpf)
+        statement.setString(6, candidato.informacoes.pais)
+        statement.setString(7, candidato.estado)
+        statement.setString(8, candidato.informacoes.cep)
+        statement.setString(9, candidato.descricaoPessoal)
+        statement.setString(10, candidato.senha)
+    }
+
+
+    private Candidato construirCandidato(ResultSet resultado) throws SQLException {
+        Informacoes informacoes = new Informacoes(
+                nome: resultado.getString("nome"),
+                sobrenome: resultado.getString("sobrenome"),
+                email: resultado.getString("email"),
+                pais: resultado.getString("pais"),
+                cep: resultado.getString("cep")
+        )
+
+        return new Candidato(
+                id: resultado.getLong("id"),
+                estado: resultado.getString("estado"),
+                informacoes: informacoes,
+                cpf: resultado.getString("cpf"),
+                dataNascimento: resultado.getDate("data_nascimento").toLocalDate(),
+                descricaoPessoal: resultado.getString("descricao_pessoal"),
+                senha: resultado.getString("senha")
+        )
+    }
+
 }

@@ -1,5 +1,7 @@
 package com.linketinder.ui
 
+import com.linketinder.model.Candidato
+import com.linketinder.model.CandidatoAnonimo
 import com.linketinder.service.CandidatoService
 import com.linketinder.service.CurtidaService
 import com.linketinder.service.EmpresaService
@@ -87,9 +89,16 @@ class Menu {
         println "          CANDIDATOS"
         println "================================"
 
-        def candidatos = candidatoService.listarCandidatosAnonimos()
+        List<CandidatoAnonimo> candidatos
 
-        if (!candidatos) {
+        try {
+           candidatos = candidatoService.listarCandidatosAnonimos()
+        } catch (IllegalStateException e) {
+            println "Erro ao consultar candidatos: ${e.message}"
+            return
+        }
+
+        if (candidatos.isEmpty()) {
             println "Nenhum candidato cadastrado."
             return
         }
@@ -170,9 +179,16 @@ class Menu {
         println "          CURTIR VAGA"
         println "================================"
 
-        def candidatos = candidatoService.listarTodosCandidatos()
+        List<Candidato> candidatos
 
-        if (!candidatos) {
+        try {
+           candidatos = candidatoService.listarTodosCandidatos()
+        } catch (IllegalStateException e) {
+            println "Erro ao consultar candidatos: ${e.message}"
+            return
+        }
+
+        if (candidatos.isEmpty()) {
             println "Nenhum candidato cadastrado."
             return
         }
