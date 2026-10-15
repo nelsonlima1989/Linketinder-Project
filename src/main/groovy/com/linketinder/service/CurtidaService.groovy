@@ -23,11 +23,11 @@ class CurtidaService {
 
     void curtirVaga(Candidato candidato, Vaga vaga) {
 
-        def empresa = empresaService.listarTodasEmpresas().find { empresa ->
+        Empresa empresa = empresaService.listarTodasEmpresas().find { empresa ->
             empresa.vagas.contains(vaga)
         }
 
-        def curtida = new Curtida(
+        Curtida curtida = new Curtida(
                 candidato: candidato,
                 vaga: vaga,
                 empresa: empresa,

@@ -1,22 +1,23 @@
 package com.linketinder.service
 
-import com.linketinder.dao.EmpresaDAO
-import com.linketinder.dao.VagaCompetenciaDAO
-import com.linketinder.dao.VagaDAO
+
 import com.linketinder.model.Empresa
 import com.linketinder.model.EmpresaAnonima
 import com.linketinder.model.Vaga
+import com.linketinder.repository.EmpresaRepository
+import com.linketinder.repository.VagaCompetenciaRepository
+import com.linketinder.repository.VagaRepository
 
 class EmpresaService {
 
-    private EmpresaDAO empresaDAO
-    private VagaDAO vagaDAO
-    private VagaCompetenciaDAO vagaCompetenciaDAO
+    private final EmpresaRepository empresaDAO
+    private final VagaRepository vagaDAO
+    private final VagaCompetenciaRepository vagaCompetenciaDAO
 
     EmpresaService(
-            EmpresaDAO empresaDAO,
-            VagaDAO vagaDAO,
-            VagaCompetenciaDAO vagaCompetenciaDAO
+            EmpresaRepository empresaDAO,
+            VagaRepository vagaDAO,
+            VagaCompetenciaRepository vagaCompetenciaDAO
     ) {
         this.empresaDAO = empresaDAO
         this.vagaDAO = vagaDAO
@@ -27,21 +28,10 @@ class EmpresaService {
     List<Empresa> listarTodasEmpresas() {
 
         List<Empresa> empresas = empresaDAO.listarTodos()
-
         List<Vaga> vagas = vagaDAO.listarTodos()
 
-        empresas.each { empresa ->
-
-            empresa.vagas = vagas.findAll { vaga ->
-                vaga.empresa?.id == empresa.id
-            }
-
-            empresa.vagas.each { vaga ->
-
-                vaga.skills =
-                        vagaCompetenciaDAO
-                                .listarCompetenciasDaVaga(vaga.id)
-            }
+        empresas.each { Empresa empresa ->
+            carregarVagasECompetencias(empresa, vagas)
         }
 
         return empresas
@@ -73,33 +63,22 @@ class EmpresaService {
 
         Empresa empresa = empresaDAO.buscarPorId(id)
 
-        if (empresa != null) {
-
+        if (empresa) {
             List<Vaga> vagas = vagaDAO.listarTodos()
-
-            empresa.vagas = vagas.findAll { vaga ->
-                vaga.empresa?.id == empresa.id
-            }
-
-            empresa.vagas.each { vaga ->
-
-                vaga.skills =
-                        vagaCompetenciaDAO
-                                .listarCompetenciasDaVaga(vaga.id)
-            }
+            carregarVagasECompetencias(empresa, vagas)
         }
 
         return empresa
     }
 
 
-    void atualizarEmpresa(Empresa empresa) {
-        empresaDAO.atualizar(empresa)
+    boolean atualizarEmpresa(Empresa empresa) {
+       return empresaDAO.atualizar(empresa)
     }
 
 
-    void excluirEmpresa(Long id) {
-        empresaDAO.excluir(id)
+    boolean excluirEmpresa(Long id) {
+       return empresaDAO.excluir(id)
     }
 
 
@@ -118,4 +97,22 @@ class EmpresaService {
             )
         }
     }
+
+
+    private void carregarVagasECompetencias(
+            Empresa empresa,
+            List<Vaga> vagas
+    ) {
+        empresa.vagas = vagas.findAll { Vaga vaga ->
+            vaga.empresa?.id == empresa.id
+        }
+
+        empresa.vagas.each { Vaga vaga ->
+            vaga.skills =
+                    vagaCompetenciaDAO
+                            .listarCompetenciasDaVaga(vaga.id)
+        }
+    }
+
+
 }

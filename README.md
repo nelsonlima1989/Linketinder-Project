@@ -180,10 +180,18 @@ linketinder/
 │                   │   ├── CompetenciaDAO.groovy
 │                   │   ├── EmpresaDAO.groovy
 │                   │   ├── VagaDAO.groovy
-│                   │   └── VagaCompetenciaDAO.groovy
-│                   │
-│                   ├── database/
+│                   │   ├── VagaCompetenciaDAO.groovy
+│                   │   ├── ConexaoProvider.groovy
+│                   │   ├── ConexaoPostgresProvider.groovy
 │                   │   └── ConexaoDB.groovy
+│                   │
+│                   ├── repository/
+│                   │   ├── CandidatoRepository.groovy
+│                   │   ├── CandidatoCompetenciaRepository.groovy
+│                   │   ├── EmpresaRepository.groovy
+│                   │   ├── VagaRepository.groovy
+│                   │   ├── VagaCompetenciaRepository.groovy
+│                   │   └── CompetenciaRepository.groovy
 │                   │
 │                   ├── model/
 │                   │   ├── Pessoa.groovy
@@ -1013,7 +1021,25 @@ Na próxima etapa, o `MatchService` será integrado às curtidas persistidas par
    psql -h localhost -U seu_usuario -d linketinder -f database/queries.sql
    ```
 
-4. Configure em `ConexaoDB.groovy` a URL JDBC, o usuário e a senha correspondentes ao seu ambiente PostgreSQL.
+4. Configure as variáveis de ambiente `DB_URL`, `DB_USER` e `DB_PASSWORD`. A classe `ConexaoDB.groovy` lê essas variáveis com `System.getenv()`, sem credenciais fixas no código.
+
+   Exemplo de arquivo `.env` na raiz do projeto (substitua os valores pelos de seu ambiente):
+
+   ```dotenv
+   DB_URL=jdbc:postgresql://localhost:5432/linketinder
+   DB_USER=seu_usuario
+   DB_PASSWORD=sua_senha
+   ```
+
+   Mantenha `.env` fora do controle de versão (`.gitignore`) e **não publique credenciais**. No Linux/macOS, carregue o arquivo em um terminal confiável antes de executar o Gradle:
+
+   ```bash
+   set -a
+   source .env
+   set +a
+   ```
+
+   No IntelliJ IDEA, configure as três variáveis de ambiente na configuração de execução ou execute pelo terminal que já as exportou.
 
 O `database.sql` cria a estrutura e insere os dados iniciais utilizados pelo projeto.
 
@@ -1040,10 +1066,10 @@ O programa iniciará o menu do Linketinder no terminal.
 
 ### Executando pelo Gradle
 
-Caso o projeto possua uma configuração de execução pelo Gradle, utilize:
+Na raiz do projeto, com as variáveis do banco carregadas:
 
 ```bash
-./gradlew run
+./gradlew run --console=plain
 ```
 
 No Windows:
@@ -1134,6 +1160,83 @@ Foram testados:
 
 ---
 
+# 🧹 Refatoração do backend — Clean Code e SOLID
+
+Nesta etapa, o desafio de refatoração foi delimitado **ao backend Groovy**. A estrutura e as funcionalidades do frontend TypeScript foram mantidas, sem novas refatorações nesta entrega. A persistência das curtidas e dos matches via JDBC também permanece reservada para uma etapa posterior.
+
+## Melhorias de Clean Code
+
+- **Nomes explicativos e funções menores:** extração de métodos com finalidade específica no `Menu`, como apresentação das opções, apresentação das vagas/candidatos e preparação da lista de vagas.
+- **DRY:** remoção de repetições relevantes na preparação dos mocks e na captura da saída do console no `MenuSpec`.
+- **Tratamento de erros:** DAOs preservam as causas SQL ao lançar `IllegalStateException`; o menu apresenta mensagens compreensíveis quando as consultas falham.
+- **Gerenciamento de recursos:** uso de `try-with-resources` nos DAOs para fechar conexões, statements e resultados.
+- **Separação entre persistência e apresentação:** remoção de mensagens `println` de operações do `CandidatoCompetenciaDAO`.
+- **Entrada de dados validada:** o `Menu` utiliza `Scanner` injetado e leitura consistente por `lerOpcao()`, evitando a mistura de `nextInt()` com `nextLine()`.
+- **Comentários apenas quando úteis:** remoção de comentários que apenas repetiam nomes de métodos ou de blocos.
+
+## Aplicação dos princípios SOLID
+
+| Princípio | Aplicação no backend |
+|---|---|
+| **S — Responsabilidade única (SRP)** | `Menu` concentra a interação com o usuário; `Services` coordenam operações; `DAOs` acessam os dados; `Models` representam entidades. |
+| **O — Aberto/Fechado (OCP)** | Os contratos Repository e `ConexaoProvider` permitem acrescentar implementações alternativas com poucas mudanças nos consumidores. |
+| **L — Substituição de Liskov (LSP)** | As implementações analisadas respeitam as assinaturas de seus contratos; não foram identificadas violações evidentes na revisão. |
+| **I — Segregação de Interfaces (ISP)** | Interfaces específicas para entidades e relacionamentos, sem obrigar os consumidores a receber um único contrato genérico. |
+| **D — Inversão de Dependências (DIP)** | `Services` recebem interfaces Repository; os DAOs recebem `ConexaoProvider`; o `Main.groovy` conecta as implementações. |
+
+A revisão dos princípios é uma **avaliação arquitetural**, não uma garantia formal de todas as propriedades comportamentais de SOLID.
+
+## Organização e injeção de dependências
+
+```text
+Main.groovy (composition root)
+    ├── Menu (Scanner injetado)
+    │    └── Services
+    │         └── interfaces Repository
+    │              └── DAOs JDBC
+    │                   └── ConexaoProvider
+    │                        └── ConexaoPostgresProvider
+    │                             └── ConexaoDB / DriverManager / PostgreSQL
+    └── Montagem dos objetos e suas dependências
+```
+
+Os DAOs utilizam `PreparedStatement` com parâmetros para executar consultas e alterações. Em `VagaDAO.listarTodos()`, a recuperação de empresas por `EmpresaRepository.buscarPorIds(...)` evita consultas individuais para cada vaga.
+
+## Testes unitários — Spock
+
+Na validação final desta etapa, foram **122 testes unitários aprovados**, dos quais **17 são do `MenuSpec`**. Os testes do menu usam `Mock()` para simular serviços e `Scanner` com entradas controladas, sem exigir acesso ao PostgreSQL.
+
+Foram exercitados, entre outros, encerramento do menu, opções inválidas, entradas não numéricas, listas vazias, falhas simuladas de consulta e encaminhamento de seleção válida ao serviço de curtidas. Esse último cenário **verifica a chamada ao mock**, não a persistência de uma curtida.
+
+Para executar a suíte completa:
+
+```bash
+./gradlew clean test
+```
+
+Para executar apenas os testes do menu:
+
+```bash
+./gradlew test --tests "uiTest.MenuSpec"
+```
+
+Para gerar o relatório JaCoCo, quando configurado no Gradle:
+
+```bash
+./gradlew clean test jacocoTestReport
+```
+
+O número de testes representa o resultado informado na validação local desta etapa; futuras mudanças no código podem alterar esse total.
+
+## Limites e evoluções futuras
+
+- A lógica de curtidas e matches existente foi mantida; **não foi implementada persistência JDBC dessas operações nesta refatoração**.
+- Os cadastros que envolvem múltiplas tabelas poderão exigir **transações** para evitar gravações parciais em caso de falha.
+- O carregamento individual de competências por candidato ou vaga poderá ser otimizado para evitar consultas do tipo **N+1**.
+- A proteção de senhas, autenticação e autorização merecem atenção antes de um uso em produção.
+
+---
+
 # 📋 Status atual do projeto
 
 | Funcionalidade | Status |
@@ -1157,6 +1260,8 @@ Foram testados:
 | EmpresaService | ✅ Implementado |
 | Estrutura SQL para curtidas | ✅ Implementado |
 | Integração JDBC de curtidas e Match | ⏳ Próximo desafio |
+| Refatoração Clean Code e SOLID do backend | ✅ Concluída nesta etapa |
+| Testes unitários do backend (Spock) | ✅ 122 aprovados (17 do MenuSpec) |
 | Busca de candidato | ✅ Implementado |
 | Menu de terminal | ✅ Implementado |
 | Listagem de candidatos | ✅ Implementado |
@@ -1203,6 +1308,10 @@ Entre os conceitos utilizados estão:
 - `Optional`;
 - Closures;
 - Separação de responsabilidades e camadas;
+- Clean Code e princípios SOLID aplicados ao backend;
+- Injeção de dependências por construtor e contratos Repository;
+- Testes unitários com Spock e mocks;
+- Tratamento consistente de exceções e `try-with-resources`;
 - Services e Components;
 - Manipulação da API DOM;
 - Persistência e sincronização local;

@@ -2,13 +2,20 @@ package com.linketinder.dao
 
 import com.linketinder.model.Candidato
 import com.linketinder.model.Informacoes
+import com.linketinder.repository.CandidatoRepository
 
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.SQLException
 
-class CandidatoDAO {
+class CandidatoDAO implements CandidatoRepository {
+
+    private final ConexaoProvider conexaoProvider
+
+    CandidatoDAO(ConexaoProvider conexaoProvider) {
+        this.conexaoProvider = conexaoProvider
+    }
 
 
     void inserir(Candidato candidato) {
@@ -31,7 +38,7 @@ class CandidatoDAO {
         """
 
         try (
-                Connection conexao = ConexaoDB.conectar();
+                Connection conexao = conexaoProvider.obterConexao();
                 PreparedStatement statement = conexao.prepareStatement(sql)
         ) {
             preencherParametrosCandidato(statement, candidato)
@@ -74,7 +81,7 @@ class CandidatoDAO {
         List<Candidato> candidatos = []
 
         try (
-                Connection conexao = ConexaoDB.conectar();
+                Connection conexao = conexaoProvider.obterConexao();
                 PreparedStatement statement = conexao.prepareStatement(sql);
                 ResultSet resultado = statement.executeQuery()
         ) {
@@ -114,7 +121,7 @@ class CandidatoDAO {
         Candidato candidato = null
 
         try (
-                Connection conexao = ConexaoDB.conectar();
+                Connection conexao = conexaoProvider.obterConexao();
                 PreparedStatement statement = conexao.prepareStatement(sql)
         ) {
             statement.setLong(1, id)
@@ -126,14 +133,17 @@ class CandidatoDAO {
             }
 
         } catch (SQLException e) {
-            println "Erro ao buscar candidato por ID: ${e.message}"
+            throw new IllegalStateException(
+                    "Não foi possível buscar o candidato por ID.",
+                    e
+            )
         }
 
         return candidato
     }
 
 
-    void atualizar(Candidato candidato) {
+    boolean atualizar(Candidato candidato) {
         String sql = """
         UPDATE candidatos
         SET
@@ -151,7 +161,7 @@ class CandidatoDAO {
     """
 
         try (
-                Connection conexao = ConexaoDB.conectar();
+                Connection conexao = conexaoProvider.obterConexao();
                 PreparedStatement statement = conexao.prepareStatement(sql)
         ) {
             preencherParametrosCandidato(statement, candidato)
@@ -159,40 +169,38 @@ class CandidatoDAO {
 
             int linhasAfetadas = statement.executeUpdate()
 
-            if (linhasAfetadas > 0) {
-                println "Candidato atualizado com sucesso."
-            } else {
-                println "Nenhum candidato encontrado com o ID ${candidato.id}."
-            }
+            return linhasAfetadas > 0
 
         } catch (SQLException e) {
-            println "Erro ao atualizar candidato: ${e.message}"
+            throw new IllegalStateException(
+                    "Não foi possível atualizar o candidato.",
+                    e
+            )
         }
     }
 
 
-    void excluir(Long id) {
+    boolean excluir(Long id) {
         String sql = """
         DELETE FROM candidatos
         WHERE id = ?
     """
 
         try (
-                Connection conexao = ConexaoDB.conectar();
+                Connection conexao = conexaoProvider.obterConexao();
                 PreparedStatement statement = conexao.prepareStatement(sql)
         ) {
             statement.setLong(1, id)
 
             int linhasAfetadas = statement.executeUpdate()
 
-            if (linhasAfetadas > 0) {
-                println "Candidato excluído com sucesso."
-            } else {
-                println "Nenhum candidato encontrado com o ID ${id}."
-            }
+            return linhasAfetadas > 0
 
         } catch (SQLException e) {
-            println "Erro ao excluir candidato: ${e.message}"
+            throw new IllegalStateException(
+                    "Não foi possível excluir o candidato.",
+                    e
+            )
         }
     }
 

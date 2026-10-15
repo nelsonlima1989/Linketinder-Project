@@ -1,8 +1,10 @@
 plugins {
     id 'groovy'
+    id 'jacoco'
+    id 'application'
 }
 
-group = 'com.helloworld'
+group = 'com.linketinder'
 version = '1.0-SNAPSHOT'
 
 repositories {
@@ -18,9 +20,28 @@ dependencies {
 
     testImplementation 'net.bytebuddy:byte-buddy:1.15.11'
 
+    testRuntimeOnly 'org.objenesis:objenesis:3.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 test {
     useJUnitPlatform()
+}
+
+jacocoTestReport {
+    dependsOn test
+
+    reports {
+        html.required = true
+        xml.required = true
+        csv.required = false
+    }
+}
+
+application {
+    mainClass = 'com.linketinder.Main'
+}
+
+tasks.named('run', JavaExec) {
+    standardInput = System.in
 }

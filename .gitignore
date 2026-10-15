@@ -44,6 +44,11 @@ bin/
 ### Mac OS ###
 .DS_Store
 
+### Variáveis de ambiente ###
+.env
+.env.*
+!.env.example
+
 # =========================
 # Frontend
 # =========================

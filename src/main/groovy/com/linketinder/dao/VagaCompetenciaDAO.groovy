@@ -1,16 +1,22 @@
+
 package com.linketinder.dao
 
 import com.linketinder.model.Skill
+import com.linketinder.repository.VagaCompetenciaRepository
 
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.SQLException
 
-class VagaCompetenciaDAO {
+class VagaCompetenciaDAO implements VagaCompetenciaRepository {
 
+    private final ConexaoProvider conexaoProvider
 
-    //adicionar
+    VagaCompetenciaDAO(ConexaoProvider conexaoProvider) {
+        this.conexaoProvider = conexaoProvider
+    }
+
     void adicionarCompetencia(Long vagaId, Long competenciaId) {
 
         String sql = """
@@ -21,167 +27,88 @@ class VagaCompetenciaDAO {
             VALUES (?, ?)
         """
 
-        Connection conexao = null
-        PreparedStatement statement = null
-
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-
+        try (
+                Connection conexao = conexaoProvider.obterConexao();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
             statement.setLong(1, vagaId)
             statement.setLong(2, competenciaId)
 
-            int linhasAfetadas = statement.executeUpdate()
-
-            if (linhasAfetadas > 0) {
-                println "Competência associada à vaga com sucesso."
-            }
+            statement.executeUpdate()
 
         } catch (SQLException e) {
-            println "Erro ao associar competência à vaga: ${e.message}"
-
-        } finally {
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+            throw new IllegalStateException(
+                    "Não foi possível associar a competência à vaga.",
+                    e
+            )
         }
     }
 
-
-    //listar
     List<Skill> listarCompetenciasDaVaga(Long vagaId) {
 
         String sql = """
-        SELECT
-            c.id,
-            c.nome
-        FROM competencias AS c
-        INNER JOIN vaga_competencias AS vc
-            ON c.id = vc.competencia_id
-        WHERE vc.vaga_id = ?
-        ORDER BY c.id
-    """
+            SELECT
+                c.id,
+                c.nome
+            FROM competencias AS c
+            INNER JOIN vaga_competencias AS vc
+                ON c.id = vc.competencia_id
+            WHERE vc.vaga_id = ?
+            ORDER BY c.id
+        """
 
-        List<Skill> skills = []
+        List<Skill> competencias = []
 
-        Connection conexao = null
-        PreparedStatement statement = null
-        ResultSet resultado = null
-
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-
+        try (
+                Connection conexao = conexaoProvider.obterConexao();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
             statement.setLong(1, vagaId)
 
-            resultado = statement.executeQuery()
+            try (ResultSet resultado = statement.executeQuery()) {
 
-            while (resultado.next()) {
+                while (resultado.next()) {
+                    Skill competencia = new Skill(
+                            id: resultado.getLong("id"),
+                            nome: resultado.getString("nome")
+                    )
 
-                Skill skill = new Skill(
-                        id: resultado.getLong("id"),
-                        nome: resultado.getString("nome")
-                )
-
-                skills.add(skill)
+                    competencias.add(competencia)
+                }
             }
 
         } catch (SQLException e) {
-            println "Erro ao listar competências da vaga: ${e.message}"
-
-        } finally {
-
-            if (resultado != null) {
-                try {
-                    resultado.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar ResultSet: ${e.message}"
-                }
-            }
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+            throw new IllegalStateException(
+                    "Não foi possível listar as competências da vaga.",
+                    e
+            )
         }
 
-        return skills
+        return competencias
     }
 
-
-    //remover
     void removerCompetencia(Long vagaId, Long competenciaId) {
 
         String sql = """
-        DELETE FROM vaga_competencias
-        WHERE vaga_id = ?
-          AND competencia_id = ?
-    """
+            DELETE FROM vaga_competencias
+            WHERE vaga_id = ?
+              AND competencia_id = ?
+        """
 
-        Connection conexao = null
-        PreparedStatement statement = null
-
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-
+        try (
+                Connection conexao = conexaoProvider.obterConexao();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
             statement.setLong(1, vagaId)
             statement.setLong(2, competenciaId)
 
-            int linhasAfetadas = statement.executeUpdate()
-
-            if (linhasAfetadas > 0) {
-                println "Competência removida da vaga com sucesso."
-            } else {
-                println "Relacionamento não encontrado."
-            }
+            statement.executeUpdate()
 
         } catch (SQLException e) {
-            println "Erro ao remover competência da vaga: ${e.message}"
-
-        } finally {
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+            throw new IllegalStateException(
+                    "Não foi possível remover a competência da vaga.",
+                    e
+            )
         }
     }
-
-
 }

@@ -1,8 +1,17 @@
+package com.linketinder
+
 import com.linketinder.dao.CandidatoCompetenciaDAO
 import com.linketinder.dao.CandidatoDAO
+import com.linketinder.dao.ConexaoPostgresProvider
+import com.linketinder.dao.ConexaoProvider
 import com.linketinder.dao.EmpresaDAO
 import com.linketinder.dao.VagaCompetenciaDAO
 import com.linketinder.dao.VagaDAO
+import com.linketinder.repository.CandidatoCompetenciaRepository
+import com.linketinder.repository.CandidatoRepository
+import com.linketinder.repository.EmpresaRepository
+import com.linketinder.repository.VagaCompetenciaRepository
+import com.linketinder.repository.VagaRepository
 import com.linketinder.service.CandidatoService
 import com.linketinder.service.CurtidaService
 import com.linketinder.service.EmpresaService
@@ -10,21 +19,22 @@ import com.linketinder.service.MatchService
 import com.linketinder.ui.Menu
 
 
-// DAOs
-CandidatoDAO candidatoDAO = new CandidatoDAO()
 
-CandidatoCompetenciaDAO candidatoCompetenciaDAO =
-        new CandidatoCompetenciaDAO()
+ConexaoProvider conexaoProvider = new ConexaoPostgresProvider()
 
-EmpresaDAO empresaDAO = new EmpresaDAO()
+CandidatoRepository candidatoDAO = new CandidatoDAO(conexaoProvider)
 
-VagaDAO vagaDAO = new VagaDAO()
+CandidatoCompetenciaRepository candidatoCompetenciaDAO =
+        new CandidatoCompetenciaDAO(conexaoProvider)
 
-VagaCompetenciaDAO vagaCompetenciaDAO =
-        new VagaCompetenciaDAO()
+EmpresaRepository empresaDAO = new EmpresaDAO(conexaoProvider)
+
+VagaRepository vagaDAO = new VagaDAO(conexaoProvider, empresaDAO)
+
+VagaCompetenciaRepository vagaCompetenciaDAO = new VagaCompetenciaDAO(conexaoProvider)
 
 
-// Services
+
 CandidatoService candidatoService =
         new CandidatoService(
                 candidatoDAO,
@@ -48,12 +58,14 @@ CurtidaService curtidaService =
         )
 
 
-// Menu
+
+Scanner scanner = new Scanner(System.in)
 Menu menu = new Menu(
         candidatoService,
         empresaService,
         curtidaService,
-        matchService
+        matchService,
+        scanner
 )
 
 menu.iniciarPrograma()

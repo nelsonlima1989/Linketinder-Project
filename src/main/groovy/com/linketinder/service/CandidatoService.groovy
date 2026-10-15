@@ -1,18 +1,18 @@
 package com.linketinder.service
 
-import com.linketinder.dao.CandidatoCompetenciaDAO
-import com.linketinder.dao.CandidatoDAO
+import com.linketinder.repository.CandidatoCompetenciaRepository
+import com.linketinder.repository.CandidatoRepository
 import com.linketinder.model.Candidato
 import com.linketinder.model.CandidatoAnonimo
 
 class CandidatoService {
 
-    private CandidatoDAO candidatoDAO
-    private CandidatoCompetenciaDAO candidatoCompetenciaDAO
+    private final CandidatoRepository candidatoDAO
+    private final CandidatoCompetenciaRepository candidatoCompetenciaDAO
 
     CandidatoService(
-            CandidatoDAO candidatoDAO,
-            CandidatoCompetenciaDAO candidatoCompetenciaDAO
+            CandidatoRepository candidatoDAO,
+            CandidatoCompetenciaRepository candidatoCompetenciaDAO
     ) {
         this.candidatoDAO = candidatoDAO
         this.candidatoCompetenciaDAO = candidatoCompetenciaDAO
@@ -23,9 +23,7 @@ class CandidatoService {
         List<Candidato> candidatos = candidatoDAO.listarTodos()
 
         candidatos.each { candidato ->
-            candidato.skills =
-                    candidatoCompetenciaDAO
-                            .listarCompetenciasDoCandidato(candidato.id)
+            carregarCompetencias(candidato)
         }
 
         return candidatos
@@ -47,21 +45,19 @@ class CandidatoService {
 
         Candidato candidato = candidatoDAO.buscarPorId(id)
 
-        if (candidato != null) {
-            candidato.skills =
-                    candidatoCompetenciaDAO
-                            .listarCompetenciasDoCandidato(candidato.id)
+        if (candidato) {
+            carregarCompetencias(candidato)
         }
 
         return candidato
     }
 
-    void atualizarCandidato(Candidato candidato) {
-        candidatoDAO.atualizar(candidato)
+    boolean atualizarCandidato(Candidato candidato) {
+        return candidatoDAO.atualizar(candidato)
     }
 
-    void excluirCandidato(Long id) {
-        candidatoDAO.excluir(id)
+    boolean excluirCandidato(Long id) {
+        return candidatoDAO.excluir(id)
     }
 
     List<CandidatoAnonimo> listarCandidatosAnonimos() {
@@ -78,4 +74,13 @@ class CandidatoService {
             )
         }
     }
+
+
+    private void carregarCompetencias(Candidato candidato) {
+        candidato.skills =
+                candidatoCompetenciaDAO
+                        .listarCompetenciasDoCandidato(candidato.id)
+    }
+
+
 }

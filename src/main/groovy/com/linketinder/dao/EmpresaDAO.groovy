@@ -2,15 +2,21 @@ package com.linketinder.dao
 
 import com.linketinder.model.Empresa
 import com.linketinder.model.Informacoes
+import com.linketinder.repository.EmpresaRepository
 
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.SQLException
 
-class EmpresaDAO {
+class EmpresaDAO implements EmpresaRepository{
 
-    // inserir
+    private final ConexaoProvider conexaoProvider
+
+    EmpresaDAO(ConexaoProvider conexaoProvider) {
+        this.conexaoProvider = conexaoProvider
+    }
+
     void inserir(Empresa empresa) {
 
         String sql = """
@@ -28,14 +34,10 @@ class EmpresaDAO {
             RETURNING id
         """
 
-        Connection conexao = null
-        PreparedStatement statement = null
-        ResultSet resultado = null
-
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-
+        try (
+                Connection conexao = conexaoProvider.obterConexao();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
             statement.setString(1, empresa.informacoes.nome)
             statement.setString(2, empresa.cnpj)
             statement.setString(3, empresa.informacoes.email)
@@ -45,45 +47,23 @@ class EmpresaDAO {
             statement.setString(7, empresa.informacoes.cep)
             statement.setString(8, empresa.senha)
 
-            resultado = statement.executeQuery()
-
-            if (resultado.next()) {
-                empresa.id = resultado.getLong("id")
+            try (ResultSet resultado = statement.executeQuery()) {
+                if (resultado.next()) {
+                    empresa.id = resultado.getLong("id")
+                }
             }
 
         } catch (SQLException e) {
-            println "Erro ao inserir empresa: ${e.message}"
-
-        } finally {
-
-            if (resultado != null) {
-                try {
-                    resultado.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar ResultSet: ${e.message}"
-                }
-            }
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+            throw new IllegalStateException(
+                    "Não foi possível inserir a empresa.",
+                    e
+            )
         }
+
     }
 
 
-    // listar todos
+
     List<Empresa> listarTodos() {
 
         String sql = """
@@ -103,181 +83,138 @@ class EmpresaDAO {
 
         List<Empresa> empresas = []
 
-        Connection conexao = null
-        PreparedStatement statement = null
-        ResultSet resultado = null
-
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-            resultado = statement.executeQuery()
-
+        try (
+                Connection conexao = conexaoProvider.obterConexao();
+                PreparedStatement statement = conexao.prepareStatement(sql);
+                ResultSet resultado = statement.executeQuery()
+        ) {
             while (resultado.next()) {
-
-                Informacoes informacoes = new Informacoes(
-                        nome: resultado.getString("nome"),
-                        email: resultado.getString("email"),
-                        cep: resultado.getString("cep"),
-                        pais: resultado.getString("pais")
-                )
-
-                Empresa empresa = new Empresa(
-                        id: resultado.getLong("id"),
-                        cnpj: resultado.getString("cnpj"),
-                        pais: resultado.getString("pais"),
-                        estado: resultado.getString("estado"),
-                        descricaoEmpresarial: resultado.getString("descricao"),
-                        senha: resultado.getString("senha"),
-                        informacoes: informacoes
-                )
-
-                empresas.add(empresa)
+                empresas.add(construirEmpresa(resultado))
             }
 
         } catch (SQLException e) {
-            println "Erro ao listar empresas: ${e.message}"
-
-        } finally {
-
-            if (resultado != null) {
-                try {
-                    resultado.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar ResultSet: ${e.message}"
-                }
-            }
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+            throw new IllegalStateException(
+                    "Não foi possível listar as empresas.",
+                    e
+            )
         }
 
         return empresas
     }
 
-
-    // buscar por ID
     Empresa buscarPorId(Long id) {
 
         String sql = """
-            SELECT
-                id,
-                nome,
-                cnpj,
-                email,
-                descricao,
-                pais,
-                estado,
-                cep,
-                senha
-            FROM empresas
-            WHERE id = ?
-        """
-
-        Connection conexao = null
-        PreparedStatement statement = null
-        ResultSet resultado = null
+        SELECT
+            id,
+            nome,
+            cnpj,
+            email,
+            descricao,
+            pais,
+            estado,
+            cep,
+            senha
+        FROM empresas
+        WHERE id = ?
+    """
 
         Empresa empresa = null
 
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-
+        try (
+                Connection conexao = conexaoProvider.obterConexao();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
             statement.setLong(1, id)
 
-            resultado = statement.executeQuery()
-
-            if (resultado.next()) {
-
-                Informacoes informacoes = new Informacoes(
-                        nome: resultado.getString("nome"),
-                        email: resultado.getString("email"),
-                        cep: resultado.getString("cep"),
-                        pais: resultado.getString("pais")
-                )
-
-                empresa = new Empresa(
-                        id: resultado.getLong("id"),
-                        cnpj: resultado.getString("cnpj"),
-                        pais: resultado.getString("pais"),
-                        estado: resultado.getString("estado"),
-                        descricaoEmpresarial: resultado.getString("descricao"),
-                        senha: resultado.getString("senha"),
-                        informacoes: informacoes
-                )
+            try (ResultSet resultado = statement.executeQuery()) {
+                if (resultado.next()) {
+                    empresa = construirEmpresa(resultado)
+                }
             }
 
         } catch (SQLException e) {
-            println "Erro ao buscar empresa por ID: ${e.message}"
-
-        } finally {
-
-            if (resultado != null) {
-                try {
-                    resultado.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar ResultSet: ${e.message}"
-                }
-            }
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+            throw new IllegalStateException(
+                    "Não foi possível buscar a empresa por ID.",
+                    e
+            )
         }
 
         return empresa
     }
 
+    Map<Long, Empresa> buscarPorIds(List<Long> ids) {
 
-    // atualizar
-    void atualizar(Empresa empresa) {
+        if (ids.isEmpty()) {
+            return [:]
+        }
+
+        String placeholders = ids.collect { "?" }.join(", ")
 
         String sql = """
-            UPDATE empresas
-            SET
-                nome = ?,
-                cnpj = ?,
-                email = ?,
-                descricao = ?,
-                pais = ?,
-                estado = ?,
-                cep = ?,
-                senha = ?
-            WHERE id = ?
-        """
+        SELECT
+            id,
+            nome,
+            email,
+            cnpj,
+            descricao,
+            pais,
+            estado,
+            cep,
+            senha
+        FROM empresas
+        WHERE id IN (${placeholders})
+        ORDER BY id
+    """
 
-        Connection conexao = null
-        PreparedStatement statement = null
+        Map<Long, Empresa> empresasPorId = [:]
 
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
+        try (
+                Connection conexao = conexaoProvider.obterConexao();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
+            ids.eachWithIndex { Long id, int index ->
+                statement.setLong(index + 1, id)
+            }
 
+            try (ResultSet resultado = statement.executeQuery()) {
+                while (resultado.next()) {
+                    Empresa empresa = construirEmpresa(resultado)
+                    empresasPorId[empresa.id] = empresa
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new IllegalStateException(
+                    "Não foi possível buscar as empresas por IDs.",
+                    e
+            )
+        }
+
+        return empresasPorId
+    }
+
+
+    boolean atualizar(Empresa empresa) {
+
+        String sql = """
+        UPDATE empresas
+        SET
+            nome = ?,
+            cnpj = ?,
+            email = ?,
+            descricao = ?,
+            pais = ?,
+            estado = ?,
+            cep = ?,
+            senha = ?
+        WHERE id = ?
+    """
+
+        try (
+                Connection conexao = conexaoProvider.obterConexao();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
             statement.setString(1, empresa.informacoes.nome)
             statement.setString(2, empresa.cnpj)
             statement.setString(3, empresa.informacoes.email)
@@ -290,81 +227,61 @@ class EmpresaDAO {
 
             int linhasAfetadas = statement.executeUpdate()
 
-            if (linhasAfetadas > 0) {
-                println "Empresa atualizada com sucesso."
-            } else {
-                println "Nenhuma empresa encontrada com o ID ${empresa.id}."
-            }
+            return linhasAfetadas > 0
 
         } catch (SQLException e) {
-            println "Erro ao atualizar empresa: ${e.message}"
-
-        } finally {
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+            throw new IllegalStateException(
+                    "Não foi possível atualizar a empresa.",
+                    e
+            )
         }
     }
 
 
-    // excluir
-    void excluir(Long id) {
+    boolean excluir(Long id) {
 
         String sql = """
-            DELETE FROM empresas
-            WHERE id = ?
-        """
+        DELETE FROM empresas
+        WHERE id = ?
+    """
 
-        Connection conexao = null
-        PreparedStatement statement = null
-
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-
+        try (
+                Connection conexao = conexaoProvider.obterConexao();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
             statement.setLong(1, id)
 
             int linhasAfetadas = statement.executeUpdate()
 
-            if (linhasAfetadas > 0) {
-                println "Empresa excluída com sucesso."
-            } else {
-                println "Nenhuma empresa encontrada com o ID ${id}."
-            }
+            return linhasAfetadas > 0
 
         } catch (SQLException e) {
-            println "Erro ao excluir empresa: ${e.message}"
-
-        } finally {
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+            throw new IllegalStateException(
+                    "Não foi possível excluir a empresa.",
+                    e
+            )
         }
+    }
+
+    private Empresa construirEmpresa(ResultSet resultado) throws SQLException {
+
+        String pais = resultado.getString("pais")
+
+        Informacoes informacoes = new Informacoes(
+                nome: resultado.getString("nome"),
+                email: resultado.getString("email"),
+                cep: resultado.getString("cep"),
+                pais: pais
+        )
+
+        return new Empresa(
+                id: resultado.getLong("id"),
+                cnpj: resultado.getString("cnpj"),
+                pais: pais,
+                estado: resultado.getString("estado"),
+                descricaoEmpresarial: resultado.getString("descricao"),
+                senha: resultado.getString("senha"),
+                informacoes: informacoes
+        )
     }
 }

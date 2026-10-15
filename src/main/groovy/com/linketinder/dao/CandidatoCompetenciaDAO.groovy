@@ -1,15 +1,24 @@
 package com.linketinder.dao
 
 import com.linketinder.model.Skill
+import com.linketinder.repository.CandidatoCompetenciaRepository
 
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.SQLException
 
-class CandidatoCompetenciaDAO {
 
-    //adicionar
+
+class CandidatoCompetenciaDAO implements CandidatoCompetenciaRepository {
+
+    private final ConexaoProvider conexaoProvider
+
+    CandidatoCompetenciaDAO(ConexaoProvider conexaoProvider) {
+        this.conexaoProvider = conexaoProvider
+    }
+
+
     void adicionarCompetencia(Long candidatoId, Long competenciaId) {
 
         String sql = """
@@ -20,13 +29,10 @@ class CandidatoCompetenciaDAO {
             VALUES (?, ?)
         """
 
-        Connection conexao = null
-        PreparedStatement statement = null
-
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-
+        try (
+                Connection conexao = conexaoProvider.obterConexao();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
             statement.setLong(1, candidatoId)
             statement.setLong(2, competenciaId)
 
@@ -37,29 +43,15 @@ class CandidatoCompetenciaDAO {
             }
 
         } catch (SQLException e) {
-            println "Erro ao associar competência ao candidato: ${e.message}"
-
-        } finally {
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+            throw new IllegalStateException(
+                    "Não foi possível associar a competência ao candidato.",
+                    e
+            )
         }
+
     }
 
-    //listar
+
     List<Skill> listarCompetenciasDoCandidato(Long candidatoId) {
 
         String sql = """
@@ -75,62 +67,35 @@ class CandidatoCompetenciaDAO {
 
         List<Skill> skills = []
 
-        Connection conexao = null
-        PreparedStatement statement = null
-        ResultSet resultado = null
-
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-
+        try (
+                Connection conexao = conexaoProvider.obterConexao();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
             statement.setLong(1, candidatoId)
 
-            resultado = statement.executeQuery()
+            try (ResultSet resultado = statement.executeQuery()) {
 
-            while (resultado.next()) {
+                while (resultado.next()) {
+                    Skill skill = new Skill(
+                            id: resultado.getLong("id"),
+                            nome: resultado.getString("nome")
+                    )
 
-                Skill skill = new Skill(
-                        id: resultado.getLong("id"),
-                        nome: resultado.getString("nome")
-                )
-
-                skills.add(skill)
+                    skills.add(skill)
+                }
             }
-
         } catch (SQLException e) {
-            println "Erro ao listar competências do candidato: ${e.message}"
-
-        } finally {
-
-            if (resultado != null) {
-                try {
-                    resultado.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar ResultSet: ${e.message}"
-                }
-            }
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+            throw new IllegalStateException(
+                    "Não foi possível listar as competências do candidato.",
+                    e
+            )
         }
+
 
         return skills
     }
 
-    //remover
+
     void removerCompetencia(Long candidatoId, Long competenciaId) {
 
         String sql = """
@@ -139,44 +104,20 @@ class CandidatoCompetenciaDAO {
           AND competencia_id = ?
     """
 
-        Connection conexao = null
-        PreparedStatement statement = null
-
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-
+        try (
+                Connection conexao = conexaoProvider.obterConexao();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
             statement.setLong(1, candidatoId)
             statement.setLong(2, competenciaId)
 
-            int linhasAfetadas = statement.executeUpdate()
-
-            if (linhasAfetadas > 0) {
-                println "Competência removida do candidato com sucesso."
-            } else {
-                println "Relacionamento não encontrado."
-            }
+            statement.executeUpdate()
 
         } catch (SQLException e) {
-            println "Erro ao remover competência do candidato: ${e.message}"
-
-        } finally {
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+            throw new IllegalStateException(
+                    "Não foi possível remover a competência do candidato.",
+                    e
+            )
         }
     }
 

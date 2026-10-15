@@ -2,15 +2,29 @@ package com.linketinder.dao
 
 import com.linketinder.model.Empresa
 import com.linketinder.model.Vaga
+import com.linketinder.repository.EmpresaRepository
+import com.linketinder.repository.VagaRepository
 
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.SQLException
 
-class VagaDAO {
+class VagaDAO implements VagaRepository{
 
-    // inserir
+    private final ConexaoProvider conexaoProvider
+    private final EmpresaRepository empresaRepository
+
+    VagaDAO(
+            ConexaoProvider conexaoProvider,
+            EmpresaRepository empresaRepository
+    ) {
+        this.conexaoProvider = conexaoProvider
+        this.empresaRepository = empresaRepository
+    }
+
+
+
     void inserir(Vaga vaga) {
 
         String sql = """
@@ -24,59 +38,31 @@ class VagaDAO {
         VALUES (?, ?, ?, ?, ?)
         RETURNING id
     """
-
-        Connection conexao = null
-        PreparedStatement statement = null
-        ResultSet resultado = null
-
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-
+        try (
+                Connection conexao = conexaoProvider.obterConexao();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
             statement.setLong(1, vaga.empresa.id)
             statement.setString(2, vaga.titulo)
-            statement.setString(3, vaga.descricaoVaga)
-            statement.setString(4, vaga.estado)
-            statement.setString(5, vaga.cidade)
+            statement.setString(3, vaga.estado)
+            statement.setString(4, vaga.cidade)
+            statement.setString(5, vaga.descricaoVaga)
 
-            resultado = statement.executeQuery()
-
-            if (resultado.next()) {
-                vaga.id = resultado.getLong("id")
+            try (ResultSet resultado = statement.executeQuery()) {
+                if (resultado.next()) {
+                    vaga.id = resultado.getLong("id")
+                }
             }
 
         } catch (SQLException e) {
-            println "Erro ao inserir vaga: ${e.message}"
-
-        } finally {
-
-            if (resultado != null) {
-                try {
-                    resultado.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar ResultSet: ${e.message}"
-                }
-            }
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+            throw new IllegalStateException(
+                    "Não foi possível inserir a vaga.",
+                    e
+            )
         }
+
     }
 
-    // listar todos
     List<Vaga> listarTodos() {
 
         String sql = """
@@ -92,64 +78,49 @@ class VagaDAO {
     """
 
         List<Vaga> vagas = []
+        Map<Long, Long> empresaIdPorVagaId = [:]
+        Set<Long> empresaIds = new LinkedHashSet<Long>()
 
-        Connection conexao = null
-        PreparedStatement statement = null
-        ResultSet resultado = null
-
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-            resultado = statement.executeQuery()
-
-            EmpresaDAO empresaDAO = new EmpresaDAO()
-
+        try (
+                Connection conexao = conexaoProvider.obterConexao();
+                PreparedStatement statement = conexao.prepareStatement(sql);
+                ResultSet resultado = statement.executeQuery()
+        ) {
             while (resultado.next()) {
 
                 Long empresaId = resultado.getLong("empresa_id")
-
-                Empresa empresa = empresaDAO.buscarPorId(empresaId)
 
                 Vaga vaga = new Vaga(
                         id: resultado.getLong("id"),
                         titulo: resultado.getString("nome"),
                         descricaoVaga: resultado.getString("descricao"),
                         estado: resultado.getString("estado"),
-                        cidade: resultado.getString("cidade"),
-                        empresa: empresa
+                        cidade: resultado.getString("cidade")
                 )
 
                 vagas.add(vaga)
+                empresaIdPorVagaId[vaga.id] = empresaId
+                empresaIds.add(empresaId)
             }
 
         } catch (SQLException e) {
-            println "Erro ao listar vagas: ${e.message}"
+            throw new IllegalStateException(
+                    "Não foi possível listar as vagas.",
+                    e
+            )
+        }
 
-        } finally {
+        if (empresaIds.isEmpty()) {
+            return vagas
+        }
 
-            if (resultado != null) {
-                try {
-                    resultado.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar ResultSet: ${e.message}"
-                }
-            }
+        Map<Long, Empresa> empresasPorId = empresaRepository.buscarPorIds(
+                new ArrayList<Long>(empresaIds)
+        )
 
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+        for (Vaga vaga : vagas) {
+            Long empresaId = empresaIdPorVagaId[vaga.id]
+            vaga.empresa = empresasPorId[empresaId]
         }
 
         return vagas
@@ -157,7 +128,7 @@ class VagaDAO {
 
 
 
-    // buscar por ID
+
     Vaga buscarPorId(Long id) {
 
         String sql = """
@@ -172,71 +143,31 @@ class VagaDAO {
         WHERE id = ?
     """
 
-        Connection conexao = null
-        PreparedStatement statement = null
-        ResultSet resultado = null
-
         Vaga vaga = null
 
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-
+        try (
+                Connection conexao = conexaoProvider.obterConexao();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
             statement.setLong(1, id)
 
-            resultado = statement.executeQuery()
-
-            if (resultado.next()) {
-
-                Long empresaId = resultado.getLong("empresa_id")
-
-                EmpresaDAO empresaDAO = new EmpresaDAO()
-                Empresa empresa = empresaDAO.buscarPorId(empresaId)
-
-                vaga = new Vaga(
-                        id: resultado.getLong("id"),
-                        titulo: resultado.getString("nome"),
-                        descricaoVaga: resultado.getString("descricao"),
-                        estado: resultado.getString("estado"),
-                        cidade: resultado.getString("cidade"),
-                        empresa: empresa
-                )
+            try (ResultSet resultado = statement.executeQuery()) {
+                if (resultado.next()) {
+                    vaga = construirVaga(resultado)
+                }
             }
 
         } catch (SQLException e) {
-            println "Erro ao buscar vaga por ID: ${e.message}"
-
-        } finally {
-
-            if (resultado != null) {
-                try {
-                    resultado.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar ResultSet: ${e.message}"
-                }
-            }
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+            throw new IllegalStateException(
+                    "Não foi possível buscar a vaga por ID.",
+                    e
+            )
         }
 
         return vaga
     }
 
-    void atualizar(Vaga vaga) {
+    boolean atualizar(Vaga vaga) {
 
         String sql = """
         UPDATE vagas
@@ -248,13 +179,10 @@ class VagaDAO {
         WHERE id = ?
     """
 
-        Connection conexao = null
-        PreparedStatement statement = null
-
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-
+        try (
+                Connection conexao = conexaoProvider.obterConexao();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
             statement.setString(1, vaga.titulo)
             statement.setString(2, vaga.descricaoVaga)
             statement.setString(3, vaga.estado)
@@ -263,84 +191,57 @@ class VagaDAO {
 
             int linhasAfetadas = statement.executeUpdate()
 
-            if (linhasAfetadas > 0) {
-                println "Vaga atualizada com sucesso."
-            } else {
-                println "Nenhuma vaga encontrada com o ID ${vaga.id}."
-            }
+            return linhasAfetadas > 0
 
         } catch (SQLException e) {
-            println "Erro ao atualizar vaga: ${e.message}"
-
-        } finally {
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+            throw new IllegalStateException(
+                    "Não foi possível atualizar a vaga.",
+                    e
+            )
         }
     }
 
 
-    // excluir
-    void excluir(Long id) {
+    boolean excluir(Long id) {
 
         String sql = """
         DELETE FROM vagas
         WHERE id = ?
     """
 
-        Connection conexao = null
-        PreparedStatement statement = null
-
-        try {
-            conexao = ConexaoDB.conectar()
-            statement = conexao.prepareStatement(sql)
-
+        try (
+                Connection conexao = conexaoProvider.obterConexao();
+                PreparedStatement statement = conexao.prepareStatement(sql)
+        ) {
             statement.setLong(1, id)
 
             int linhasAfetadas = statement.executeUpdate()
 
-            if (linhasAfetadas > 0) {
-                println "Vaga excluída com sucesso."
-            } else {
-                println "Nenhuma vaga encontrada com o ID ${id}."
-            }
+            return linhasAfetadas > 0
 
         } catch (SQLException e) {
-            println "Erro ao excluir vaga: ${e.message}"
-
-        } finally {
-
-            if (statement != null) {
-                try {
-                    statement.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar PreparedStatement: ${e.message}"
-                }
-            }
-
-            if (conexao != null) {
-                try {
-                    conexao.close()
-                } catch (SQLException e) {
-                    println "Erro ao fechar conexão: ${e.message}"
-                }
-            }
+            throw new IllegalStateException(
+                    "Não foi possível excluir a vaga.",
+                    e
+            )
         }
     }
 
+    private Vaga construirVaga(ResultSet resultado) throws SQLException {
+
+        Long empresaId = resultado.getLong("empresa_id")
+
+        Empresa empresa = empresaRepository.buscarPorId(empresaId)
+
+        return new Vaga(
+                id: resultado.getLong("id"),
+                titulo: resultado.getString("nome"),
+                descricaoVaga: resultado.getString("descricao"),
+                estado: resultado.getString("estado"),
+                cidade: resultado.getString("cidade"),
+                empresa: empresa
+        )
+    }
 
 
 }

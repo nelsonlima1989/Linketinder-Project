@@ -2,9 +2,14 @@ package com.linketinder.ui
 
 import com.linketinder.model.Candidato
 import com.linketinder.model.CandidatoAnonimo
+import com.linketinder.model.EmpresaAnonima
+import com.linketinder.model.Match
+import com.linketinder.model.Skill
+import com.linketinder.model.Vaga
 import com.linketinder.service.CandidatoService
 import com.linketinder.service.CurtidaService
 import com.linketinder.service.EmpresaService
+import com.linketinder.model.Empresa
 import com.linketinder.service.MatchService
 
 import java.time.LocalDate
@@ -12,44 +17,49 @@ import java.time.Period
 
 class Menu {
 
-    private CandidatoService candidatoService
-    private EmpresaService empresaService
-    private CurtidaService curtidaService
-    private MatchService matchService
+    private final CandidatoService candidatoService
+    private final EmpresaService empresaService
+    private final CurtidaService curtidaService
+    private final MatchService matchService
+    private final Scanner scanner
 
     Menu(
             CandidatoService candidatoService,
             EmpresaService empresaService,
             CurtidaService curtidaService,
-            MatchService matchService
+            MatchService matchService,
+            Scanner scanner
     ) {
         this.candidatoService = candidatoService
         this.empresaService = empresaService
         this.curtidaService = curtidaService
         this.matchService = matchService
+        this.scanner = scanner
+    }
+
+    private void exibirMenuPrincipal() {
+
+        println "================================"
+        println "          LINKETINDER"
+        println "================================"
+        println "1 - Listar candidatos"
+        println "2 - Listar vagas"
+        println "3 - Curtir vaga"
+        println "4 - Curtir candidato"
+        println "5 - Listar matches"
+        println "0 - Sair"
+        println "================================"
     }
 
     void iniciarPrograma() {
-
-        Scanner scanner = new Scanner(System.in)
 
         int opcao = -1
 
         while (opcao != 0) {
 
-            println "================================"
-            println "          LINKETINDER"
-            println "================================"
-            println "1 - Listar candidatos"
-            println "2 - Listar vagas"
-            println "3 - Curtir vaga"
-            println "4 - Curtir candidato"
-            println "5 - Listar matches"
-            println "0 - Sair"
-            println "================================"
-            print "Escolha uma opção: "
+            exibirMenuPrincipal()
 
-            opcao = scanner.nextInt()
+            opcao = lerOpcao("Escolha uma opção: ")
 
             switch (opcao) {
 
@@ -129,51 +139,130 @@ class Menu {
         println "           VAGAS"
         println "================================"
 
-        def empresas = empresaService.listarEmpresasAnonimas()
+        List<EmpresaAnonima> empresas
+
+        try {
+            empresas = empresaService.listarEmpresasAnonimas()
+
+        } catch (IllegalStateException e) {
+            println "Erro ao consultar vagas: ${e.message}"
+            return
+        }
 
         if (!empresas) {
             println "Nenhuma empresa cadastrada."
             return
         }
 
-        empresas.each { empresa ->
+        empresas.each { EmpresaAnonima empresa ->
 
-            println "País: ${empresa.pais}"
-            println "Estado: ${empresa.estado}"
+            println "Empresa:"
+            println "  País: ${empresa.pais}"
+            println "  Estado: ${empresa.estado}"
+            println ""
 
             println "Vagas:"
 
             if (empresa.vagas) {
 
-                empresa.vagas.each { vaga ->
+                empresa.vagas.each { Vaga vaga ->
 
-                    println "${vaga.id} - ${vaga.titulo}"
-                    println "  Descrição: ${vaga.descricaoVaga}"
-                    println "  Estado: ${vaga.estado}"
-                    println "  Cidade: ${vaga.cidade}"
-
-                    println "  Skills:"
+                    println "  ${vaga.id} - ${vaga.titulo}"
+                    println "    Descrição: ${vaga.descricaoVaga}"
+                    println "    Estado: ${vaga.estado}"
+                    println "    Cidade: ${vaga.cidade}"
+                    println "    Skills:"
 
                     if (vaga.skills) {
-                        vaga.skills.each { skill ->
-                            println "  - ${skill.nome}"
+                        vaga.skills.each { Skill skill ->
+                            println "      - ${skill.nome}"
                         }
                     } else {
-                        println "  - Nenhuma competência cadastrada"
+                        println "      - Nenhuma competência cadastrada"
                     }
+
+                    println ""
                 }
 
             } else {
-                println "- Nenhuma vaga cadastrada"
+                println "  Nenhuma vaga cadastrada"
             }
 
             println "--------------------------------"
         }
     }
 
-    private void curtirVaga() {
+    private void exibirCandidatosParaSelecao(List<Candidato> candidatos) {
 
-        Scanner scanner = new Scanner(System.in)
+        candidatos.eachWithIndex { Candidato candidato, int index ->
+
+            println "${index + 1} - Candidato ${candidato.id}"
+            println "Estado: ${candidato.estado}"
+            println "Descrição: ${candidato.descricaoPessoal}"
+            println "Skills:"
+
+            if (candidato.skills) {
+                candidato.skills.each { Skill skill ->
+                    println "- ${skill.nome}"
+                }
+            } else {
+                println "- Nenhuma competência cadastrada"
+            }
+
+            println "--------------------------------"
+        }
+    }
+
+
+    private void exibirVagasParaSelecao(List<Map<String, Object>> vagas) {
+
+        vagas.eachWithIndex { Map<String, Object> item, int index ->
+
+            Vaga vaga = (Vaga) item.vaga
+            Empresa empresa = (Empresa) item.empresa
+
+            println "${index + 1} - ${vaga.titulo}"
+            println "Descrição: ${vaga.descricaoVaga}"
+            println "Empresa: ${empresa.informacoes.nome}"
+            println "País: ${empresa.pais}"
+            println "Estado: ${vaga.estado}"
+            println "Cidade: ${vaga.cidade}"
+            println "Skills:"
+
+            if (vaga.skills) {
+                vaga.skills.each { Skill skill ->
+                    println "- ${skill.nome}"
+                }
+            } else {
+                println "- Nenhuma competência cadastrada"
+            }
+
+            println "--------------------------------"
+        }
+    }
+
+
+    private List<Map<String, Object>> obterVagasParaSelecao() {
+
+        List<Empresa> empresas = empresaService.listarTodasEmpresas()
+
+        return empresas.collectMany { Empresa empresa ->
+
+            List<Map<String, Object>> vagasDaEmpresa = empresa.vagas.collect { Vaga vaga ->
+
+                Map<String, Object> item = [
+                        vaga: vaga,
+                        empresa: empresa
+                ]
+
+                return item
+            }
+
+            return vagasDaEmpresa
+        }
+    }
+
+    private void curtirVaga() {
 
         println "================================"
         println "          CURTIR VAGA"
@@ -199,83 +288,67 @@ class Menu {
             println "${index + 1} - Candidato ${candidato.id}"
         }
 
-        print "Escolha o candidato: "
-        int candidatoOpcao = scanner.nextInt()
+        int candidatoOpcao = lerOpcao("Escolha o candidato: ")
 
         if (candidatoOpcao < 1 || candidatoOpcao > candidatos.size()) {
             println "Candidato inválido."
             return
         }
 
-        def candidato = candidatos[candidatoOpcao - 1]
+        Candidato candidato = candidatos[candidatoOpcao - 1]
 
         println "================================"
         println "            VAGAS"
         println "================================"
 
-        def vagas = empresaService.listarTodasEmpresas()
-                .collectMany { empresa ->
+        List<Map<String, Object>> vagas
 
-                    empresa.vagas.collect { vaga ->
-                        [
-                                vaga   : vaga,
-                                empresa: empresa
-                        ]
-                    }
-                }
+        try {
+            vagas = obterVagasParaSelecao()
+
+        } catch (IllegalStateException e) {
+            println "Erro ao consultar vagas: ${e.message}"
+            return
+        }
 
         if (!vagas) {
             println "Nenhuma vaga cadastrada."
             return
         }
 
-        vagas.eachWithIndex { item, index ->
+        exibirVagasParaSelecao(vagas)
 
-            def vaga = item.vaga
-            def empresa = item.empresa
-
-            println "${index + 1} - ${vaga.titulo}"
-            println "Descrição: ${vaga.descricaoVaga}"
-            println "Empresa: ${empresa.informacoes.nome}"
-            println "País: ${empresa.pais}"
-            println "Estado: ${vaga.estado}"
-            println "Cidade: ${vaga.cidade}"
-            println "Skills:"
-
-            if (vaga.skills) {
-                vaga.skills.each { skill ->
-                    println "- ${skill.nome}"
-                }
-            } else {
-                println "- Nenhuma competência cadastrada"
-            }
-
-            println "--------------------------------"
-        }
-
-        print "Escolha a vaga: "
-        int vagaOpcao = scanner.nextInt()
+        int vagaOpcao = lerOpcao("Escolha a vaga: ")
 
         if (vagaOpcao < 1 || vagaOpcao > vagas.size()) {
             println "Vaga inválida."
             return
         }
 
-        def item = vagas[vagaOpcao - 1]
-        def vaga = item.vaga
+        Map<String, Object> item = vagas[vagaOpcao - 1]
+
+        Vaga vaga = (Vaga) item.vaga
 
         curtidaService.curtirVaga(candidato, vaga)
     }
 
-    private void curtirCandidato() {
 
-        Scanner scanner = new Scanner(System.in)
+
+    private void curtirCandidato() {
 
         println "================================"
         println "       CURTIR CANDIDATO"
         println "================================"
 
-        def empresas = empresaService.listarTodasEmpresas()
+        List<Empresa> empresas
+
+        try {
+            empresas = empresaService.listarTodasEmpresas()
+
+        } catch (IllegalStateException e) {
+            println "Erro ao consultar empresas: ${e.message}"
+            return
+        }
 
         if (!empresas) {
             println "Nenhuma empresa cadastrada."
@@ -288,59 +361,107 @@ class Menu {
             println "${index + 1} - ${empresa.informacoes.nome}"
         }
 
-        print "Escolha a empresa: "
-        int empresaOpcao = scanner.nextInt()
+        int empresaOpcao = lerOpcao("Escolha a empresa: ")
 
         if (empresaOpcao < 1 || empresaOpcao > empresas.size()) {
             println "Empresa inválida."
             return
         }
 
-        def empresa = empresas[empresaOpcao - 1]
+        Empresa empresa = empresas[empresaOpcao - 1]
 
         println "================================"
         println "          CANDIDATOS"
         println "================================"
 
-        def candidatos = candidatoService.listarTodosCandidatos()
+        List<Candidato> candidatos
+
+        try {
+            candidatos = candidatoService.listarTodosCandidatos()
+
+        } catch (IllegalStateException e) {
+            println "Erro ao consultar candidatos: ${e.message}"
+            return
+        }
 
         if (!candidatos) {
             println "Nenhum candidato cadastrado."
             return
         }
 
-        candidatos.eachWithIndex { candidato, index ->
+        exibirCandidatosParaSelecao(candidatos)
 
-            println "${index + 1} - Candidato ${candidato.id}"
-            println "Estado: ${candidato.estado}"
-            println "Descrição: ${candidato.descricaoPessoal}"
-            println "Skills:"
-
-            if (candidato.skills) {
-                candidato.skills.each { skill ->
-                    println "- ${skill.nome}"
-                }
-            } else {
-                println "- Nenhuma competência cadastrada"
-            }
-
-            println "--------------------------------"
-        }
-
-        print "Escolha o candidato: "
-        int candidatoOpcao = scanner.nextInt()
+        int candidatoOpcao = lerOpcao("Escolha o candidato: ")
 
         if (candidatoOpcao < 1 || candidatoOpcao > candidatos.size()) {
             println "Candidato inválido."
             return
         }
 
-        def candidato = candidatos[candidatoOpcao - 1]
+        Candidato candidato = candidatos[candidatoOpcao - 1]
 
         curtidaService.curtirCandidato(
                 empresa,
                 candidato
         )
+    }
+
+
+    private void exibirCandidatoDoMatch(Match match) {
+
+        println "Candidato:"
+        println "Nome: ${match.candidato.informacoes.nome}"
+        println "CPF: ${match.candidato.cpf}"
+
+        if (match.candidato.dataNascimento != null) {
+
+            int idade = Period.between(
+                    match.candidato.dataNascimento,
+                    LocalDate.now()
+            ).years
+
+            println "Idade: ${idade}"
+        }
+
+        println "Estado: ${match.candidato.estado}"
+        println "Descrição: ${match.candidato.descricaoPessoal}"
+        println "CEP: ${match.candidato.informacoes.cep}"
+        println "Email: ${match.candidato.informacoes.email}"
+
+        println "Skills:"
+
+        if (match.candidato.skills) {
+            match.candidato.skills.each { Skill skill ->
+                println "- ${skill.nome}"
+            }
+        } else {
+            println "- Nenhuma competência cadastrada"
+        }
+    }
+
+    private void exibirEmpresaDoMatch(Match match) {
+
+        println "Empresa:"
+        println "Nome: ${match.empresa.informacoes.nome}"
+        println "CNPJ: ${match.empresa.cnpj}"
+        println "País: ${match.empresa.pais}"
+        println "Estado: ${match.empresa.estado}"
+        println "Descrição: ${match.empresa.descricaoEmpresarial}"
+        println "CEP: ${match.empresa.informacoes.cep}"
+        println "Email: ${match.empresa.informacoes.email}"
+
+        println "Vagas:"
+
+        if (match.empresa.vagas) {
+
+            match.empresa.vagas.each { Vaga vaga ->
+                println "- ${vaga.titulo}"
+                println "  Descrição: ${vaga.descricaoVaga}"
+            }
+
+        } else {
+            println "- Nenhuma vaga cadastrada"
+        }
     }
 
     private void listarMatches() {
@@ -349,73 +470,48 @@ class Menu {
         println "            MATCHES"
         println "================================"
 
-        def matches = matchService.listarMatches()
+        List<Match> matches = matchService.listarMatches()
 
-        if (matches) {
-
-            matches.each { match ->
-
-                println "Candidato:"
-                println "Nome: ${match.candidato.informacoes.nome}"
-                println "CPF: ${match.candidato.cpf}"
-
-                if (match.candidato.dataNascimento != null) {
-
-                    int idade = Period.between(
-                            match.candidato.dataNascimento,
-                            LocalDate.now()
-                    ).years
-
-                    println "Idade: ${idade}"
-                }
-
-                println "Estado: ${match.candidato.estado}"
-                println "Descrição: ${match.candidato.descricaoPessoal}"
-                println "CEP: ${match.candidato.informacoes.cep}"
-                println "Email: ${match.candidato.informacoes.email}"
-
-                println "Skills:"
-
-                if (match.candidato.skills) {
-                    match.candidato.skills.each { skill ->
-                        println "- ${skill.nome}"
-                    }
-                } else {
-                    println "- Nenhuma competência cadastrada"
-                }
-
-                println "--------------------------------"
-
-                println "Empresa:"
-                println "Nome: ${match.empresa.informacoes.nome}"
-                println "CNPJ: ${match.empresa.cnpj}"
-                println "País: ${match.empresa.pais}"
-                println "Estado: ${match.empresa.estado}"
-                println "Descrição: ${match.empresa.descricaoEmpresarial}"
-                println "CEP: ${match.empresa.informacoes.cep}"
-                println "Email: ${match.empresa.informacoes.email}"
-
-                println "Vagas:"
-
-                if (match.empresa.vagas) {
-
-                    match.empresa.vagas.each { vaga ->
-
-                        println "- ${vaga.titulo}"
-                        println "  Descrição: ${vaga.descricaoVaga}"
-                    }
-
-                } else {
-                    println "- Nenhuma vaga cadastrada"
-                }
-
-                println "================================"
-            }
-
-        } else {
+        if (!matches) {
             println "Nenhum Match encontrado."
+            println "================================"
+            return
+        }
+
+        matches.each { Match match ->
+
+            exibirCandidatoDoMatch(match)
+
+            println "--------------------------------"
+
+            exibirEmpresaDoMatch(match)
+
+            println "================================"
         }
 
         println "================================"
     }
+
+
+    private int lerOpcao(String mensagem) {
+
+        while (true) {
+            print mensagem
+
+            String entrada = scanner.nextLine().trim()
+
+            if (entrada ==~ /\d+/) {
+                try {
+                    return Integer.parseInt(entrada)
+                } catch (NumberFormatException e) {
+                    // O valor excede o limite de Integer
+                }
+            }
+
+            println "Opção inválida. Digite um número válido."
+        }
+    }
+
+
+
 }
