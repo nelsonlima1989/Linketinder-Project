@@ -1,4 +1,5 @@
-package com.linketinder.dao
+package com.linketinder.database
+
 
 import java.sql.Connection
 import java.sql.SQLException

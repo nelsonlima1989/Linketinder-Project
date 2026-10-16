@@ -2,8 +2,8 @@ package com.linketinder
 
 import com.linketinder.dao.CandidatoCompetenciaDAO
 import com.linketinder.dao.CandidatoDAO
-import com.linketinder.dao.ConexaoPostgresProvider
-import com.linketinder.dao.ConexaoProvider
+import com.linketinder.database.ConexaoProvider
+import com.linketinder.database.ConexaoFactory
 import com.linketinder.dao.EmpresaDAO
 import com.linketinder.dao.VagaCompetenciaDAO
 import com.linketinder.dao.VagaDAO
@@ -20,12 +20,11 @@ import com.linketinder.ui.Menu
 
 
 
-ConexaoProvider conexaoProvider = new ConexaoPostgresProvider()
+ConexaoProvider conexaoProvider = ConexaoFactory.criarProvider("postgresql")
 
 CandidatoRepository candidatoDAO = new CandidatoDAO(conexaoProvider)
 
-CandidatoCompetenciaRepository candidatoCompetenciaDAO =
-        new CandidatoCompetenciaDAO(conexaoProvider)
+CandidatoCompetenciaRepository candidatoCompetenciaDAO = new CandidatoCompetenciaDAO(conexaoProvider)
 
 EmpresaRepository empresaDAO = new EmpresaDAO(conexaoProvider)
 

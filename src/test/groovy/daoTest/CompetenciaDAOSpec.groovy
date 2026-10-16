@@ -1,7 +1,7 @@
 package daoTest
 
 import com.linketinder.dao.CompetenciaDAO
-import com.linketinder.dao.ConexaoProvider
+import com.linketinder.database.ConexaoProvider
 import com.linketinder.model.Skill
 import spock.lang.Specification
 

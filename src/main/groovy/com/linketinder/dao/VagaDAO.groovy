@@ -1,5 +1,6 @@
 package com.linketinder.dao
 
+import com.linketinder.database.ConexaoProvider
 import com.linketinder.model.Empresa
 import com.linketinder.model.Vaga
 import com.linketinder.repository.EmpresaRepository

@@ -1,6 +1,6 @@
 package daoTest
 
-import com.linketinder.dao.ConexaoProvider
+import com.linketinder.database.ConexaoProvider
 import com.linketinder.dao.VagaDAO
 import com.linketinder.model.Empresa
 import com.linketinder.model.Vaga

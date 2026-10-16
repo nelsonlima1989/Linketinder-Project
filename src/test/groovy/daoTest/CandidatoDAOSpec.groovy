@@ -1,7 +1,7 @@
 package daoTest
 
 import com.linketinder.dao.CandidatoDAO
-import com.linketinder.dao.ConexaoProvider
+import com.linketinder.database.ConexaoProvider
 import com.linketinder.model.Candidato
 import com.linketinder.model.Informacoes
 import spock.lang.Specification

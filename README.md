@@ -137,13 +137,13 @@ Linketinder
 No backend, o fluxo principal de acesso aos dados passou a seguir:
 
 ```text
-Main
+Main (ConexaoFactory → ConexaoProvider)
   ↓
 Menu
   ↓
 Service
   ↓
-DAO
+Repository / DAO
   ↓
 JDBC
   ↓
@@ -180,10 +180,13 @@ linketinder/
 │                   │   ├── CompetenciaDAO.groovy
 │                   │   ├── EmpresaDAO.groovy
 │                   │   ├── VagaDAO.groovy
-│                   │   ├── VagaCompetenciaDAO.groovy
+│                   │   └── VagaCompetenciaDAO.groovy
+│                   │
+│                   ├── database/
+│                   │   ├── ConexaoDB.groovy
 │                   │   ├── ConexaoProvider.groovy
 │                   │   ├── ConexaoPostgresProvider.groovy
-│                   │   └── ConexaoDB.groovy
+│                   │   └── ConexaoFactory.groovy
 │                   │
 │                   ├── repository/
 │                   │   ├── CandidatoRepository.groovy
@@ -313,11 +316,7 @@ que serão utilizadas na próxima etapa para persistir curtidas e implementar a 
 
 A Parte 2 introduziu a integração entre o backend Groovy e o PostgreSQL através de **JDBC**, sem utilização de JPA ou Hibernate.
 
-A conexão é centralizada em:
-
-```text
-ConexaoDB.groovy
-```
+A configuração de acesso PostgreSQL permanece em `com.linketinder.database.ConexaoDB`, que lê credenciais do ambiente e utiliza JDBC. A escolha da implementação de `ConexaoProvider` agora é centralizada na `ConexaoFactory`, que retorna `ConexaoPostgresProvider`. O provedor chama `ConexaoDB` para abrir conexões, e cada DAO gerencia o fechamento dos recursos por `try-with-resources`.
 
 O acesso às tabelas foi separado em classes DAO:
 
@@ -1194,7 +1193,7 @@ Main.groovy (composition root)
     │    └── Services
     │         └── interfaces Repository
     │              └── DAOs JDBC
-    │                   └── ConexaoProvider
+    │                   └── ConexaoProvider (selecionado pela ConexaoFactory)
     │                        └── ConexaoPostgresProvider
     │                             └── ConexaoDB / DriverManager / PostgreSQL
     └── Montagem dos objetos e suas dependências
@@ -1204,7 +1203,7 @@ Os DAOs utilizam `PreparedStatement` com parâmetros para executar consultas e a
 
 ## Testes unitários — Spock
 
-Na validação final desta etapa, foram **122 testes unitários aprovados**, dos quais **17 são do `MenuSpec`**. Os testes do menu usam `Mock()` para simular serviços e `Scanner` com entradas controladas, sem exigir acesso ao PostgreSQL.
+Na validação do desafio de Clean Code e SOLID, foram **122 testes unitários aprovados**, dos quais **17 são do `MenuSpec`**. Após a implementação da Factory, foram adicionados quatro testes, elevando o total validado para **126 testes**. Os testes do menu usam `Mock()` para simular serviços e `Scanner` com entradas controladas, sem exigir acesso ao PostgreSQL.
 
 Foram exercitados, entre outros, encerramento do menu, opções inválidas, entradas não numéricas, listas vazias, falhas simuladas de consulta e encaminhamento de seleção válida ao serviço de curtidas. Esse último cenário **verifica a chamada ao mock**, não a persistência de uma curtida.
 
@@ -1226,7 +1225,7 @@ Para gerar o relatório JaCoCo, quando configurado no Gradle:
 ./gradlew clean test jacocoTestReport
 ```
 
-O número de testes representa o resultado informado na validação local desta etapa; futuras mudanças no código podem alterar esse total.
+O total de **126 testes aprovados** foi confirmado na execução local de `./gradlew clean test` após a implementação da Factory; futuras alterações podem modificar esse total.
 
 ## Limites e evoluções futuras
 
@@ -1234,6 +1233,101 @@ O número de testes representa o resultado informado na validação local desta 
 - Os cadastros que envolvem múltiplas tabelas poderão exigir **transações** para evitar gravações parciais em caso de falha.
 - O carregamento individual de competências por candidato ou vaga poderá ser otimizado para evitar consultas do tipo **N+1**.
 - A proteção de senhas, autenticação e autorização merecem atenção antes de um uso em produção.
+
+---
+
+# 🏭 Refatoração do backend — Design Patterns
+
+Este desafio dá continuidade à etapa de Clean Code e SOLID, **sem refatorar o frontend TypeScript**. O objetivo principal foi centralizar a escolha da implementação responsável por fornecer conexões JDBC, preservando a arquitetura e as regras de negócio existentes.
+
+## Padrões utilizados e benefícios práticos
+
+| Padrão | Onde é aplicado | Por que melhora o código |
+|---|---|---|
+| **Simple Factory** (padrão de criação) | `database/ConexaoFactory.groovy` | Concentra a criação e a escolha do `ConexaoProvider` em um único ponto, retirando do `Main` a instanciação direta do provedor PostgreSQL. |
+| **Repository** (padrão de acesso a dados) | Interfaces em `repository/`, como `CandidatoRepository` e `EmpresaRepository` | Define contratos utilizados pelos Services, permitindo substituir ou simular implementações de persistência sem reescrever as regras dos serviços. |
+| **DAO — Data Access Object** (padrão de persistência) | Classes em `dao/`, como `CandidatoDAO` e `VagaDAO` | Encapsula operações JDBC, instruções SQL e mapeamento de resultados, evitando SQL na interface ou nos Services. |
+
+**Injeção de dependências por construtor** complementa esses padrões: DAOs recebem `ConexaoProvider`, Services recebem contratos Repository e o `Main` monta as dependências. Trata-se de uma técnica de projeto, não de um padrão GoF adicional implementado nesta etapa.
+
+### 1. Simple Factory — implementação adicionada
+
+**Arquivo:** `src/main/groovy/com/linketinder/database/ConexaoFactory.groovy`
+
+```groovy
+package com.linketinder.database
+
+class ConexaoFactory {
+
+    static ConexaoProvider criarProvider(String tipoBanco) {
+        if ("postgresql".equalsIgnoreCase(tipoBanco?.trim())) {
+            return new ConexaoPostgresProvider()
+        }
+
+        throw new IllegalArgumentException(
+                "Banco de dados não suportado: ${tipoBanco}"
+        )
+    }
+}
+```
+
+A criação do provedor no `Main.groovy` passou de:
+
+```groovy
+ConexaoProvider conexaoProvider = new ConexaoPostgresProvider()
+```
+
+para:
+
+```groovy
+ConexaoProvider conexaoProvider = ConexaoFactory.criarProvider("postgresql")
+```
+
+Dessa forma, o `Main` conhece a Factory e a interface `ConexaoProvider`, mas deixa de depender diretamente da classe concreta `ConexaoPostgresProvider`. A criação e a seleção da implementação ficam concentradas em uma classe de infraestrutura.
+
+**Fluxo da conexão:**
+
+```text
+Main
+  └── ConexaoFactory.criarProvider("postgresql")
+        └── ConexaoProvider → ConexaoPostgresProvider
+              └── ConexaoDB.conectar()
+                    └── JDBC / DriverManager → PostgreSQL
+
+DAO → ConexaoProvider.obterConexao() → Connection
+```
+
+A implementação aceita `postgresql`, variações entre maiúsculas/minúsculas e espaços externos; tipos não suportados provocam `IllegalArgumentException`. A fábrica **não abre uma conexão ao ser chamada**: ela cria o objeto provedor, que abre conexões quando os DAOs solicitam.
+
+### 2. Repository — abstração da persistência
+
+Os Services dependem das interfaces em `repository/` em vez de acoplarem suas regras de negócio a classes JDBC específicas. Por exemplo, `CandidatoDAO implements CandidatoRepository`. Isso permite criar mocks para testes unitários e considerar implementações alternativas no futuro.
+
+### 3. DAO — encapsulamento de JDBC e SQL
+
+Os DAOs implementam as interfaces Repository e realizam consultas com `PreparedStatement`, gerenciam `Connection`, `PreparedStatement` e `ResultSet` usando `try-with-resources` e transformam os resultados em objetos de domínio. A Factory não substitui esses DAOs: os dois padrões atuam em responsabilidades distintas.
+
+## Sobre Singleton e portabilidade de bancos
+
+**Singleton não foi implementado**, pois o enunciado o apresenta como opcional e manter uma única instância global de `Connection` JDBC não oferece vantagem neste projeto. Compartilhar a mesma conexão pode dificultar transações, fechamento correto de recursos e acessos concorrentes. Os DAOs continuam obtendo e fechando suas próprias conexões.
+
+**Limitação de portabilidade:** atualmente, a Factory seleciona apenas PostgreSQL. Para suportar outro SGBD, será necessário implementar outro provedor, configurar o driver e revisar SQL específico do PostgreSQL utilizado nos DAOs, como `RETURNING id`. A Factory desacopla a **seleção do provedor**; ela não traduz SQL automaticamente.
+
+## Validação desta etapa
+
+O novo `ConexaoFactorySpec` possui **4 testes unitários com Spock**, cobrindo seleção do PostgreSQL, normalização de maiúsculas/espaços, rejeição de banco não suportado e entrada nula. Os testes não acessam o banco, pois apenas instanciam o provider.
+
+```bash
+# Testes isolados da Factory
+./gradlew test --tests "databaseTest.ConexaoFactorySpec"
+
+# Suíte completa
+./gradlew clean test
+```
+
+**Resultado informado na execução local: 126 testes unitários aprovados**, incluindo os 4 novos testes da Factory. O menu também foi executado com sucesso após a integração, confirmando o funcionamento da aplicação no ambiente configurado.
+
+**Escopo preservado:** a lógica e a persistência JDBC de curtidas e matches não foram alteradas nesta etapa; o frontend e os scripts de banco também não receberam novas refatorações.
 
 ---
 
@@ -1261,7 +1355,8 @@ O número de testes representa o resultado informado na validação local desta 
 | Estrutura SQL para curtidas | ✅ Implementado |
 | Integração JDBC de curtidas e Match | ⏳ Próximo desafio |
 | Refatoração Clean Code e SOLID do backend | ✅ Concluída nesta etapa |
-| Testes unitários do backend (Spock) | ✅ 122 aprovados (17 do MenuSpec) |
+| Testes unitários do backend (Spock) | ✅ 126 aprovados (17 do MenuSpec e 4 do ConexaoFactorySpec) |
+| Simple Factory para seleção de provedor JDBC | ✅ Implementada e integrada ao Main |
 | Busca de candidato | ✅ Implementado |
 | Menu de terminal | ✅ Implementado |
 | Listagem de candidatos | ✅ Implementado |
@@ -1298,6 +1393,8 @@ Entre os conceitos utilizados estão:
 - Modelagem Relacional (DDL/DML);
 - JDBC (`Connection`, `PreparedStatement`, `ResultSet`);
 - Padrão DAO;
+- Padrão Repository;
+- Padrão Simple Factory para seleção do provedor JDBC;
 - CRUD persistente;
 - Chaves estrangeiras e relacionamentos N:N / 1:N;
 - Junções SQL (`INNER JOIN`);
@@ -1309,7 +1406,7 @@ Entre os conceitos utilizados estão:
 - Closures;
 - Separação de responsabilidades e camadas;
 - Clean Code e princípios SOLID aplicados ao backend;
-- Injeção de dependências por construtor e contratos Repository;
+- Injeção de dependências por construtor e contratos Repository/ConexaoProvider;
 - Testes unitários com Spock e mocks;
 - Tratamento consistente de exceções e `try-with-resources`;
 - Services e Components;

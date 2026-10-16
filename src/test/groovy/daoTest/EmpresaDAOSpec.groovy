@@ -1,10 +1,9 @@
 package daoTest
 
-import com.linketinder.dao.ConexaoProvider
+import com.linketinder.database.ConexaoProvider
 import com.linketinder.dao.EmpresaDAO
 import com.linketinder.model.Empresa
 import com.linketinder.model.Informacoes
-import com.linketinder.model.Vaga
 import spock.lang.Specification
 
 import java.sql.Connection

@@ -1,6 +1,7 @@
 
 package com.linketinder.dao
 
+import com.linketinder.database.ConexaoProvider
 import com.linketinder.model.Skill
 import com.linketinder.repository.VagaCompetenciaRepository
 
