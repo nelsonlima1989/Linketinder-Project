@@ -1,4 +1,27 @@
+
+import { ITENS_MENU, obterTelaInicial } from "../../services/utils/navegacaoService";
+
+function renderizarItemMenu(tela: string, titulo: string): string {
+    const classeAtiva = tela === obterTelaInicial() ? " ativo" : "";
+
+    return `
+        <button class="menu-item${classeAtiva}" data-tela="${tela}">
+            <span>${titulo}</span>
+        </button>
+    `;
+}
+
 export function renderizarSidebar(): string {
+    const itensPrincipais = ITENS_MENU
+        .filter(item => item.tela === "empresa" || item.tela === "candidato")
+        .map(item => renderizarItemMenu(item.tela, item.titulo))
+        .join("");
+
+    const itensCadastro = ITENS_MENU
+        .filter(item => item.tela.startsWith("cadastro-"))
+        .map(item => renderizarItemMenu(item.tela, item.titulo))
+        .join("");
+
     return `
         <aside class="sidebar">
 
@@ -9,25 +32,13 @@ export function renderizarSidebar(): string {
 
             <nav class="sidebar-menu">
 
-                <button class="menu-item ativo" data-tela="empresa">
-                    <span>Empresa</span>
-                </button>
-
-                <button class="menu-item" data-tela="candidato">
-                    <span>Candidato</span>
-                </button>
+                ${itensPrincipais}
 
                 <div class="menu-separador"></div>
 
                 <span class="menu-titulo">Cadastros</span>
 
-                <button class="menu-item" data-tela="cadastro-candidato">
-                    <span>Novo candidato</span>
-                </button>
-
-                <button class="menu-item" data-tela="cadastro-empresa">
-                    <span>Nova empresa</span>
-                </button>
+                ${itensCadastro}
 
             </nav>
 

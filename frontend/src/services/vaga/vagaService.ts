@@ -7,14 +7,17 @@ import {
     salvarDados,
     carregarDados
 } from "../utils/storage";
+import { calcularProximoId } from "../utils/idUtils";
+import { converterSkills } from "../utils/skillUtils";
 
 const CHAVE = "vagas";
 
-type DadosFormularioVaga = {
+export type DadosFormularioVaga = {
     titulo: string;
     descricao: string;
     skills: string;
 };
+
 
 export function listarVagas(): Vaga[] {
 
@@ -31,18 +34,9 @@ export function listarVagas(): Vaga[] {
 }
 
 export function obterProximoId(): number {
-
     const vagasAtuais = listarVagas();
 
-    if (vagasAtuais.length === 0) {
-        return 1;
-    }
-
-    const maiorId = Math.max(
-        ...vagasAtuais.map(vaga => vaga.id)
-    );
-
-    return maiorId + 1;
+    return calcularProximoId(vagasAtuais);
 }
 
 export function adicionarVaga(
@@ -71,10 +65,7 @@ export function criarVaga(
     const novaVaga: Omit<Vaga, "id"> = {
         titulo: dados.titulo,
         descricao: dados.descricao,
-        skills: dados.skills
-            .split(",")
-            .map(skill => skill.trim())
-            .filter(skill => skill !== ""),
+        skills: converterSkills(dados.skills),
         empresaId: empresaId
     };
 
@@ -143,10 +134,7 @@ export function editarVaga(
         return;
     }
 
-    const skills = dados.skills
-        .split(",")
-        .map(skill => skill.trim())
-        .filter(skill => skill !== "");
+    const skills = converterSkills(dados.skills);
 
     vagasAtuais[indiceVaga] = {
         ...vagasAtuais[indiceVaga],

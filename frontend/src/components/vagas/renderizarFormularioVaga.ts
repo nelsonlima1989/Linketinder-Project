@@ -1,9 +1,10 @@
+
 import type { Vaga } from "../../models/Vaga";
+import { escaparHtml } from "../../services/utils/escapeHtml";
 
 export function renderizarFormularioVaga(
     vaga?: Vaga
 ): string {
-
     const estaEditando = vaga !== undefined;
 
     return `
@@ -26,7 +27,7 @@ export function renderizarFormularioVaga(
                         type="text"
                         id="titulo"
                         name="titulo"
-                        value="${vaga?.titulo ?? ""}"
+                        value="${escaparHtml(vaga?.titulo ?? "")}"
                         required
                     >
                 </div>
@@ -41,7 +42,7 @@ export function renderizarFormularioVaga(
                         name="descricao"
                         rows="4"
                         required
-                    >${vaga?.descricao ?? ""}</textarea>
+                    >${escaparHtml(vaga?.descricao ?? "")}</textarea>
                 </div>
 
                 <div class="campo">
@@ -53,7 +54,7 @@ export function renderizarFormularioVaga(
                         type="text"
                         id="skills"
                         name="skills"
-                        value="${vaga?.skills.join(", ") ?? ""}"
+                        value="${escaparHtml(vaga?.skills.join(", ") ?? "")}"
                         placeholder="C#, .NET, SQL Server"
                         required
                     >

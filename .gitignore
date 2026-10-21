@@ -75,3 +75,7 @@ frontend/pnpm-debug.log*
 
 # OS generated files
 frontend/.DS_Store
+
+######
+**/node_modules/
+node_modules/

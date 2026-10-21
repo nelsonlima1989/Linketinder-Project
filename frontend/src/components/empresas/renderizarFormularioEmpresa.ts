@@ -1,11 +1,11 @@
+
 import type { Empresa } from "../../models/Empresa";
+import { escaparHtml } from "../../services/utils/escapeHtml";
 
 export function renderizarFormularioEmpresa(
     empresa?: Empresa
 ): string {
-
-    const estaEditando =
-        empresa !== undefined;
+    const estaEditando = empresa !== undefined;
 
     return `
         <section class="cadastro-empresa">
@@ -24,7 +24,7 @@ export function renderizarFormularioEmpresa(
                         type="text"
                         id="nome"
                         name="nome"
-                        value="${empresa?.nome ?? ""}"
+                        value="${escaparHtml(empresa?.nome ?? "")}"
                         required
                     >
                 </div>
@@ -35,7 +35,7 @@ export function renderizarFormularioEmpresa(
                         type="text"
                         id="cnpj"
                         name="cnpj"
-                        value="${empresa?.cnpj ?? ""}"
+                        value="${escaparHtml(empresa?.cnpj ?? "")}"
                         required
                     >
                 </div>
@@ -47,7 +47,7 @@ export function renderizarFormularioEmpresa(
                         name="descricao"
                         rows="4"
                         required
-                    >${empresa?.descricao ?? ""}</textarea>
+                    >${escaparHtml(empresa?.descricao ?? "")}</textarea>
                 </div>
 
                 <div class="campo">
@@ -56,7 +56,7 @@ export function renderizarFormularioEmpresa(
                         type="text"
                         id="estado"
                         name="estado"
-                        value="${empresa?.estado ?? ""}"
+                        value="${escaparHtml(empresa?.estado ?? "")}"
                         required
                     >
                 </div>

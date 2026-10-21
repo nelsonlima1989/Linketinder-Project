@@ -1,28 +1,29 @@
+
 import type { Vaga } from "../../models/Vaga";
 import type { Candidato } from "../../models/Candidato";
 import { calcularAfinidade } from "../../services/utils/afinidadeService";
+import { escaparHtml } from "../../services/utils/escapeHtml";
 
 export function renderizarCardsVagas(
     vagas: Vaga[],
     candidato: Candidato
 ): string {
-
     return vagas.map(vaga => {
         const afinidade = calcularAfinidade(candidato, vaga);
 
         return `
             <article class="card-vaga">
 
-                <h3>${vaga.titulo}</h3>
+                <h3>${escaparHtml(vaga.titulo)}</h3>
 
                 <p>
                     <strong>Descrição:</strong>
-                    ${vaga.descricao}
+                    ${escaparHtml(vaga.descricao)}
                 </p>
 
                 <p>
                     <strong>Skills:</strong>
-                    ${vaga.skills.join(" • ")}
+                    ${vaga.skills.map(escaparHtml).join(" • ")}
                 </p>
 
                 <p>

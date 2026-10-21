@@ -1,4 +1,6 @@
+
 import type { Vaga } from "../../models/Vaga";
+import { escaparHtml } from "../../services/utils/escapeHtml";
 
 export function renderizarCardsVagasEmpresa(
     vagas: Vaga[]
@@ -13,16 +15,16 @@ export function renderizarCardsVagasEmpresa(
     return vagas.map(vaga => `
         <article class="card-vaga-empresa">
 
-            <h3>${vaga.titulo}</h3>
+            <h3>${escaparHtml(vaga.titulo)}</h3>
 
             <p>
                 <strong>Descrição:</strong>
-                ${vaga.descricao}
+                ${escaparHtml(vaga.descricao)}
             </p>
 
             <p>
                 <strong>Skills:</strong>
-                ${vaga.skills.join(" • ")}
+                ${vaga.skills.map(escaparHtml).join(" • ")}
             </p>
 
             <div class="acoes-vaga">
@@ -48,4 +50,3 @@ export function renderizarCardsVagasEmpresa(
         </article>
     `).join("");
 }
-

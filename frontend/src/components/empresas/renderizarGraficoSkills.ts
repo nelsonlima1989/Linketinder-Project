@@ -21,6 +21,8 @@ export function criarGraficoSkills(
     return;
   }
 
+  Chart.getChart(canvas)?.destroy();
+
   new Chart(canvas, {
     type: "bar",
 

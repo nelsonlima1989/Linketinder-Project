@@ -1,11 +1,11 @@
+
 import type { Candidato } from "../../models/Candidato";
+import { escaparHtml } from "../../services/utils/escapeHtml";
 
 export function renderizarFormularioCandidato(
     candidato?: Candidato
 ): string {
-
-    const estaEditando =
-        candidato !== undefined;
+    const estaEditando = candidato !== undefined;
 
     return `
         <section class="cadastro-candidato">
@@ -25,7 +25,7 @@ export function renderizarFormularioCandidato(
                         type="text"
                         id="nome"
                         name="nome"
-                        value="${candidato?.nome ?? ""}"
+                        value="${escaparHtml(candidato?.nome ?? "")}"
                         required
                     >
                 </div>
@@ -37,7 +37,7 @@ export function renderizarFormularioCandidato(
                         type="text"
                         id="cpf"
                         name="cpf"
-                        value="${candidato?.cpf ?? ""}"
+                        value="${escaparHtml(candidato?.cpf ?? "")}"
                         required
                     >
                 </div>
@@ -62,7 +62,7 @@ export function renderizarFormularioCandidato(
                         type="text"
                         id="formacao"
                         name="formacao"
-                        value="${candidato?.formacao ?? ""}"
+                        value="${escaparHtml(candidato?.formacao ?? "")}"
                         required
                     >
                 </div>
@@ -75,7 +75,7 @@ export function renderizarFormularioCandidato(
                         name="descricao"
                         rows="4"
                         required
-                    >${candidato?.descricao ?? ""}</textarea>
+                    >${escaparHtml(candidato?.descricao ?? "")}</textarea>
                 </div>
 
                 <div class="campo">
@@ -85,7 +85,7 @@ export function renderizarFormularioCandidato(
                         type="text"
                         id="skills"
                         name="skills"
-                        value="${candidato?.skills.join(", ") ?? ""}"
+                        value="${escaparHtml(candidato?.skills.join(", ") ?? "")}"
                         placeholder="Java, Spring, SQL"
                         required
                     >
@@ -98,7 +98,7 @@ export function renderizarFormularioCandidato(
                         type="text"
                         id="estado"
                         name="estado"
-                        value="${candidato?.estado ?? ""}"
+                        value="${escaparHtml(candidato?.estado ?? "")}"
                         required
                     >
                 </div>

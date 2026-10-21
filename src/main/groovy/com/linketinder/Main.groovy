@@ -1,5 +1,9 @@
 package com.linketinder
 
+import com.linketinder.controller.CandidatoController
+import com.linketinder.controller.CurtidaController
+import com.linketinder.controller.EmpresaController
+import com.linketinder.controller.MatchController
 import com.linketinder.dao.CandidatoCompetenciaDAO
 import com.linketinder.dao.CandidatoDAO
 import com.linketinder.database.ConexaoProvider
@@ -16,7 +20,7 @@ import com.linketinder.service.CandidatoService
 import com.linketinder.service.CurtidaService
 import com.linketinder.service.EmpresaService
 import com.linketinder.service.MatchService
-import com.linketinder.ui.Menu
+import com.linketinder.view.Menu
 
 
 
@@ -40,6 +44,8 @@ CandidatoService candidatoService =
                 candidatoCompetenciaDAO
         )
 
+CandidatoController candidatoController = new CandidatoController(candidatoService)
+
 EmpresaService empresaService =
         new EmpresaService(
                 empresaDAO,
@@ -47,8 +53,11 @@ EmpresaService empresaService =
                 vagaCompetenciaDAO
         )
 
-MatchService matchService =
-        new MatchService()
+EmpresaController empresaController = new EmpresaController(empresaService)
+
+MatchService matchService = new MatchService()
+
+MatchController matchController = new MatchController(matchService)
 
 CurtidaService curtidaService =
         new CurtidaService(
@@ -56,15 +65,17 @@ CurtidaService curtidaService =
                 matchService
         )
 
+CurtidaController curtidaController = new CurtidaController(curtidaService)
+
 
 
 Scanner scanner = new Scanner(System.in)
 Menu menu = new Menu(
-        candidatoService,
-        empresaService,
-        curtidaService,
-        matchService,
-        scanner
+        scanner,
+        candidatoController,
+        empresaController,
+        curtidaController,
+        matchController
 )
 
 menu.iniciarPrograma()

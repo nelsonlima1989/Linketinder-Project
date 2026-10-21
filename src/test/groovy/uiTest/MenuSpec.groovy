@@ -1,22 +1,22 @@
 package uiTest
 
+import com.linketinder.controller.CandidatoController
+import com.linketinder.controller.CurtidaController
+import com.linketinder.controller.EmpresaController
+import com.linketinder.controller.MatchController
 import com.linketinder.model.Candidato
 import com.linketinder.model.Empresa
 import com.linketinder.model.Informacoes
 import com.linketinder.model.Vaga
-import com.linketinder.ui.Menu
-import com.linketinder.service.CandidatoService
-import com.linketinder.service.EmpresaService
-import com.linketinder.service.CurtidaService
-import com.linketinder.service.MatchService
+import com.linketinder.view.Menu
 import spock.lang.Specification
 
 class MenuSpec extends Specification {
 
-    CandidatoService candidatoService = Mock()
-    EmpresaService empresaService = Mock()
-    CurtidaService curtidaService = Mock()
-    MatchService matchService = Mock()
+    CandidatoController candidatoController = Mock()
+    EmpresaController empresaController = Mock()
+    CurtidaController curtidaController = Mock()
+    MatchController matchController = Mock()
     ByteArrayOutputStream saida
     PrintStream saidaOriginal
     PrintStream saidaCapturada
@@ -40,11 +40,12 @@ class MenuSpec extends Specification {
         Scanner scanner = new Scanner("0\n")
 
         Menu menu = new Menu(
-                candidatoService,
-                empresaService,
-                curtidaService,
-                matchService,
-                scanner
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController
+
         )
 
         when:
@@ -53,10 +54,10 @@ class MenuSpec extends Specification {
         then:
         noExceptionThrown()
 
-        0 * candidatoService._
-        0 * empresaService._
-        0 * curtidaService._
-        0 * matchService._
+        0 * candidatoController._
+        0 * empresaController._
+        0 * curtidaController._
+        0 * matchController._
     }
 
     void "deve informar opcao invalida e permitir encerrar o programa"() {
@@ -66,11 +67,11 @@ class MenuSpec extends Specification {
         Scanner scanner = new Scanner("9\n0\n")
 
         Menu menu = new Menu(
-                candidatoService,
-                empresaService,
-                curtidaService,
-                matchService,
-                scanner
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController
         )
 
         when:
@@ -82,10 +83,10 @@ class MenuSpec extends Specification {
         resultado.contains("Opção inválida.")
         resultado.contains("Encerrando o Linketinder...")
 
-        0 * candidatoService._
-        0 * empresaService._
-        0 * curtidaService._
-        0 * matchService._
+        0 * candidatoController._
+        0 * empresaController._
+        0 * curtidaController._
+        0 * matchController._
     }
 
     void "deve rejeitar entrada nao numerica e permitir nova tentativa"() {
@@ -94,11 +95,11 @@ class MenuSpec extends Specification {
         Scanner scanner = new Scanner("abc\n0\n")
 
         Menu menu = new Menu(
-                candidatoService,
-                empresaService,
-                curtidaService,
-                matchService,
-                scanner
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController
         )
 
 
@@ -111,10 +112,10 @@ class MenuSpec extends Specification {
         resultado.contains("Opção inválida. Digite um número válido.")
         resultado.contains("Encerrando o Linketinder...")
 
-        0 * candidatoService._
-        0 * empresaService._
-        0 * curtidaService._
-        0 * matchService._
+        0 * candidatoController._
+        0 * empresaController._
+        0 * curtidaController._
+        0 * matchController._
     }
 
 
@@ -124,11 +125,11 @@ class MenuSpec extends Specification {
         Scanner scanner = new Scanner("1\n0\n")
 
         Menu menu = new Menu(
-                candidatoService,
-                empresaService,
-                curtidaService,
-                matchService,
-                scanner
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController
         )
 
 
@@ -136,16 +137,17 @@ class MenuSpec extends Specification {
         menu.iniciarPrograma()
 
         then:
-        1 * candidatoService.listarCandidatosAnonimos() >> []
+        1 * candidatoController.listarCandidatosAnonimos() >> []
 
         String resultado = saida.toString("UTF-8")
 
         resultado.contains("Nenhum candidato cadastrado.")
         resultado.contains("Encerrando o Linketinder...")
 
-        0 * empresaService._
-        0 * curtidaService._
-        0 * matchService._
+        0 * empresaController._
+        0 * curtidaController._
+        0 * matchController._
+        0 * candidatoController._
     }
 
 
@@ -155,11 +157,11 @@ class MenuSpec extends Specification {
         Scanner scanner = new Scanner("1\n0\n")
 
         Menu menu = new Menu(
-                candidatoService,
-                empresaService,
-                curtidaService,
-                matchService,
-                scanner
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController
         )
 
 
@@ -167,7 +169,7 @@ class MenuSpec extends Specification {
         menu.iniciarPrograma()
 
         then:
-        1 * candidatoService.listarCandidatosAnonimos() >>
+        1 * candidatoController.listarCandidatosAnonimos() >>
                 { throw new IllegalStateException("Falha simulada no banco de dados") }
 
         String resultado = saida.toString("UTF-8")
@@ -175,9 +177,10 @@ class MenuSpec extends Specification {
         resultado.contains("Erro ao consultar candidatos: Falha simulada no banco de dados")
         resultado.contains("Encerrando o Linketinder...")
 
-        0 * empresaService._
-        0 * curtidaService._
-        0 * matchService._
+        0 * empresaController._
+        0 * curtidaController._
+        0 * matchController._
+        0 * candidatoController._
     }
 
     void "deve informar quando nao existem empresas cadastradas ao listar vagas"() {
@@ -186,27 +189,27 @@ class MenuSpec extends Specification {
         Scanner scanner = new Scanner("2\n0\n")
 
         Menu menu = new Menu(
-                candidatoService,
-                empresaService,
-                curtidaService,
-                matchService,
-                scanner
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController
         )
 
         when:
         menu.iniciarPrograma()
 
         then:
-        1 * empresaService.listarEmpresasAnonimas() >> []
+        1 * empresaController.listarEmpresasAnonimas() >> []
 
         String resultado = saida.toString("UTF-8")
 
         resultado.contains("Nenhuma empresa cadastrada.")
         resultado.contains("Encerrando o Linketinder...")
 
-        0 * candidatoService._
-        0 * curtidaService._
-        0 * matchService._
+        0 * candidatoController._
+        0 * curtidaController._
+        0 * matchController._
     }
 
 
@@ -216,18 +219,18 @@ class MenuSpec extends Specification {
         Scanner scanner = new Scanner("2\n0\n")
 
         Menu menu = new Menu(
-                candidatoService,
-                empresaService,
-                curtidaService,
-                matchService,
-                scanner
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController
         )
 
         when:
         menu.iniciarPrograma()
 
         then:
-        1 * empresaService.listarEmpresasAnonimas() >>
+        1 * empresaController.listarEmpresasAnonimas() >>
                 { throw new IllegalStateException("Falha simulada no banco de dados") }
 
         String resultado = saida.toString("UTF-8")
@@ -235,9 +238,9 @@ class MenuSpec extends Specification {
         resultado.contains("Erro ao consultar vagas: Falha simulada no banco de dados")
         resultado.contains("Encerrando o Linketinder...")
 
-        0 * candidatoService._
-        0 * curtidaService._
-        0 * matchService._
+        0 * candidatoController._
+        0 * curtidaController._
+        0 * matchController._
     }
 
 
@@ -247,27 +250,27 @@ class MenuSpec extends Specification {
         Scanner scanner = new Scanner("3\n0\n")
 
         Menu menu = new Menu(
-                candidatoService,
-                empresaService,
-                curtidaService,
-                matchService,
-                scanner
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController
         )
 
         when:
         menu.iniciarPrograma()
 
         then:
-        1 * candidatoService.listarTodosCandidatos() >> []
+        1 * candidatoController.listarTodosCandidatos() >> []
 
         String resultado = saida.toString("UTF-8")
 
         resultado.contains("Nenhum candidato cadastrado.")
         resultado.contains("Encerrando o Linketinder...")
 
-        0 * empresaService._
-        0 * curtidaService._
-        0 * matchService._
+        0 * empresaController._
+        0 * curtidaController._
+        0 * matchController._
     }
 
 
@@ -277,18 +280,18 @@ class MenuSpec extends Specification {
         Scanner scanner = new Scanner("3\n0\n")
 
         Menu menu = new Menu(
-                candidatoService,
-                empresaService,
-                curtidaService,
-                matchService,
-                scanner
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController
         )
 
         when:
         menu.iniciarPrograma()
 
         then:
-        1 * candidatoService.listarTodosCandidatos() >>
+        1 * candidatoController.listarTodosCandidatos() >>
                 { throw new IllegalStateException("Falha simulada no banco de dados") }
 
         String resultado = saida.toString("UTF-8")
@@ -296,9 +299,9 @@ class MenuSpec extends Specification {
         resultado.contains("Erro ao consultar candidatos: Falha simulada no banco de dados")
         resultado.contains("Encerrando o Linketinder...")
 
-        0 * empresaService._
-        0 * curtidaService._
-        0 * matchService._
+        0 * empresaController._
+        0 * curtidaController._
+        0 * matchController._
     }
 
     void "deve tratar falha na consulta de vagas ao tentar curtir"() {
@@ -310,20 +313,20 @@ class MenuSpec extends Specification {
         Scanner scanner = new Scanner("3\n1\n0\n")
 
         Menu menu = new Menu(
-                candidatoService,
-                empresaService,
-                curtidaService,
-                matchService,
-                scanner
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController
         )
 
         when:
         menu.iniciarPrograma()
 
         then:
-        1 * candidatoService.listarTodosCandidatos() >> [candidato]
+        1 * candidatoController.listarTodosCandidatos() >> [candidato]
 
-        1 * empresaService.listarTodasEmpresas() >>
+        1 * empresaController.listarTodasEmpresas() >>
                 { throw new IllegalStateException("Falha simulada ao consultar vagas") }
 
         String resultado = saida.toString("UTF-8")
@@ -331,8 +334,8 @@ class MenuSpec extends Specification {
         resultado.contains("Erro ao consultar vagas: Falha simulada ao consultar vagas")
         resultado.contains("Encerrando o Linketinder...")
 
-        0 * curtidaService._
-        0 * matchService._
+        0 * curtidaController._
+        0 * matchController._
     }
 
 
@@ -345,27 +348,27 @@ class MenuSpec extends Specification {
         Scanner scanner = new Scanner("3\n2\n0\n")
 
         Menu menu = new Menu(
-                candidatoService,
-                empresaService,
-                curtidaService,
-                matchService,
-                scanner
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController
         )
 
         when:
         menu.iniciarPrograma()
 
         then:
-        1 * candidatoService.listarTodosCandidatos() >> [candidato]
+        1 * candidatoController.listarTodosCandidatos() >> [candidato]
 
         String resultado = saida.toString("UTF-8")
 
         resultado.contains("Candidato inválido.")
         resultado.contains("Encerrando o Linketinder...")
 
-        0 * empresaService._
-        0 * curtidaService._
-        0 * matchService._
+        0 * empresaController._
+        0 * curtidaController._
+        0 * matchController._
     }
 
 
@@ -388,27 +391,27 @@ class MenuSpec extends Specification {
         Scanner scanner = new Scanner("3\n1\n2\n0\n")
 
         Menu menu = new Menu(
-                candidatoService,
-                empresaService,
-                curtidaService,
-                matchService,
-                scanner
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController
         )
 
         when:
         menu.iniciarPrograma()
 
         then:
-        1 * candidatoService.listarTodosCandidatos() >> [candidato]
-        1 * empresaService.listarTodasEmpresas() >> [empresa]
+        1 * candidatoController.listarTodosCandidatos() >> [candidato]
+        1 * empresaController.listarTodasEmpresas() >> [empresa]
 
         String resultado = saida.toString("UTF-8")
 
         resultado.contains("Vaga inválida.")
         resultado.contains("Encerrando o Linketinder...")
 
-        0 * curtidaService._
-        0 * matchService._
+        0 * curtidaController._
+        0 * matchController._
     }
 
     void "deve chamar o servico de curtidas com candidato e vaga selecionados"() {
@@ -430,22 +433,22 @@ class MenuSpec extends Specification {
         Scanner scanner = new Scanner("3\n1\n1\n0\n")
 
         Menu menu = new Menu(
-                candidatoService,
-                empresaService,
-                curtidaService,
-                matchService,
-                scanner
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController
         )
 
         when:
         menu.iniciarPrograma()
 
         then:
-        1 * candidatoService.listarTodosCandidatos() >> [candidato]
-        1 * empresaService.listarTodasEmpresas() >> [empresa]
-        1 * curtidaService.curtirVaga(candidato, vaga)
+        1 * candidatoController.listarTodosCandidatos() >> [candidato]
+        1 * empresaController.listarTodasEmpresas() >> [empresa]
+        1 * curtidaController.curtirVaga(candidato, vaga)
 
-        0 * matchService._
+        0 * matchController._
     }
 
 
@@ -455,27 +458,27 @@ class MenuSpec extends Specification {
         Scanner scanner = new Scanner("4\n0\n")
 
         Menu menu = new Menu(
-                candidatoService,
-                empresaService,
-                curtidaService,
-                matchService,
-                scanner
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController
         )
 
         when:
         menu.iniciarPrograma()
 
         then:
-        1 * empresaService.listarTodasEmpresas() >> []
+        1 * empresaController.listarTodasEmpresas() >> []
 
         String resultado = saida.toString("UTF-8")
 
         resultado.contains("Nenhuma empresa cadastrada.")
         resultado.contains("Encerrando o Linketinder...")
 
-        0 * candidatoService._
-        0 * curtidaService._
-        0 * matchService._
+        0 * candidatoController._
+        0 * curtidaController._
+        0 * matchController._
     }
 
     void "deve tratar falha na consulta de empresas ao curtir candidato"() {
@@ -484,18 +487,18 @@ class MenuSpec extends Specification {
         Scanner scanner = new Scanner("4\n0\n")
 
         Menu menu = new Menu(
-                candidatoService,
-                empresaService,
-                curtidaService,
-                matchService,
-                scanner
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController
         )
 
         when:
         menu.iniciarPrograma()
 
         then:
-        1 * empresaService.listarTodasEmpresas() >>
+        1 * empresaController.listarTodasEmpresas() >>
                 { throw new IllegalStateException("Falha simulada ao consultar empresas") }
 
         String resultado = saida.toString("UTF-8")
@@ -503,9 +506,9 @@ class MenuSpec extends Specification {
         resultado.contains("Erro ao consultar empresas: Falha simulada ao consultar empresas")
         resultado.contains("Encerrando o Linketinder...")
 
-        0 * candidatoService._
-        0 * curtidaService._
-        0 * matchService._
+        0 * candidatoController._
+        0 * curtidaController._
+        0 * matchController._
     }
 
     void "deve impedir curtida quando nao existem candidatos disponiveis"() {
@@ -518,27 +521,27 @@ class MenuSpec extends Specification {
         Scanner scanner = new Scanner("4\n1\n0\n")
 
         Menu menu = new Menu(
-                candidatoService,
-                empresaService,
-                curtidaService,
-                matchService,
-                scanner
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController
         )
 
         when:
         menu.iniciarPrograma()
 
         then:
-        1 * empresaService.listarTodasEmpresas() >> [empresa]
-        1 * candidatoService.listarTodosCandidatos() >> []
+        1 * empresaController.listarTodasEmpresas() >> [empresa]
+        1 * candidatoController.listarTodosCandidatos() >> []
 
         String resultado = saida.toString("UTF-8")
 
         resultado.contains("Nenhum candidato cadastrado.")
         resultado.contains("Encerrando o Linketinder...")
 
-        0 * curtidaService._
-        0 * matchService._
+        0 * curtidaController._
+        0 * matchController._
     }
 
     void "deve tratar falha na consulta de candidatos ao tentar curtir"() {
@@ -551,20 +554,20 @@ class MenuSpec extends Specification {
         Scanner scanner = new Scanner("4\n1\n0\n")
 
         Menu menu = new Menu(
-                candidatoService,
-                empresaService,
-                curtidaService,
-                matchService,
-                scanner
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController
         )
 
         when:
         menu.iniciarPrograma()
 
         then:
-        1 * empresaService.listarTodasEmpresas() >> [empresa]
+        1 * empresaController.listarTodasEmpresas() >> [empresa]
 
-        1 * candidatoService.listarTodosCandidatos() >>
+        1 * candidatoController.listarTodosCandidatos() >>
                 { throw new IllegalStateException("Falha simulada ao consultar candidatos") }
 
         String resultado = saida.toString("UTF-8")
@@ -572,8 +575,8 @@ class MenuSpec extends Specification {
         resultado.contains("Erro ao consultar candidatos: Falha simulada ao consultar candidatos")
         resultado.contains("Encerrando o Linketinder...")
 
-        0 * curtidaService._
-        0 * matchService._
+        0 * curtidaController._
+        0 * matchController._
     }
 
 

@@ -2,52 +2,26 @@ import "./styles/style.css";
 
 import {
   listarCandidatos,
-  criarCandidato,
-  editarCandidato,
-  excluirCandidato,
   obterCandidatoPorId,
 } from "./services/candidato/candidatoService";
 
-import {
-  listarVagas,
-  criarVaga,
-  obterVagasPorEmpresa,
-  excluirVaga,
-  editarVaga,
-  obterVagaPorId,
-  excluirVagasPorEmpresa,
-} from "./services/vaga/vagaService";
+import { listarVagas, obterVagasPorEmpresa } from "./services/vaga/vagaService";
 
 import { renderizarCardsVagasEmpresa } from "./components/vagas/renderizarCardsVagasEmpresa";
 import { renderizarCardsVagas } from "./components/vagas/renderizarCardsVagas";
 import { renderizarCardsCandidatos } from "./components/candidatos/renderizarCardsCandidatos";
 import { renderizarSidebar } from "./components/layout/renderizarSidebar";
 import { renderizarTela } from "./components/layout/renderizarTela";
+
 import { contarSkills, ordenarSkills } from "./services/empresa/skillService";
+
 import { criarGraficoSkills } from "./components/empresas/renderizarGraficoSkills";
-import {
-  criarEmpresa,
-  editarEmpresa,
-  excluirEmpresa,
-} from "./services/empresa/empresaService";
 
-import {
-  bloquearCandidato,
-  liberarBloqueioCandidato,
-  candidatoEstaBloqueado,
-} from "./services/candidato/edicaoCandidatoService";
+import { liberarBloqueioCandidato } from "./services/candidato/edicaoCandidatoService";
 
-import {
-  bloquearVaga,
-  liberarBloqueioVaga,
-  vagaEstaBloqueada,
-} from "./services/vaga/edicaoVagaService";
+import { liberarBloqueioVaga } from "./services/vaga/edicaoVagaService";
 
-import {
-  bloquearEmpresa,
-  empresaEstaBloqueada,
-  liberarBloqueioEmpresa,
-} from "./services/empresa/edicaoEmpresaService";
+import { liberarBloqueioEmpresa } from "./services/empresa/edicaoEmpresaService";
 
 import {
   obterTelaInicial,
@@ -55,11 +29,26 @@ import {
   type Tela,
 } from "./services/utils/navegacaoService";
 
-const candidatos = listarCandidatos();
+import { obterEmpresaIdParaRenderizacao } from "./services/utils/contextoTelaService";
 
-const vagas = listarVagas();
+import {
+  configurarFormularioCandidato,
+  configurarExclusaoCandidato,
+  configurarEdicaoCandidato,
+} from "./controllers/candidatoController";
 
-const skills = ordenarSkills(contarSkills(candidatos));
+import {
+  configurarEdicaoEmpresa,
+  configurarExclusaoEmpresa,
+  configurarFormularioEmpresa,
+} from "./controllers/empresaController";
+import {
+  configurarCriacaoVaga,
+  configurarEdicaoVaga,
+  configurarExclusaoVaga,
+  configurarFormularioVaga,
+} from "./controllers/vagaController";
+import { listarEmpresas } from "./services/empresa/empresaService";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -84,139 +73,67 @@ function atualizarConteudo(
     return;
   }
 
-  conteudo.innerHTML = renderizarTela(
+  const empresaIdParaRenderizacao = obterEmpresaIdParaRenderizacao(
     tela,
     empresaAtualId,
+    empresaId,
+  );
+
+  conteudo.innerHTML = renderizarTela(
+    tela,
+    empresaIdParaRenderizacao,
     candidatoAtualId,
     vagaId,
   );
 
-  // cadastro e edição de candidato
+  // Cadastro e edição de candidatos
 
   if (tela === "cadastro-candidato") {
-    const formulario = document.querySelector<HTMLFormElement>(
-      "#formulario-candidato",
-    );
-
-    const botaoCancelar = document.querySelector<HTMLButtonElement>(
-      "#botao-cancelar-candidato",
-    );
-
-    if (botaoCancelar) {
-      botaoCancelar.addEventListener("click", () => {
-        if (candidatoAtualId !== undefined) {
-          liberarBloqueioCandidato();
-        }
-
-        atualizarConteudo("candidato");
-      });
-    }
-
-    if (formulario) {
-      formulario.addEventListener("submit", (evento) => {
-        evento.preventDefault();
-
-        const dados = new FormData(formulario);
-
-        const dadosCandidato = {
-          nome: String(dados.get("nome")),
-          cpf: String(dados.get("cpf")),
-          idade: String(dados.get("idade")),
-          formacao: String(dados.get("formacao")),
-          descricao: String(dados.get("descricao")),
-          skills: String(dados.get("skills")),
-          estado: String(dados.get("estado")),
-        };
-
-        if (candidatoAtualId !== undefined) {
-          editarCandidato(candidatoAtualId, dadosCandidato);
-
-          liberarBloqueioCandidato();
-
-          alert("Perfil atualizado com sucesso!");
-
-          atualizarConteudo("candidato");
-
-          return;
-        }
-
-        criarCandidato(dadosCandidato);
-
-        formulario.reset();
-
-        alert("Candidato cadastrado com sucesso!");
-      });
-    }
+    configurarFormularioCandidato({
+      candidatoId: candidatoAtualId,
+      navegarParaPerfil: () => atualizarConteudo("candidato"),
+      aoCadastrar: (candidatoId: number) => {
+        candidatoAtualId = candidatoId;
+      },
+    });
   }
 
-  // perfil da empresa
+  // Perfil da empresa
 
   if (tela === "empresa") {
-    const botaoNovaVaga =
-      document.querySelector<HTMLButtonElement>("#botao-nova-vaga");
+    configurarCriacaoVaga({
+      abrirFormulario: () => atualizarConteudo("cadastro-vaga", empresaAtualId),
+    });
 
-    if (botaoNovaVaga) {
-      botaoNovaVaga.addEventListener("click", () => {
-        atualizarConteudo("cadastro-vaga", empresaAtualId);
-      });
-    }
+    configurarEdicaoEmpresa({
+      empresaId: empresaAtualId,
+      abrirFormulario: () =>
+        atualizarConteudo("cadastro-empresa", empresaAtualId),
+    });
 
-    const botaoEditarEmpresa = document.querySelector<HTMLButtonElement>(
-      "#botao-editar-empresa",
-    );
+    // Excluir empresa
 
-    if (botaoEditarEmpresa) {
-      botaoEditarEmpresa.addEventListener("click", () => {
-        const bloqueou = bloquearEmpresa(empresaAtualId);
+    configurarExclusaoEmpresa({
+      empresaId: empresaAtualId,
+      aoExcluir: () => {
+        const empresasRestantes = listarEmpresas();
 
-        if (!bloqueou) {
-          alert("Esta empresa está sendo editada em outra aba.");
+        empresaAtualId = empresasRestantes[0]?.id;
 
-          return;
-        }
+        atualizarConteudo("empresa");
+      },
+    });
 
-        atualizarConteudo("cadastro-empresa", empresaAtualId);
-      });
-    }
-
-    const botaoExcluirEmpresa = document.querySelector<HTMLButtonElement>(
-      "#botao-excluir-empresa",
-    );
-
-    if (botaoExcluirEmpresa) {
-      botaoExcluirEmpresa.addEventListener("click", () => {
-        if (empresaAtualId === undefined) return;
-
-        if (empresaEstaBloqueada(empresaAtualId)) {
-          alert(
-            "Exclusão bloqueada: esta empresa está sendo editada em outra aba.",
-          );
-          return;
-        }
-
-        const confirmar = confirm("Deseja realmente excluir sua conta?");
-
-        if (!confirmar) return;
-
-        const excluiu = excluirEmpresa(empresaAtualId);
-
-        if (!excluiu) {
-          alert("Não foi possível excluir a conta.");
-          return;
-        }
-
-        excluirVagasPorEmpresa(empresaAtualId);
-
-        alert("Conta excluída com sucesso!");
-      });
-    }
+    // Lista de candidatos
 
     const listaCandidatos =
       document.querySelector<HTMLDivElement>("#lista-candidatos");
 
     if (listaCandidatos) {
-      listaCandidatos.innerHTML = renderizarCardsCandidatos(candidatos);
+      listaCandidatos.innerHTML = renderizarCardsCandidatos(listarCandidatos());
     }
+
+    // Vagas da empresa
 
     const listaVagasEmpresa = document.querySelector<HTMLDivElement>(
       "#lista-vagas-empresa",
@@ -228,144 +145,48 @@ function atualizarConteudo(
       listaVagasEmpresa.innerHTML = renderizarCardsVagasEmpresa(vagasDaEmpresa);
     }
 
-    // excluir vaga
+    // Excluir vaga
 
-    const botoesExcluir = document.querySelectorAll<HTMLButtonElement>(
-      ".botao-excluir-vaga",
-    );
-
-    botoesExcluir.forEach((botao) => {
-      botao.addEventListener("click", () => {
-        const vagaId = Number(botao.dataset.vagaId);
-
-        if (vagaEstaBloqueada(vagaId)) {
-          alert(
-            "Exclusão bloqueada: esta vaga está sendo editada em outra aba.",
-          );
-
-          return;
-        }
-
-        const confirmar = confirm("Deseja realmente excluir esta vaga?");
-
-        if (!confirmar) {
-          return;
-        }
-
-        const excluiu = excluirVaga(vagaId, empresaAtualId);
-
-        if (!excluiu) {
-          alert("Não foi possível excluir a vaga.");
-
-          return;
-        }
-
-        alert("Vaga excluída com sucesso!");
-
-        atualizarConteudo("empresa", empresaAtualId);
-      });
+    configurarExclusaoVaga({
+      empresaId: empresaAtualId,
+      aoExcluir: () => atualizarConteudo("empresa", empresaAtualId),
     });
 
-    //editar vaga
-
-    const botoesEditar =
-      document.querySelectorAll<HTMLButtonElement>(".botao-editar-vaga");
-
-    botoesEditar.forEach((botao) => {
-      botao.addEventListener("click", () => {
-        const vagaId = Number(botao.dataset.vagaId);
-
-        const vaga = obterVagaPorId(vagaId, empresaAtualId);
-
-        if (!vaga) {
-          return;
-        }
-
-        const bloqueou = bloquearVaga(vagaId, empresaAtualId);
-
-        if (!bloqueou) {
-          alert("Esta vaga está sendo editada em outra aba.");
-
-          return;
-        }
-
-        atualizarConteudo("cadastro-vaga", empresaAtualId, vagaId);
-      });
+    // Editar vaga
+    configurarEdicaoVaga({
+      empresaId: empresaAtualId,
+      abrirFormulario: (vagaId: number) =>
+        atualizarConteudo("cadastro-vaga", empresaAtualId, vagaId),
     });
 
-    criarGraficoSkills(skills);
+    // Gráfico de skills
+
+    const skillsAtualizadas = ordenarSkills(contarSkills(listarCandidatos()));
+
+    criarGraficoSkills(skillsAtualizadas);
   }
 
-  // perfil do candidato
+  // Perfil do candidato
 
   if (tela === "candidato") {
-    // editar perfil
+    // Editar perfil
 
-    const botaoEditar = document.querySelector<HTMLButtonElement>(
-      "#botao-editar-candidato",
-    );
+    configurarEdicaoCandidato({
+      candidatoId: candidatoAtualId,
+      abrirFormulario: () => atualizarConteudo("cadastro-candidato"),
+    });
 
-    if (botaoEditar) {
-      botaoEditar.addEventListener("click", () => {
-        if (candidatoAtualId === undefined) {
-          return;
-        }
+    // Excluir candidato — responsabilidade do controlador
 
-        const bloqueou = bloquearCandidato(candidatoAtualId);
-
-        if (!bloqueou) {
-          alert("Este candidato está sendo editado em outra aba.");
-
-          return;
-        }
-
-        atualizarConteudo("cadastro-candidato");
-      });
-    }
-
-    // excluir conta
-
-    const botaoExcluir = document.querySelector<HTMLButtonElement>(
-      "#botao-excluir-candidato",
-    );
-
-    if (botaoExcluir) {
-      botaoExcluir.addEventListener("click", () => {
-        if (candidatoAtualId === undefined) {
-          return;
-        }
-
-        if (candidatoEstaBloqueado(candidatoAtualId)) {
-          alert(
-            "Exclusão bloqueada: este candidato está sendo editado em outra aba.",
-          );
-
-          return;
-        }
-
-        const confirmar = confirm("Deseja realmente excluir sua conta?");
-
-        if (!confirmar) {
-          return;
-        }
-
-        const excluiu = excluirCandidato(candidatoAtualId);
-
-        if (!excluiu) {
-          alert("Não foi possível excluir a conta.");
-
-          return;
-        }
-
+    configurarExclusaoCandidato({
+      candidatoId: candidatoAtualId,
+      aoExcluir: () => {
         candidatoAtualId = undefined;
-
-        alert("Conta excluída com sucesso!");
-
         atualizarConteudo("candidato");
-      });
-    }
+      },
+    });
 
-    // lista de vagas
+    // Lista de vagas
 
     const listaVagas = document.querySelector<HTMLDivElement>("#lista-vagas");
 
@@ -373,137 +194,39 @@ function atualizarConteudo(
       const candidato = obterCandidatoPorId(candidatoAtualId);
 
       if (candidato) {
-        listaVagas.innerHTML = renderizarCardsVagas(vagas, candidato);
+        listaVagas.innerHTML = renderizarCardsVagas(listarVagas(), candidato);
       }
     }
   }
 
-  //cadastro empresas
+  // Cadastro e edição de empresas
 
   if (tela === "cadastro-empresa") {
-    const formulario = document.querySelector<HTMLFormElement>(
-      "#formulario-empresa",
-    );
-
-    const botaoCancelar = document.querySelector<HTMLButtonElement>(
-      "#botao-cancelar-empresa",
-    );
-
-    if (botaoCancelar) {
-      botaoCancelar.addEventListener("click", () => {
-        liberarBloqueioEmpresa();
-
-        atualizarConteudo("empresa", empresaAtualId);
-      });
-    }
-
-    if (formulario) {
-      formulario.addEventListener("submit", (evento) => {
-        evento.preventDefault();
-
-        const dados = new FormData(formulario);
-
-        const dadosEmpresa = {
-          nome: String(dados.get("nome")),
-          cnpj: String(dados.get("cnpj")),
-          descricao: String(dados.get("descricao")),
-          estado: String(dados.get("estado")),
-        };
-
-        if (empresaId !== undefined) {
-          editarEmpresa(empresaId, dadosEmpresa);
-
-          liberarBloqueioEmpresa();
-
-          alert("Perfil atualizado com sucesso!");
-
-          atualizarConteudo("empresa", empresaId);
-
-          return;
-        }
-
-        criarEmpresa(dadosEmpresa);
-
-        formulario.reset();
-
-        alert("Empresa cadastrada com sucesso!");
-      });
-    }
+    configurarFormularioEmpresa({
+      empresaId,
+      navegarParaPerfil: () => atualizarConteudo("empresa", empresaAtualId),
+      aoCadastrar: (novoEmpresaId: number) => {
+        empresaAtualId = novoEmpresaId;
+      },
+    });
   }
 
-  //cadastro e edição das vagas
+  // Cadastro e edição de vagas
+
   if (tela === "cadastro-vaga") {
-    const formulario =
-      document.querySelector<HTMLFormElement>("#formulario-vaga");
-
-    //botao para cancelar edição/criação de vagas
-
-    const botaoCancelar = document.querySelector<HTMLButtonElement>(
-      "#botao-cancelar-vaga",
-    );
-
-    if (botaoCancelar) {
-      botaoCancelar.addEventListener("click", () => {
-        //bloquer caso esteja editando um vagaId válido
-
-        if (vagaId !== undefined) {
-          liberarBloqueioVaga();
-        }
-
-        //volta para o perfil da empresa
-
-        atualizarConteudo("empresa", empresaAtualId);
-      });
-    }
-
-    //submit do form
-
-    if (formulario) {
-      formulario.addEventListener("submit", (evento) => {
-        evento.preventDefault();
-
-        const dados = new FormData(formulario);
-
-        const dadosVaga = {
-          titulo: String(dados.get("titulo")),
-
-          descricao: String(dados.get("descricao")),
-
-          skills: String(dados.get("skills")),
-        };
-
-        //se existe vagaId edita
-
-        if (vagaId !== undefined) {
-          editarVaga(vagaId, empresaAtualId, dadosVaga);
-
-          //libera bloquei após salvamento da vaga
-
-          liberarBloqueioVaga();
-
-          alert("Vaga atualizada com sucesso!");
-        } else {
-          //criar nova vaga sem vagaId
-
-          criarVaga(dadosVaga, empresaAtualId);
-
-          alert("Vaga cadastrada com sucesso!");
-        }
-
-        //vikta oara empresa após salvar
-
-        atualizarConteudo("empresa", empresaAtualId);
-      });
-    }
+    configurarFormularioVaga({
+      empresaId: empresaAtualId,
+      vagaId,
+      navegarParaEmpresa: () => atualizarConteudo("empresa", empresaAtualId),
+    });
   }
 }
 
-// INICIALIZAÇÃO DA APLICAÇÃO
+// Inicialização da aplicação
 
 if (app) {
   app.innerHTML = `
     ${renderizarSidebar()}
-
     <main class="conteudo"></main>
   `;
 
@@ -518,6 +241,10 @@ if (app) {
       if (!tela) {
         return;
       }
+
+      liberarBloqueioCandidato();
+      liberarBloqueioVaga();
+      liberarBloqueioEmpresa();
 
       telaAtual = tela;
 

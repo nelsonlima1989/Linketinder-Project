@@ -1,18 +1,21 @@
 import type { Candidato } from "../../models/Candidato";
+import { escaparHtml } from "../../services/utils/escapeHtml";
+
+const NUMERO_INICIAL_CANDIDATO = 1001;
 
 export function renderizarCardsCandidatos(candidatos: Candidato[]): string {
     return candidatos.map((candidato, index) => `
         <article class="card-candidato">
-            <h3>Candidato #${index + 1001}</h3>
+            <h3>Candidato #${index + NUMERO_INICIAL_CANDIDATO}</h3>
 
             <p>
                 <strong>Formação:</strong>
-                ${candidato.formacao}
+                ${escaparHtml(candidato.formacao)}
             </p>
 
             <p>
                 <strong>Skills:</strong>
-                ${candidato.skills.join(" • ")}
+                ${candidato.skills.map(escaparHtml).join(" • ")}
             </p>
         </article>
     `).join("");

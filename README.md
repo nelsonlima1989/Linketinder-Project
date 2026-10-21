@@ -2,7 +2,7 @@
 
 Sistema de contratação de profissionais inspirado na combinação das principais ideias do **LinkedIn** e do **Tinder**.
 
-O projeto foi desenvolvido como um **MVP (Minimum Viable Product)** para o desafio **ZG-HERO / Acelera ZG**, utilizando **Groovy** no backend, **PostgreSQL** como banco de dados relacional, integração via **JDBC** e uma interface web em **TypeScript**. O projeto aplica conceitos de **Programação Orientada a Objetos (POO)**, **DAO**, **Modelagem de Dados Relacional**, **Estruturas de Dados**, organização em camadas e desenvolvimento de uma interface funcional.
+O projeto foi iniciado como um **MVP (Minimum Viable Product)** no **ZG-HERO / Acelera ZG** e posteriormente refatorado para o padrão **MVC (Model–View–Controller)**, utilizando **Groovy** no backend, **PostgreSQL** como banco de dados relacional, integração via **JDBC** e uma interface web em **TypeScript**. O projeto aplica conceitos de **Programação Orientada a Objetos (POO)**, **DAO**, **Modelagem de Dados Relacional**, **Estruturas de Dados**, organização em camadas e desenvolvimento de uma interface funcional.
 
 A proposta do Linketinder é aproximar **candidatos** e **empresas** com base em suas **Skills**, reduzindo a influência de popularidade e priorizando a compatibilidade entre as competências do candidato e as necessidades das vagas.
 
@@ -120,14 +120,16 @@ Linketinder
 │   └── Groovy
 │       ├── Main
 │       ├── UI
+│       ├── Controllers
 │       ├── Services
-│       ├── DAO
+│       ├── Repository / DAO
 │       ├── Database
 │       └── Model
 │
 └── Frontend
     └── TypeScript
-        ├── Components
+        ├── Components (View)
+        ├── Controllers
         ├── Services
         ├── Models
         ├── Data
@@ -150,7 +152,7 @@ JDBC
 PostgreSQL
 ```
 
-A camada de interface não acessa o banco diretamente. Os `Services` concentram as operações da aplicação e utilizam os `DAOs` para executar os comandos SQL via JDBC.
+No backend, a interface de terminal e os controllers delegam operações aos services; o acesso ao banco ocorre através dos repositórios e DAOs. A camada de interface não acessa o banco diretamente. Os `Services` concentram as operações da aplicação e utilizam os `DAOs` para executar os comandos SQL via JDBC.
 
 A intenção é evitar concentrar toda a lógica em um único arquivo, mantendo cada parte do sistema responsável por uma função específica.
 
@@ -226,6 +228,11 @@ linketinder/
     ├── public/
     │
     └── src/
+        ├── controllers/
+        │   ├── candidatoController.ts
+        │   ├── empresaController.ts
+        │   └── vagaController.ts
+        │
         ├── components/
         │   ├── candidatos/
         │   │   ├── renderizarCardsCandidatos.ts
@@ -255,17 +262,10 @@ linketinder/
         │   └── Vaga.ts
         │
         ├── services/
-        │   ├── candidatoService.ts
-        │   ├── empresaService.ts
-        │   ├── edicaoCandidatoService.ts
-        │   ├── edicaoEmpresaService.ts
-        │   ├── edicaoVagaService.ts
-        │   ├── idService.ts
-        │   ├── navegacaoService.ts
-        │   ├── skillService.ts
-        │   ├── storage.ts
-        │   ├── vagaService.ts
-        │   └── afinidadeService.ts
+        │   ├── candidato/           # Cadastro e edição de candidatos
+        │   ├── empresa/             # Cadastro e edição de empresas
+        │   ├── vaga/                # Cadastro e edição de vagas
+        │   └── utils/               # Storage, navegação, IDs, skills e afinidade
         │
         └── main.ts
 ```
@@ -1161,7 +1161,7 @@ Foram testados:
 
 # 🧹 Refatoração do backend — Clean Code e SOLID
 
-Nesta etapa, o desafio de refatoração foi delimitado **ao backend Groovy**. A estrutura e as funcionalidades do frontend TypeScript foram mantidas, sem novas refatorações nesta entrega. A persistência das curtidas e dos matches via JDBC também permanece reservada para uma etapa posterior.
+Na etapa anterior de Clean Code e SOLID, o escopo foi delimitado **ao backend Groovy**. A refatoração posterior para MVC também reorganizou o frontend TypeScript. A persistência das curtidas e dos matches via JDBC também permanece reservada para uma etapa posterior.
 
 ## Melhorias de Clean Code
 
@@ -1238,7 +1238,7 @@ O total de **126 testes aprovados** foi confirmado na execução local de `./gra
 
 # 🏭 Refatoração do backend — Design Patterns
 
-Este desafio dá continuidade à etapa de Clean Code e SOLID, **sem refatorar o frontend TypeScript**. O objetivo principal foi centralizar a escolha da implementação responsável por fornecer conexões JDBC, preservando a arquitetura e as regras de negócio existentes.
+A etapa anterior de Design Patterns deu continuidade ao Clean Code e SOLID, **sem refatorar o frontend TypeScript naquele momento**. O objetivo principal foi centralizar a escolha da implementação responsável por fornecer conexões JDBC, preservando a arquitetura e as regras de negócio existentes.
 
 ## Padrões utilizados e benefícios práticos
 
@@ -1355,7 +1355,7 @@ O novo `ConexaoFactorySpec` possui **4 testes unitários com Spock**, cobrindo s
 | Estrutura SQL para curtidas | ✅ Implementado |
 | Integração JDBC de curtidas e Match | ⏳ Próximo desafio |
 | Refatoração Clean Code e SOLID do backend | ✅ Concluída nesta etapa |
-| Testes unitários do backend (Spock) | ✅ 126 aprovados (17 do MenuSpec e 4 do ConexaoFactorySpec) |
+| Testes unitários do backend (Spock) | ✅ 141 aprovados na última execução informada |
 | Simple Factory para seleção de provedor JDBC | ✅ Implementada e integrada ao Main |
 | Busca de candidato | ✅ Implementado |
 | Menu de terminal | ✅ Implementado |
@@ -1602,6 +1602,94 @@ O projeto foi desenvolvido considerando os requisitos apresentados no desafio.
 - [x] Cadastro de novos candidatos;
 - [x] Cadastro de novas empresas;
 - [x] Cadastro de novas vagas.
+
+---
+
+# 🧭 Refatoração MVC — desafio de Padrões de Projeto
+
+## Objetivo desta entrega
+
+Reorganizar o Linketinder para explicitar a divisão entre **Model, View e Controller**, preservando as regras de negócio, o acesso a dados e as funcionalidades já existentes. A estrutura em camadas complementares (`Service`, `Repository` e `DAO`) foi mantida para reduzir o acoplamento e facilitar futuras evoluções com frameworks.
+
+## Responsabilidades das camadas
+
+| Camada | Responsabilidade | Exemplos do projeto |
+|---|---|---|
+| **Model** | Representar os dados e entidades do domínio | `Candidato`, `Empresa`, `Vaga`, `Skill` |
+| **View** | Apresentar dados e obter ações do usuário | Componentes TypeScript, formulários e telas; menu de terminal no backend |
+| **Controller** | Receber eventos/ações da View e coordenar a chamada aos serviços | `candidatoController.ts`, `empresaController.ts`, `vagaController.ts` e controladores do backend |
+| **Service** | Concentrar operações e regras de negócio | Serviços de candidatos, empresas e vagas |
+| **Repository / DAO** | Abstrair e executar persistência no PostgreSQL | Interfaces Repository e DAOs JDBC no backend |
+
+**Importante:** o frontend TypeScript e o backend Groovy são aplicações executadas separadamente nesta entrega. O frontend usa `localStorage`, enquanto o backend acessa PostgreSQL via JDBC. **Não existe integração HTTP entre as duas aplicações nesta versão**, e o diagrama abaixo descreve os fluxos internos de cada uma, não uma comunicação direta entre elas.
+
+### Fluxo no frontend
+
+```text
+Interação do usuário
+        ↓
+View (components / layout)
+        ↓
+Controller (eventos de formulário, edição e exclusão)
+        ↓
+Service (operações e regras)
+        ↓
+Storage (localStorage)
+        ↓
+Controller → atualização da View
+```
+
+### Fluxo no backend
+
+```text
+View (menu de terminal)
+        ↓
+Controller (coordenação da ação)
+        ↓
+Service (regras de negócio)
+        ↓
+Repository (contratos) / DAO (JDBC)
+        ↓
+PostgreSQL
+```
+
+## Principais correções realizadas na refatoração
+
+- **Responsabilidades de interface isoladas:** eventos de formulário, edição e exclusão foram organizados em controladores de candidatos, empresas e vagas, reduzindo a concentração de código no `main.ts` do frontend.
+- **Separação da apresentação:** renderização de perfis, formulários, cartões de vagas e navegação permaneceu nos componentes de View, sem incorporar diretamente a persistência.
+- **Encaminhamento de operações aos Services:** controladores invocam serviços que realizam operações de cadastro, consulta, edição e exclusão, evitando duplicação de regras.
+- **Modelos explícitos:** entidades e contratos permanecem na camada Model, desacoplados das rotinas de apresentação.
+- **Persistência encapsulada no backend:** Repository/DAO concentram acesso JDBC e SQL, preservando os Services independentes da interface.
+- **Estado de navegação corrigido:** após cadastrar candidato ou empresa, o ID criado passa a ser selecionado. Após excluir empresa, a interface seleciona outra existente ou apresenta o estado sem empresa selecionada.
+- **Testabilidade ampliada:** eventos e decisões dos controladores podem ser verificados com mocks e testes unitários, sem exigir banco ou navegador completo em cada caso.
+
+**Benefícios:** maior coesão, menor acoplamento, facilidade de manutenção, testes isolados e organização mais adequada à futura adoção de frameworks.
+
+## Execução e testes para entrega
+
+Na raiz do projeto, para validar o backend:
+
+```bash
+./gradlew clean test
+./gradlew run --console=plain
+```
+
+Na pasta `frontend/`, para validar a interface:
+
+```bash
+npm install
+npm test
+npm run build
+npm run dev
+```
+
+**Últimos resultados informados durante a refatoração:** 302 testes unitários aprovados no frontend e 141 no backend. Esses números são registros das execuções informadas, **não substituem uma execução final** após eventuais modificações na árvore do projeto.
+
+## Limitações conhecidas e próximos passos
+
+- Não há comunicação HTTP entre frontend e backend; cada aplicação mantém sua estratégia de persistência.
+- A exclusão de empresa e vagas no `localStorage` envolve gravações separadas, sem atomicidade transacional; o tratamento de falhas parciais é uma melhoria futura.
+- Persistência JDBC de curtidas e matches e autenticação completa permanecem para etapas futuras.
 
 ---
 

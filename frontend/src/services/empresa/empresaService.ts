@@ -1,10 +1,11 @@
 import type { Empresa } from "../../models/Empresa";
 import { empresas } from "../../data/dados";
 import { salvarDados, carregarDados } from "../utils/storage";
+import { calcularProximoId } from "../utils/idUtils";
 
 const CHAVE = "empresas";
 
-type DadosFormularioEmpresa = {
+export type DadosFormularioEmpresa = {
     nome: string;
     cnpj: string;
     descricao: string;
@@ -26,23 +27,14 @@ export function listarEmpresas(): Empresa[] {
 }
 
 export function obterProximoId(): number {
-
     const empresasAtuais = listarEmpresas();
 
-    if (empresasAtuais.length === 0) {
-        return 1;
-    }
-
-    const maiorId = Math.max(
-        ...empresasAtuais.map(empresa => empresa.id)
-    );
-
-    return maiorId + 1;
+    return calcularProximoId(empresasAtuais);
 }
 
 export function adicionarEmpresa(
     empresa: Omit<Empresa, "id">
-): void {
+): number {
 
     const empresasAtuais = listarEmpresas();
 
@@ -56,11 +48,13 @@ export function adicionarEmpresa(
     empresasAtuais.push(novaEmpresa);
 
     salvarDados(CHAVE, empresasAtuais);
+
+    return novoId;
 }
 
 export function criarEmpresa(
     dados: DadosFormularioEmpresa
-): void {
+): number {
 
     const novaEmpresa: Omit<Empresa, "id"> = {
         nome: dados.nome,
@@ -69,7 +63,7 @@ export function criarEmpresa(
         estado: dados.estado
     };
 
-    adicionarEmpresa(novaEmpresa);
+  return adicionarEmpresa(novaEmpresa);
 }
 
 export function obterEmpresaPorId(
@@ -85,12 +79,7 @@ export function obterEmpresaPorId(
 
 export function editarEmpresa(
     id: number,
-    dados: {
-        nome: string;
-        cnpj: string;
-        descricao: string;
-        estado: string;
-    }
+    dados: DadosFormularioEmpresa
 ): void {
 
     const empresasAtuais = listarEmpresas();

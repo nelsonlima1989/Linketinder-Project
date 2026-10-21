@@ -1,29 +1,31 @@
+
 import type { Candidato } from "../../models/Candidato";
+import { escaparHtml } from "../../services/utils/escapeHtml";
 
 export function renderizarPerfilCandidato(candidato: Candidato): string {
-  return `
+    return `
         <section class="perfil-candidato">
 
-            <h1>${candidato.nome}</h1>
+            <h1>${escaparHtml(candidato.nome)}</h1>
 
             <p>
                 <strong>Formação:</strong>
-                ${candidato.formacao}
+                ${escaparHtml(candidato.formacao)}
             </p>
 
             <p>
                 <strong>Descrição:</strong>
-                ${candidato.descricao}
+                ${escaparHtml(candidato.descricao)}
             </p>
 
             <p>
                 <strong>Skills:</strong>
-                ${candidato.skills.join(" • ")}
+                ${candidato.skills.map(escaparHtml).join(" • ")}
             </p>
 
             <p>
                 <strong>Estado:</strong>
-                ${candidato.estado}
+                ${escaparHtml(candidato.estado)}
             </p>
 
             <div class="acoes-perfil">

@@ -1,40 +1,40 @@
-package com.linketinder.ui
+package com.linketinder.view
 
+import com.linketinder.controller.CandidatoController
+import com.linketinder.controller.CurtidaController
+import com.linketinder.controller.EmpresaController
+import com.linketinder.controller.MatchController
 import com.linketinder.model.Candidato
 import com.linketinder.model.CandidatoAnonimo
 import com.linketinder.model.EmpresaAnonima
 import com.linketinder.model.Match
 import com.linketinder.model.Skill
 import com.linketinder.model.Vaga
-import com.linketinder.service.CandidatoService
-import com.linketinder.service.CurtidaService
-import com.linketinder.service.EmpresaService
 import com.linketinder.model.Empresa
-import com.linketinder.service.MatchService
+
 
 import java.time.LocalDate
 import java.time.Period
 
 class Menu {
-
-    private final CandidatoService candidatoService
-    private final EmpresaService empresaService
-    private final CurtidaService curtidaService
-    private final MatchService matchService
+    private final CandidatoController candidatoController
+    private final EmpresaController empresaController
+    private final CurtidaController curtidaController
+    private final MatchController matchController
     private final Scanner scanner
 
     Menu(
-            CandidatoService candidatoService,
-            EmpresaService empresaService,
-            CurtidaService curtidaService,
-            MatchService matchService,
-            Scanner scanner
+            Scanner scanner,
+            CandidatoController candidatoController,
+            EmpresaController empresaController,
+            CurtidaController curtidaController,
+            MatchController matchController
     ) {
-        this.candidatoService = candidatoService
-        this.empresaService = empresaService
-        this.curtidaService = curtidaService
-        this.matchService = matchService
         this.scanner = scanner
+        this.candidatoController = candidatoController
+        this.empresaController = empresaController
+        this.curtidaController = curtidaController
+        this.matchController = matchController
     }
 
     private void exibirMenuPrincipal() {
@@ -102,7 +102,7 @@ class Menu {
         List<CandidatoAnonimo> candidatos
 
         try {
-           candidatos = candidatoService.listarCandidatosAnonimos()
+           candidatos = candidatoController.listarCandidatosAnonimos()
         } catch (IllegalStateException e) {
             println "Erro ao consultar candidatos: ${e.message}"
             return
@@ -142,7 +142,7 @@ class Menu {
         List<EmpresaAnonima> empresas
 
         try {
-            empresas = empresaService.listarEmpresasAnonimas()
+            empresas = empresaController.listarEmpresasAnonimas()
 
         } catch (IllegalStateException e) {
             println "Erro ao consultar vagas: ${e.message}"
@@ -244,7 +244,7 @@ class Menu {
 
     private List<Map<String, Object>> obterVagasParaSelecao() {
 
-        List<Empresa> empresas = empresaService.listarTodasEmpresas()
+        List<Empresa> empresas = empresaController.listarTodasEmpresas()
 
         return empresas.collectMany { Empresa empresa ->
 
@@ -271,7 +271,7 @@ class Menu {
         List<Candidato> candidatos
 
         try {
-           candidatos = candidatoService.listarTodosCandidatos()
+           candidatos = candidatoController.listarTodosCandidatos()
         } catch (IllegalStateException e) {
             println "Erro ao consultar candidatos: ${e.message}"
             return
@@ -329,7 +329,7 @@ class Menu {
 
         Vaga vaga = (Vaga) item.vaga
 
-        curtidaService.curtirVaga(candidato, vaga)
+        curtidaController.curtirVaga(candidato, vaga)
     }
 
 
@@ -343,7 +343,7 @@ class Menu {
         List<Empresa> empresas
 
         try {
-            empresas = empresaService.listarTodasEmpresas()
+            empresas = empresaController.listarTodasEmpresas()
 
         } catch (IllegalStateException e) {
             println "Erro ao consultar empresas: ${e.message}"
@@ -377,7 +377,7 @@ class Menu {
         List<Candidato> candidatos
 
         try {
-            candidatos = candidatoService.listarTodosCandidatos()
+            candidatos = candidatoController.listarTodosCandidatos()
 
         } catch (IllegalStateException e) {
             println "Erro ao consultar candidatos: ${e.message}"
@@ -400,7 +400,7 @@ class Menu {
 
         Candidato candidato = candidatos[candidatoOpcao - 1]
 
-        curtidaService.curtirCandidato(
+        curtidaController.curtirCandidato(
                 empresa,
                 candidato
         )
@@ -470,7 +470,7 @@ class Menu {
         println "            MATCHES"
         println "================================"
 
-        List<Match> matches = matchService.listarMatches()
+        List<Match> matches = matchController.listarMatches()
 
         if (!matches) {
             println "Nenhum Match encontrado."
