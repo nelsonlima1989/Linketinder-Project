@@ -2,7 +2,7 @@
 
 Sistema de contratação de profissionais inspirado na combinação das principais ideias do **LinkedIn** e do **Tinder**.
 
-O projeto foi iniciado como um **MVP (Minimum Viable Product)** no **ZG-HERO / Acelera ZG** e posteriormente refatorado para o padrão **MVC (Model–View–Controller)**, utilizando **Groovy** no backend, **PostgreSQL** como banco de dados relacional, integração via **JDBC** e uma interface web em **TypeScript**. O projeto aplica conceitos de **Programação Orientada a Objetos (POO)**, **DAO**, **Modelagem de Dados Relacional**, **Estruturas de Dados**, organização em camadas e desenvolvimento de uma interface funcional.
+O projeto foi iniciado como um **MVP (Minimum Viable Product)** no **ZG-HERO / Acelera ZG** e posteriormente refatorado para o padrão **MVC (Model–View–Controller)**, utilizando **Groovy** no backend, **PostgreSQL** como banco de dados relacional, integração via **JDBC** e uma interface web em **TypeScript**. O projeto aplica conceitos de **Programação Orientada a Objetos (POO)**, **DAO**, **Modelagem de Dados Relacional**, **Estruturas de Dados**, organização em camadas e desenvolvimento de uma interface funcional. O backend também disponibiliza uma **API REST HTTP sem frameworks web** para cadastro de candidatos, empresas e vagas.
 
 A proposta do Linketinder é aproximar **candidatos** e **empresas** com base em suas **Skills**, reduzindo a influência de popularidade e priorizando a compatibilidade entre as competências do candidato e as necessidades das vagas.
 
@@ -31,6 +31,7 @@ O projeto atualmente possui:
 - relacionamentos `Candidato N:N Competência`, `Vaga N:N Competência` e `Empresa 1:N Vaga`;
 - scripts SQL para criação do banco, carga de dados iniciais e consultas de validação;
 - serviços integrados à camada de persistência;
+- API REST no backend com endpoints HTTP para criação de candidatos, empresas e vagas;
 - interface de terminal no backend;
 - interface web em TypeScript;
 - cadastro de candidatos, empresas e vagas;
@@ -89,6 +90,9 @@ O objetivo do projeto é construir uma plataforma de recrutamento capaz de:
 - **JDBC (Java Database Connectivity)**
 - **Gradle**
 - **IntelliJ IDEA**
+- **Java HttpServer (`jdk.httpserver`)** para API REST sem framework web
+- **Groovy JSON (`JsonSlurper` / `JsonOutput`)**
+- **Spock e JaCoCo** para testes e cobertura
 
 ## Frontend
 
@@ -176,6 +180,14 @@ linketinder/
 │               └── linketinder/
 │                   ├── Main.groovy
 │                   │
+│                   ├── api/
+│                   │   ├── ApiServer.groovy
+│                   │   ├── CandidatoHttpHandler.groovy
+│                   │   ├── EmpresaHttpHandler.groovy
+│                   │   ├── VagaHttpHandler.groovy
+│                   │   ├── HttpRequestUtil.groovy
+│                   │   └── HttpResponseUtil.groovy
+│                   │
 │                   ├── dao/
 │                   │   ├── CandidatoDAO.groovy
 │                   │   ├── CandidatoCompetenciaDAO.groovy
@@ -214,6 +226,7 @@ linketinder/
 │                   ├── service/
 │                   │   ├── CandidatoService.groovy
 │                   │   ├── EmpresaService.groovy
+│                   │   ├── VagaService.groovy
 │                   │   ├── CurtidaService.groovy
 │                   │   └── MatchService.groovy
 │                   │
@@ -1355,7 +1368,8 @@ O novo `ConexaoFactorySpec` possui **4 testes unitários com Spock**, cobrindo s
 | Estrutura SQL para curtidas | ✅ Implementado |
 | Integração JDBC de curtidas e Match | ⏳ Próximo desafio |
 | Refatoração Clean Code e SOLID do backend | ✅ Concluída nesta etapa |
-| Testes unitários do backend (Spock) | ✅ 141 aprovados na última execução informada |
+| Testes automatizados do backend (Spock) | ✅ Suíte executada com sucesso após a adição dos testes REST; total atual deve ser consultado no relatório |
+| API REST sem framework web — candidatos, empresas e vagas | ✅ Três POSTs testados com `201 Created` |
 | Simple Factory para seleção de provedor JDBC | ✅ Implementada e integrada ao Main |
 | Busca de candidato | ✅ Implementado |
 | Menu de terminal | ✅ Implementado |
@@ -1493,7 +1507,7 @@ A arquitetura estabelecida permite evoluções futuras como:
 
 ## 1. Integração entre frontend e backend
 
-Consumo direto dos endpoints ou serviços em substituição à manipulação exclusiva em `localStorage`.
+O backend já disponibiliza endpoints REST para cadastro; permanece planejado o consumo desses endpoints pelo frontend em substituição à manipulação exclusiva em `localStorage`.
 
 ## 2. Persistência de curtidas e Match
 
@@ -1621,7 +1635,7 @@ Reorganizar o Linketinder para explicitar a divisão entre **Model, View e Contr
 | **Service** | Concentrar operações e regras de negócio | Serviços de candidatos, empresas e vagas |
 | **Repository / DAO** | Abstrair e executar persistência no PostgreSQL | Interfaces Repository e DAOs JDBC no backend |
 
-**Importante:** o frontend TypeScript e o backend Groovy são aplicações executadas separadamente nesta entrega. O frontend usa `localStorage`, enquanto o backend acessa PostgreSQL via JDBC. **Não existe integração HTTP entre as duas aplicações nesta versão**, e o diagrama abaixo descreve os fluxos internos de cada uma, não uma comunicação direta entre elas.
+**Importante (escopo da etapa MVC):** o frontend TypeScript e o backend Groovy são aplicações executadas separadamente. O frontend usa `localStorage`, enquanto o backend acessa PostgreSQL via JDBC. Na etapa posterior **K2-T6**, foi adicionada uma API HTTP ao backend, **sem integrar o frontend a ela**. O diagrama abaixo descreve os fluxos internos da etapa MVC, não uma comunicação direta entre as duas aplicações.
 
 ### Fluxo no frontend
 
@@ -1687,9 +1701,216 @@ npm run dev
 
 ## Limitações conhecidas e próximos passos
 
-- Não há comunicação HTTP entre frontend e backend; cada aplicação mantém sua estratégia de persistência.
+- O backend agora expõe uma API REST HTTP; o frontend TypeScript ainda não a consome e mantém `localStorage`.
 - A exclusão de empresa e vagas no `localStorage` envolve gravações separadas, sem atomicidade transacional; o tratamento de falhas parciais é uma melhoria futura.
 - Persistência JDBC de curtidas e matches e autenticação completa permanecem para etapas futuras.
+
+---
+
+
+# 🌐 API REST/RESTful sem frameworks web
+
+## Objetivo e escopo
+
+Nesta etapa, o backend do Linketinder passou a oferecer **três endpoints HTTP de cadastro** com persistência no PostgreSQL, sem Spring, Grails ou Micronaut. A API usa `HttpServer` do JDK, Groovy para processamento e JSON para troca de dados. **Não há integração com o frontend TypeScript nesta etapa**: o frontend segue independente, utilizando `localStorage`.
+
+### Recursos e responsabilidades
+
+| Recurso | Responsabilidade |
+|---|---|
+| `ApiServer.groovy` | Inicializa o `HttpServer` em `127.0.0.1:8080`, monta as dependências e registra as rotas |
+| `CandidatoHttpHandler.groovy` | Recebe e valida o cadastro de candidato, delegando ao `CandidatoService` |
+| `EmpresaHttpHandler.groovy` | Recebe e valida o cadastro de empresa, delegando ao `EmpresaService` |
+| `VagaHttpHandler.groovy` | Recebe e valida o cadastro de vaga, delegando ao `VagaService` |
+| `HttpRequestUtil.groovy` | Valida rota, método, `Content-Type`, tamanho do corpo, JSON e campos obrigatórios |
+| `HttpResponseUtil.groovy` | Serializa mapas em JSON e configura status, `Content-Type` e corpo da resposta |
+| `Services` | Coordenam os cadastros, verificam a associação da vaga à empresa e usam os Repositories |
+| `DAOs` + JDBC | Realizam consultas e `INSERT ... RETURNING id` no PostgreSQL |
+
+Fluxo de comunicação:
+
+```text
+curl / cliente HTTP
+       ↓
+HttpServer → HttpHandler → HttpRequestUtil
+       ↓
+Service → Repository / DAO → JDBC → PostgreSQL
+       ↓
+HttpResponseUtil → JSON + código HTTP + Location
+```
+
+A API utiliza **injeção manual de dependências por construtor**: o servidor monta os DAOs com `ConexaoProvider`, os Services com Repositories/DAOs e os Handlers com Services. As regras de persistência existentes foram reaproveitadas.
+
+## Contrato dos endpoints
+
+| Método | Rota | Função | Resposta de sucesso |
+|---|---|---|---|
+| `GET` | `/api/health` | Verificação simples de disponibilidade do processo HTTP | `200 OK`, `{"status":"UP"}` |
+| `POST` | `/api/candidatos` | Cadastra candidato sem Skills na requisição inicial | `201 Created` |
+| `POST` | `/api/empresas` | Cadastra empresa sem vagas na requisição inicial | `201 Created` |
+| `POST` | `/api/vagas` | Cadastra vaga associada a uma empresa existente | `201 Created` |
+
+O `201 Created` inclui `Location: /api/<recurso>/<id>` e um JSON com o ID criado. **Os caminhos individuais informados por `Location` ainda não oferecem operações GET**; a implementação desta etapa é focada nos três cadastros exigidos.
+
+### Exemplo 1 — Cadastrar candidato
+
+```bash
+curl -i -X POST http://localhost:8080/api/candidatos \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "nome": "Sandubinha",
+    "sobrenome": "Silva",
+    "dataNascimento": "2000-05-15",
+    "email": "sandubinha@example.com",
+    "cpf": "12345678909",
+    "pais": "Brasil",
+    "estado": "RJ",
+    "cep": "20000000",
+    "descricaoPessoal": "Desenvolvedor backend",
+    "senha": "SenhaDeTeste123!"
+  }'
+```
+
+Resposta de referência (ID ilustrativo):
+
+```http
+HTTP/1.1 201 Created
+Location: /api/candidatos/6
+Content-Type: application/json; charset=UTF-8
+
+{"id":6,"mensagem":"Candidato cadastrado com sucesso."}
+```
+
+### Exemplo 2 — Cadastrar empresa
+
+```bash
+curl -i -X POST http://localhost:8080/api/empresas \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "nome": "ZG Tecnologia",
+    "cnpj": "11222333000181",
+    "email": "contato@example.com",
+    "descricaoEmpresarial": "Empresa de tecnologia",
+    "pais": "Brasil",
+    "estado": "RJ",
+    "cep": "20000000",
+    "senha": "SenhaTeste123!"
+  }'
+```
+
+Resposta de referência (ID ilustrativo):
+
+```http
+HTTP/1.1 201 Created
+Location: /api/empresas/6
+Content-Type: application/json; charset=UTF-8
+
+{"id":6,"mensagem":"Empresa cadastrada com sucesso."}
+```
+
+### Exemplo 3 — Cadastrar vaga
+
+O campo `empresaId` deve informar o identificador de uma **empresa já cadastrada**. Substitua `6` pelo ID obtido no cadastro anterior, caso seja diferente.
+
+```bash
+curl -i -X POST http://localhost:8080/api/vagas \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "empresaId": 6,
+    "titulo": "Desenvolvedor Backend Júnior",
+    "descricaoVaga": "Desenvolvimento de APIs REST com Groovy e Java.",
+    "estado": "RJ",
+    "cidade": "Rio de Janeiro"
+  }'
+```
+
+Resposta de referência (IDs ilustrativos):
+
+```http
+HTTP/1.1 201 Created
+Location: /api/vagas/6
+Content-Type: application/json; charset=UTF-8
+
+{"id":6,"empresaId":6,"mensagem":"Vaga cadastrada com sucesso."}
+```
+
+### Códigos HTTP tratados
+
+| Status | Contexto |
+|---|---|
+| `200 OK` | Health check |
+| `201 Created` | Cadastro realizado |
+| `400 Bad Request` | JSON inválido, campos obrigatórios incorretos ou ID de empresa inválido |
+| `404 Not Found` | Caminho inexistente nos handlers ou empresa da vaga não encontrada |
+| `405 Method Not Allowed` | Método diferente do permitido (`Allow` é informado) |
+| `413 Content Too Large` | Corpo superior a 16 KiB |
+| `415 Unsupported Media Type` | `Content-Type` diferente de `application/json` |
+| `500 Internal Server Error` | Falha na execução do cadastro |
+
+## Como configurar e executar a API
+
+### Pré-requisitos
+
+- JDK compatível com o projeto, Gradle Wrapper (`gradlew`) e PostgreSQL em execução;
+- banco de dados criado e estruturado a partir de `database/database.sql` (consulte a seção **Como executar → Banco de Dados**);
+- variáveis `DB_URL`, `DB_USER` e `DB_PASSWORD` disponíveis ao processo Java;
+- porta TCP `8080` disponível em `127.0.0.1`.
+
+O `build.gradle` utiliza os plugins `groovy`, `application` e `jacoco`, além das dependências `org.apache.groovy:groovy:5.0.8`, `org.apache.groovy:groovy-json:5.0.8` e driver JDBC PostgreSQL. O task `runApi` inicia `com.linketinder.api.ApiServer`, enquanto `run` continua executando o menu de terminal.
+
+O arquivo `.env` **não é carregado automaticamente por `System.getenv()`**. Em Linux/macOS, a partir da raiz do projeto, carregue um `.env` confiável, de sintaxe compatível com shell, antes de executar:
+
+```bash
+set -a
+source .env
+set +a
+./gradlew runApi --console=plain
+```
+
+Em outro terminal, faça o health check:
+
+```bash
+curl -i http://localhost:8080/api/health
+```
+
+Resposta esperada: `200 OK` com `{"status":"UP"}`. A execução de `runApi` permanece ativa enquanto o servidor HTTP estiver atendendo requisições. Encerre com `Ctrl+C`. Para o menu tradicional, utilize `./gradlew run --console=plain`.
+
+> **Atenção:** não comite o `.env` ou credenciais. O servidor usa `127.0.0.1` para testes locais. Utilize exclusivamente dados fictícios nos exemplos. A implementação educacional atual não deve ser exposta publicamente como serviço de produção; autenticação, autorização, proteção de senhas e transações de gravações relacionadas são evoluções futuras, fora do escopo K2-T6.
+
+## Testes automatizados e cobertura
+
+Os testes utilizam **Spock** com Services/Repositories simulados, sem conexão com o PostgreSQL. Nos testes dos handlers, um `HttpServer` temporário com porta escolhida pelo sistema recebe requisições de um `HttpClient`, permitindo verificar respostas HTTP reais.
+
+| Classe de teste | O que verifica |
+|---|---|
+| `apiTest.CandidatoHttpHandlerSpec` | `201`, `400`, `405`, `415`, `500` e `Location` |
+| `apiTest.EmpresaHttpHandlerSpec` | `201`, `400`, `405`, `415`, `500` e `Location` |
+| `apiTest.VagaHttpHandlerSpec` | `201`, `400`, `404`, `405`, `413`, `415`, `500`, validações de `empresaId` e `Location` |
+| `serviceTest.VagaServiceSpec` | Associação com empresa existente, rejeição de ID inválido/empresa inexistente e falha simulada no Repository |
+
+```bash
+# Executar apenas os testes REST
+./gradlew test --tests 'apiTest.*' --console=plain
+
+# Testar especificamente o serviço de vagas
+./gradlew test --tests 'serviceTest.VagaServiceSpec' --console=plain
+
+# Executar toda a suíte e gerar o JaCoCo
+./gradlew clean test jacocoTestReport --console=plain
+```
+
+Relatórios: `build/reports/tests/test/index.html` e `build/reports/jacoco/test/html/index.html`.
+
+Os três endpoints tiveram **cadastros manuais com `201 Created`** e os testes automatizados foram executados com sucesso durante o desenvolvimento. O número total de testes e os percentuais de cobertura devem ser consultados no relatório mais recente: não são valores fixos do projeto. Os testes com mocks não substituem a verificação de persistência com o banco real.
+
+## Decisões e limitações da etapa REST
+
+- **Sem framework web:** `HttpServer` e `HttpHandler` do próprio Java, não Tomcat/Spring/Grails.
+- **REST sobre HTTP/JSON:** métodos e códigos HTTP adequados, separação cliente/servidor e comunicação stateless nas operações de cadastro.
+- **Sem integração com frontend:** a interface TypeScript continua usando `localStorage`.
+- **Reutilização do backend:** Services, Repositories, DAOs e JDBC existentes foram mantidos.
+- **Sem cadastro de Skills neste contrato:** os cadastros iniciais usam listas vazias de Skills/vagas, apesar de o domínio já oferecer associações por outros fluxos.
+- **Limitações conhecidas:** rotas individuais GET não implementadas, senhas ainda armazenadas conforme o fluxo legado, ausência de autenticação/autorização e falta de transação única em cadastros que envolvam múltiplas tabelas.
 
 ---
 
