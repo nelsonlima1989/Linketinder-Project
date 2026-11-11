@@ -28,7 +28,7 @@
 
 | ID | Tarefa | Camada | Dependências | Status | Commit Esperado |
 |---|---|---|---|---|---|
-| **T-01** | Estrutura SQL e seeds/consultas de `recrutadores` | Banco (PostgreSQL) | `spec.md` aprovada | Pendente | `feat(database): adiciona tabela e consultas de recrutadores` |
+| **T-01** | Estrutura SQL e seeds/consultas de `recrutadores` | Banco (PostgreSQL) | `spec.md` aprovada | Concluída | `feat(database): adiciona tabela e consultas de recrutadores` |
 | **T-02** | Models, utilitário PBKDF2 (`SenhaHashUtil`), `RecrutadorRepository` e `RecrutadorDAO` + `RecrutadorDAOSpec` | Backend (Groovy) | T-01 | Pendente | `feat: implementa model e DAO de recrutador com PBKDF2` |
 | **T-03** | `RecrutadorService` (validações, unicidade, 1:N, cascata e consultas anônimas) + `RecrutadorServiceSpec` | Backend (Groovy) | T-02 | Pendente | `feat: implementa RecrutadorService com validacoes e anonimato` |
 | **T-04** | `RecrutadorController`, `Menu` de terminal e `Main` + `RecrutadorControllerSpec` e `MenuSpec` | Backend (Groovy) | T-03 | Pendente | `feat: adiciona controller e opcoes de recrutador no menu` |
@@ -45,7 +45,7 @@
 
 ### Tarefa T-01 — Estrutura SQL e Seeds/Consultas de `recrutadores`
 
-- **Status:** Pendente
+- **Status:** Concluída
 - **Objetivo:** Adicionar o DDL da tabela `recrutadores` (relacionamento `1:N` com `empresas`, constraints `NOT NULL`, `UNIQUE` para `email` e `cpf`, `ON DELETE CASCADE` e índice em `empresa_id`) e incluir seeds iniciais (com senhas em formato hash PBKDF2) e consultas SQL de validação.
 - **Camada afetada:** Banco de Dados (`database/`).
 - **Arquivos previstos:**
