@@ -1,6 +1,7 @@
 package serviceTest
 
 import com.linketinder.repository.EmpresaRepository
+import com.linketinder.repository.RecrutadorRepository
 import com.linketinder.model.Empresa
 import com.linketinder.model.EmpresaAnonima
 import com.linketinder.model.Skill
@@ -440,6 +441,28 @@ class EmpresaServiceSpec extends Specification {
         0 * _
 
         resultado.isEmpty()
+    }
+
+    void "deve excluir recrutadores em cascata ao excluir empresa quando recrutadorDAO estiver configurado"() {
+
+        given:
+        RecrutadorRepository recrutadorDAO = Mock(RecrutadorRepository)
+        EmpresaService serviceComRecrutador = new EmpresaService(
+                empresaDAO,
+                vagaDAO,
+                vagaCompetenciaDAO,
+                recrutadorDAO
+        )
+
+        when:
+        boolean excluiu = serviceComRecrutador.excluirEmpresa(1L)
+
+        then:
+        1 * recrutadorDAO.excluirPorEmpresaId(1L) >> 2
+        1 * empresaDAO.excluir(1L) >> true
+        0 * _
+
+        excluiu
     }
 
 }
