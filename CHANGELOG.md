@@ -7,6 +7,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). C
 ## [Não lançado]
 
 ### Adicionado
+- `RecrutadorController`, integração de opções de recrutador no `Menu` de terminal (listagem por empresa, painel de análise de vagas da empresa e candidatos anônimos e submenu de gerenciamento), injeção manual de dependências em `Main.groovy` e testes Spock `RecrutadorControllerSpec` e `MenuSpec` (Tarefa T-04).
 - `RecrutadorService` e `ConflitoDadosException` (validações `VAL-01` a `VAL-09`, unicidade de CPF/e-mail, derivação PBKDF2, consultas de vagas por empresa e candidatos anônimos), suporte a exclusão em cascata em `EmpresaService` e `RecrutadorServiceSpec` (Tarefa T-03).
 - `Recrutador`, `RecrutadorResumo`, `SenhaHashUtil` (PBKDF2WithHmacSHA256 com salt individual), `RecrutadorRepository`, `RecrutadorDAO` e `RecrutadorDAOSpec` no backend Groovy (Tarefa T-02).
 - `database/database.sql` e `database/queries.sql`: tabela `recrutadores` (relacionamento 1:N com `empresas`, `ON DELETE CASCADE`, `UNIQUE` em `email` e `cpf` e índice em `empresa_id`), dados iniciais com hashes PBKDF2 e consulta de validação sem exposição de senha ou CPF (Tarefa T-01).

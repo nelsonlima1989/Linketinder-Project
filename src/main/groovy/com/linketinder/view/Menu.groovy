@@ -4,23 +4,30 @@ import com.linketinder.controller.CandidatoController
 import com.linketinder.controller.CurtidaController
 import com.linketinder.controller.EmpresaController
 import com.linketinder.controller.MatchController
+import com.linketinder.controller.RecrutadorController
 import com.linketinder.model.Candidato
 import com.linketinder.model.CandidatoAnonimo
 import com.linketinder.model.EmpresaAnonima
 import com.linketinder.model.Match
+import com.linketinder.model.Recrutador
+import com.linketinder.model.RecrutadorResumo
 import com.linketinder.model.Skill
 import com.linketinder.model.Vaga
 import com.linketinder.model.Empresa
+import com.linketinder.service.ConflitoDadosException
 
 
 import java.time.LocalDate
 import java.time.Period
+import java.time.format.DateTimeParseException
+import java.util.NoSuchElementException
 
 class Menu {
     private final CandidatoController candidatoController
     private final EmpresaController empresaController
     private final CurtidaController curtidaController
     private final MatchController matchController
+    private final RecrutadorController recrutadorController
     private final Scanner scanner
 
     Menu(
@@ -28,13 +35,15 @@ class Menu {
             CandidatoController candidatoController,
             EmpresaController empresaController,
             CurtidaController curtidaController,
-            MatchController matchController
+            MatchController matchController,
+            RecrutadorController recrutadorController = null
     ) {
         this.scanner = scanner
         this.candidatoController = candidatoController
         this.empresaController = empresaController
         this.curtidaController = curtidaController
         this.matchController = matchController
+        this.recrutadorController = recrutadorController
     }
 
     private void exibirMenuPrincipal() {
@@ -47,6 +56,9 @@ class Menu {
         println "3 - Curtir vaga"
         println "4 - Curtir candidato"
         println "5 - Listar matches"
+        println "6 - Listar recrutadores por empresa"
+        println "7 - Analisar vagas e candidatos (Recrutador)"
+        println "8 - Gerenciar recrutadores"
         println "0 - Sair"
         println "================================"
     }
@@ -81,6 +93,18 @@ class Menu {
 
                 case 5:
                     listarMatches()
+                    break
+
+                case 6:
+                    listarRecrutadoresPorEmpresa()
+                    break
+
+                case 7:
+                    analisarVagasECandidatosComoRecrutador()
+                    break
+
+                case 8:
+                    gerenciarRecrutadores()
                     break
 
                 case 0:
@@ -490,6 +514,337 @@ class Menu {
         }
 
         println "================================"
+    }
+
+    private void listarRecrutadoresPorEmpresa() {
+
+        println "================================"
+        println "   RECRUTADORES POR EMPRESA"
+        println "================================"
+
+        if (recrutadorController == null) {
+            println "Funcionalidade de recrutador não configurada."
+            return
+        }
+
+        List<Empresa> empresas
+
+        try {
+            empresas = empresaController.listarTodasEmpresas()
+        } catch (IllegalStateException e) {
+            println "Erro ao consultar empresas: ${e.message}"
+            return
+        }
+
+        if (!empresas) {
+            println "Nenhuma empresa cadastrada."
+            return
+        }
+
+        println "Empresas:"
+        empresas.eachWithIndex { Empresa empresa, int index ->
+            println "${index + 1} - ${empresa.informacoes?.nome ?: ('Empresa ' + empresa.id)}"
+        }
+
+        int empresaOpcao = lerOpcao("Escolha a empresa: ")
+
+        if (empresaOpcao < 1 || empresaOpcao > empresas.size()) {
+            println "Empresa inválida."
+            return
+        }
+
+        Empresa empresaSelecionada = empresas[empresaOpcao - 1]
+        List<RecrutadorResumo> recrutadores
+
+        try {
+            recrutadores = recrutadorController.listarRecrutadoresPorEmpresa(
+                    empresaSelecionada.id
+            )
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            println "Erro ao consultar recrutadores: ${e.message}"
+            return
+        }
+
+        if (!recrutadores) {
+            println "Nenhum recrutador cadastrado para esta empresa."
+            return
+        }
+
+        recrutadores.each { RecrutadorResumo recrutador ->
+            println "ID: ${recrutador.id}"
+            println "Nome: ${recrutador.nome}"
+            println "Área de recrutamento: ${recrutador.areaRecrutamento}"
+            println "Descrição: ${recrutador.descricao}"
+            println "E-mail: ${recrutador.email}"
+            println "--------------------------------"
+        }
+    }
+
+    private void analisarVagasECandidatosComoRecrutador() {
+
+        println "================================"
+        println "   PAINEL DO RECRUTADOR"
+        println "================================"
+
+        if (recrutadorController == null) {
+            println "Funcionalidade de recrutador não configurada."
+            return
+        }
+
+        List<RecrutadorResumo> recrutadores
+
+        try {
+            recrutadores = recrutadorController.listarTodosResumos()
+        } catch (IllegalStateException e) {
+            println "Erro ao consultar recrutadores: ${e.message}"
+            return
+        }
+
+        if (!recrutadores) {
+            println "Nenhum recrutador cadastrado."
+            return
+        }
+
+        println "Recrutadores:"
+        recrutadores.eachWithIndex { RecrutadorResumo recrutador, int index ->
+            println "${index + 1} - ${recrutador.nome} (${recrutador.areaRecrutamento})"
+        }
+
+        int recrutadorOpcao = lerOpcao("Escolha o recrutador: ")
+
+        if (recrutadorOpcao < 1 || recrutadorOpcao > recrutadores.size()) {
+            println "Recrutador inválido."
+            return
+        }
+
+        RecrutadorResumo recrutadorSelecionado = recrutadores[recrutadorOpcao - 1]
+
+        List<Vaga> vagasDaEmpresa
+        try {
+            vagasDaEmpresa = recrutadorController.listarVagasDaEmpresaDoRecrutador(
+                    recrutadorSelecionado.id
+            )
+        } catch (IllegalStateException | IllegalArgumentException | NoSuchElementException e) {
+            println "Erro ao consultar vagas da empresa: ${e.message}"
+            return
+        }
+
+        println "Vagas da empresa do recrutador:"
+        if (!vagasDaEmpresa) {
+            println "Nenhuma vaga cadastrada para a empresa."
+        } else {
+            vagasDaEmpresa.each { Vaga vaga ->
+                println "ID: ${vaga.id} - ${vaga.titulo}"
+                println "Descrição: ${vaga.descricaoVaga}"
+                println "Estado: ${vaga.estado}"
+                println "Cidade: ${vaga.cidade}"
+                println "Skills:"
+                if (vaga.skills) {
+                    vaga.skills.each { Skill skill ->
+                        println "- ${skill.nome}"
+                    }
+                } else {
+                    println "- Nenhuma competência cadastrada"
+                }
+                println "--------------------------------"
+            }
+        }
+
+        List<CandidatoAnonimo> candidatosAnonimos
+        try {
+            candidatosAnonimos = recrutadorController.listarCandidatosAnonimosParaRecrutador(
+                    recrutadorSelecionado.id
+            )
+        } catch (IllegalStateException | IllegalArgumentException | NoSuchElementException e) {
+            println "Erro ao consultar candidatos: ${e.message}"
+            return
+        }
+
+        println "Candidatos disponíveis (anônimos):"
+        if (!candidatosAnonimos) {
+            println "Nenhum candidato cadastrado."
+        } else {
+            candidatosAnonimos.each { CandidatoAnonimo candidato ->
+                println "ID: ${candidato.id}"
+                println "Estado: ${candidato.estado}"
+                println "Descrição: ${candidato.descricaoPessoal}"
+                println "Skills:"
+                if (candidato.skills) {
+                    candidato.skills.each { Skill skill ->
+                        println "- ${skill.nome}"
+                    }
+                } else {
+                    println "- Nenhuma competência cadastrada"
+                }
+                println "--------------------------------"
+            }
+        }
+    }
+
+    private void gerenciarRecrutadores() {
+
+        if (recrutadorController == null) {
+            println "Funcionalidade de recrutador não configurada."
+            return
+        }
+
+        int opcao = -1
+
+        while (opcao != 0) {
+            println "================================"
+            println "    GERENCIAR RECRUTADORES"
+            println "================================"
+            println "1 - Cadastrar recrutador"
+            println "2 - Buscar recrutador por ID"
+            println "3 - Atualizar recrutador"
+            println "4 - Excluir recrutador"
+            println "0 - Voltar"
+            println "================================"
+
+            opcao = lerOpcao("Escolha uma opção: ")
+
+            switch (opcao) {
+                case 1:
+                    cadastrarRecrutadorNoMenu()
+                    break
+                case 2:
+                    buscarRecrutadorPorIdNoMenu()
+                    break
+                case 3:
+                    atualizarRecrutadorNoMenu()
+                    break
+                case 4:
+                    excluirRecrutadorNoMenu()
+                    break
+                case 0:
+                    break
+                default:
+                    println "Opção inválida."
+            }
+        }
+    }
+
+    private void cadastrarRecrutadorNoMenu() {
+        int empresaId = lerOpcao("ID da empresa: ")
+        String nome = lerTexto("Nome: ")
+        String area = lerTexto("Área de recrutamento: ")
+        String descricao = lerTexto("Descrição: ")
+        String email = lerTexto("E-mail: ")
+        String cpf = lerTexto("CPF (11 dígitos): ")
+        String dataTexto = lerTexto("Data de nascimento (AAAA-MM-DD): ")
+        String senha = lerTexto("Senha: ")
+
+        LocalDate dataNascimento
+        try {
+            dataNascimento = LocalDate.parse(dataTexto)
+        } catch (DateTimeParseException ignored) {
+            println "Erro ao cadastrar recrutador: Data de nascimento em formato inválido. Use AAAA-MM-DD."
+            return
+        }
+
+        Recrutador novoRecrutador = new Recrutador(
+                nome: nome,
+                areaRecrutamento: area,
+                descricao: descricao,
+                email: email,
+                cpf: cpf,
+                dataNascimento: dataNascimento,
+                senha: senha
+        )
+
+        try {
+            recrutadorController.cadastrarRecrutador(novoRecrutador, (Long) empresaId)
+            println "Recrutador cadastrado com sucesso (ID: ${novoRecrutador.id})."
+        } catch (ConflitoDadosException e) {
+            println "Conflito de dados: ${e.message}"
+        } catch (NoSuchElementException | IllegalArgumentException | IllegalStateException e) {
+            println "Erro ao cadastrar recrutador: ${e.message}"
+        }
+    }
+
+    private void buscarRecrutadorPorIdNoMenu() {
+        int id = lerOpcao("ID do recrutador: ")
+
+        try {
+            RecrutadorResumo resumo = recrutadorController.buscarResumoPorId((Long) id)
+            if (resumo == null) {
+                println "Recrutador não encontrado."
+                return
+            }
+
+            println "ID: ${resumo.id}"
+            println "Empresa ID: ${resumo.empresaId}"
+            println "Nome: ${resumo.nome}"
+            println "Área de recrutamento: ${resumo.areaRecrutamento}"
+            println "Descrição: ${resumo.descricao}"
+            println "E-mail: ${resumo.email}"
+            println "--------------------------------"
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            println "Erro ao buscar recrutador: ${e.message}"
+        }
+    }
+
+    private void atualizarRecrutadorNoMenu() {
+        int id = lerOpcao("ID do recrutador a atualizar: ")
+        String nome = lerTexto("Novo nome: ")
+        String area = lerTexto("Nova área de recrutamento: ")
+        String descricao = lerTexto("Nova descrição: ")
+        String email = lerTexto("Novo e-mail: ")
+        String cpf = lerTexto("Novo CPF (11 dígitos): ")
+        String dataTexto = lerTexto("Nova data de nascimento (AAAA-MM-DD): ")
+        String senha = lerTexto("Nova senha (deixe em branco para manter a atual): ")
+
+        LocalDate dataNascimento
+        try {
+            dataNascimento = LocalDate.parse(dataTexto)
+        } catch (DateTimeParseException ignored) {
+            println "Erro ao atualizar recrutador: Data de nascimento em formato inválido. Use AAAA-MM-DD."
+            return
+        }
+
+        Recrutador recrutadorAtualizado = new Recrutador(
+                id: (Long) id,
+                nome: nome,
+                areaRecrutamento: area,
+                descricao: descricao,
+                email: email,
+                cpf: cpf,
+                dataNascimento: dataNascimento,
+                senha: senha
+        )
+
+        try {
+            boolean atualizado = recrutadorController.atualizarRecrutador(recrutadorAtualizado)
+            if (atualizado) {
+                println "Recrutador atualizado com sucesso."
+            } else {
+                println "Recrutador não encontrado."
+            }
+        } catch (ConflitoDadosException e) {
+            println "Conflito de dados: ${e.message}"
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            println "Erro ao atualizar recrutador: ${e.message}"
+        }
+    }
+
+    private void excluirRecrutadorNoMenu() {
+        int id = lerOpcao("ID do recrutador a excluir: ")
+
+        try {
+            boolean excluido = recrutadorController.excluirRecrutador((Long) id)
+            if (excluido) {
+                println "Recrutador excluído com sucesso."
+            } else {
+                println "Recrutador não encontrado."
+            }
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            println "Erro ao excluir recrutador: ${e.message}"
+        }
+    }
+
+    private String lerTexto(String mensagem) {
+        print mensagem
+        return scanner.nextLine().trim()
     }
 
 

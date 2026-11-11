@@ -31,7 +31,7 @@
 | **T-01** | Estrutura SQL e seeds/consultas de `recrutadores` | Banco (PostgreSQL) | `spec.md` aprovada | Concluída | `feat(database): adiciona tabela e consultas de recrutadores` |
 | **T-02** | Models, utilitário PBKDF2 (`SenhaHashUtil`), `RecrutadorRepository` e `RecrutadorDAO` + `RecrutadorDAOSpec` | Backend (Groovy) | T-01 | Concluída | `feat: implementa model e DAO de recrutador com PBKDF2` |
 | **T-03** | `RecrutadorService` (validações, unicidade, 1:N, cascata e consultas anônimas) + `RecrutadorServiceSpec` | Backend (Groovy) | T-02 | Concluída | `feat: implementa RecrutadorService com validacoes e anonimato` |
-| **T-04** | `RecrutadorController`, `Menu` de terminal e `Main` + `RecrutadorControllerSpec` e `MenuSpec` | Backend (Groovy) | T-03 | Pendente | `feat: adiciona controller e opcoes de recrutador no menu` |
+| **T-04** | `RecrutadorController`, `Menu` de terminal e `Main` + `RecrutadorControllerSpec` e `MenuSpec` | Backend (Groovy) | T-03 | Concluída | `feat: adiciona controller e opcoes de recrutador no menu` |
 | **T-05** | Endpoint HTTP `POST /api/recrutadores` (`RecrutadorHttpHandler` e `ApiServer`) + `RecrutadorHttpHandlerSpec` | Backend (API HTTP) | T-03 | Pendente | `feat: adiciona endpoint POST /api/recrutadores na API HTTP` |
 | **T-06** | Model `Recrutador.ts`, seeds, `recrutadorService.ts`, `edicaoRecrutadorService.ts` e cascata em `exclusaoEmpresaService.ts` + testes Vitest | Frontend (TypeScript) | `spec.md` aprovada | Pendente | `feat: implementa servicos de recrutador e cascata no frontend` |
 | **T-07** | Componentes de UI (`renderizarCardsRecrutadoresEmpresa`, `renderizarFormularioRecrutador`) e integração no perfil da empresa + testes Vitest | Frontend (TypeScript) | T-06 | Pendente | `feat: adiciona componentes de listagem e formulario de recrutador` |
@@ -131,7 +131,7 @@
 
 ### Tarefa T-04 — `RecrutadorController`, `Menu` de Terminal e `Main`
 
-- **Status:** Pendente
+- **Status:** Concluída
 - **Objetivo:** Implementar `RecrutadorController`, integrar as opções de Recrutador (listagem de recrutadores por empresa e análise de vagas da empresa / candidatos anônimos pelo recrutador) no `Menu.groovy` e realizar a injeção manual de dependências em `Main.groovy`.
 - **Camada afetada:** Backend (`controller`, `view`, `Main`, `src/test/groovy/controllerTest`, `src/test/groovy/uiTest`).
 - **Arquivos previstos:**
