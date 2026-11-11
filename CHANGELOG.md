@@ -20,7 +20,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). C
 - Nada até o momento.
 
 ### Corrigido
-- Nada até o momento.
+- `RecrutadorService`, `EmpresaService`, `ConflitoDadosException`, `RecrutadorServiceSpec` e `EmpresaServiceSpec`: correção dos achados `A-01` a `A-08` da auditoria técnica da Tarefa T-03 (derivação PBKDF2 obrigatória para qualquer senha não vazia na atualização sem aceitar hashes externos pré-processados, delegação da exclusão em cascata de recrutadores ao `ON DELETE CASCADE` do PostgreSQL evitando exclusão parcial sem transação, adição de `buscarResumoPorId` e sanitização de `Vaga.empresa` na listagem de vagas do recrutador, lançamento de `IllegalStateException` para dependências ausentes e ampliação dos testes Spock alinhados a `CA-01`..`CA-14`).
 
 ### Removido
 - Nada até o momento.

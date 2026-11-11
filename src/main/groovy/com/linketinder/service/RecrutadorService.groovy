@@ -4,6 +4,7 @@ import com.linketinder.model.CandidatoAnonimo
 import com.linketinder.model.Empresa
 import com.linketinder.model.Recrutador
 import com.linketinder.model.RecrutadorResumo
+import com.linketinder.model.Skill
 import com.linketinder.model.Vaga
 import com.linketinder.repository.EmpresaRepository
 import com.linketinder.repository.RecrutadorRepository
@@ -83,6 +84,28 @@ class RecrutadorService {
         }
     }
 
+    /**
+     * Consulta segura para camadas de apresentação, controllers e respostas HTTP.
+     * Retorna apenas {@link RecrutadorResumo}, omitindo senha, CPF, data de nascimento
+     * e a referência completa para {@link Empresa}.
+     */
+    RecrutadorResumo buscarResumoPorId(Long id) {
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("Identificador do recrutador inválido.")
+        }
+
+        Recrutador recrutador = recrutadorRepository.buscarPorId(id)
+        if (recrutador == null) {
+            return null
+        }
+
+        return converterParaResumo(recrutador, recrutador.empresa?.id)
+    }
+
+    /**
+     * Consulta interna de domínio que retorna a entidade {@link Recrutador} completa.
+     * Não deve ser exposta diretamente em views, DTOs de listagem ou respostas HTTP.
+     */
     Recrutador buscarPorId(Long id) {
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("Identificador do recrutador inválido.")
@@ -102,8 +125,7 @@ class RecrutadorService {
         }
 
         boolean informouNovaSenha = recrutador.senha != null &&
-                !recrutador.senha.trim().isEmpty() &&
-                !SenhaHashUtil.ehHashValido(recrutador.senha)
+                !recrutador.senha.trim().isEmpty()
 
         normalizarEValidarCampos(recrutador, informouNovaSenha)
         verificarUnicidade(recrutador.cpf, recrutador.email, recrutador.id)
@@ -136,23 +158,37 @@ class RecrutadorService {
     }
 
     List<Vaga> listarVagasDaEmpresaDoRecrutador(Long recrutadorId) {
+        if (empresaService == null) {
+            throw new IllegalStateException(
+                    "Serviço de empresas não configurado para consulta de vagas."
+            )
+        }
+
         Recrutador recrutador = obterRecrutadorExistente(recrutadorId)
         Long empresaId = recrutador.empresa?.id
 
-        if (empresaId == null || empresaService == null) {
-            return []
+        if (empresaId == null) {
+            throw new IllegalStateException(
+                    "Recrutador não possui empresa vinculada."
+            )
         }
 
         Empresa empresa = empresaService.buscarPorId(empresaId)
-        return empresa?.vagas ?: []
+        List<Vaga> vagasDaEmpresa = empresa?.vagas ?: []
+
+        return vagasDaEmpresa.collect { Vaga vaga ->
+            sanitizarVagaParaApresentacao(vaga)
+        }
     }
 
     List<CandidatoAnonimo> listarCandidatosAnonimosParaRecrutador(Long recrutadorId) {
-        obterRecrutadorExistente(recrutadorId)
-
         if (candidatoService == null) {
-            return []
+            throw new IllegalStateException(
+                    "Serviço de candidatos não configurado para consulta anônima."
+            )
         }
+
+        obterRecrutadorExistente(recrutadorId)
 
         return candidatoService.listarCandidatosAnonimos()
     }
@@ -259,6 +295,18 @@ class RecrutadorService {
                 areaRecrutamento: recrutador.areaRecrutamento,
                 descricao: recrutador.descricao,
                 email: recrutador.email
+        )
+    }
+
+    private static Vaga sanitizarVagaParaApresentacao(Vaga vaga) {
+        return new Vaga(
+                id: vaga.id,
+                titulo: vaga.titulo,
+                descricaoVaga: vaga.descricaoVaga,
+                estado: vaga.estado,
+                cidade: vaga.cidade,
+                empresa: null,
+                skills: vaga.skills ? new ArrayList<Skill>(vaga.skills) : []
         )
     }
 }

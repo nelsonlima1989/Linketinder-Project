@@ -82,9 +82,14 @@ class EmpresaService {
 
 
     boolean excluirEmpresa(Long id) {
-        if (recrutadorDAO != null) {
-            recrutadorDAO.excluirPorEmpresaId(id)
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("Identificador da empresa inválido.")
         }
+        // A exclusão dos recrutadores vinculados ocorre atomicamente no PostgreSQL
+        // via CONSTRAINT fk_recrutadores_empresa ... ON DELETE CASCADE quando o
+        // DELETE em empresas é efetivado. Não executamos exclusão manual antecipada
+        // em conexão JDBC separada para evitar exclusão parcial caso a remoção da
+        // empresa falhe por restrição de integridade (ex.: FK de vagas).
         return empresaDAO.excluir(id)
     }
 
