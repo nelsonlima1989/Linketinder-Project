@@ -29,7 +29,7 @@
 | ID | Tarefa | Camada | Dependências | Status | Commit Esperado |
 |---|---|---|---|---|---|
 | **T-01** | Estrutura SQL e seeds/consultas de `recrutadores` | Banco (PostgreSQL) | `spec.md` aprovada | Concluída | `feat(database): adiciona tabela e consultas de recrutadores` |
-| **T-02** | Models, utilitário PBKDF2 (`SenhaHashUtil`), `RecrutadorRepository` e `RecrutadorDAO` + `RecrutadorDAOSpec` | Backend (Groovy) | T-01 | Pendente | `feat: implementa model e DAO de recrutador com PBKDF2` |
+| **T-02** | Models, utilitário PBKDF2 (`SenhaHashUtil`), `RecrutadorRepository` e `RecrutadorDAO` + `RecrutadorDAOSpec` | Backend (Groovy) | T-01 | Concluída | `feat: implementa model e DAO de recrutador com PBKDF2` |
 | **T-03** | `RecrutadorService` (validações, unicidade, 1:N, cascata e consultas anônimas) + `RecrutadorServiceSpec` | Backend (Groovy) | T-02 | Pendente | `feat: implementa RecrutadorService com validacoes e anonimato` |
 | **T-04** | `RecrutadorController`, `Menu` de terminal e `Main` + `RecrutadorControllerSpec` e `MenuSpec` | Backend (Groovy) | T-03 | Pendente | `feat: adiciona controller e opcoes de recrutador no menu` |
 | **T-05** | Endpoint HTTP `POST /api/recrutadores` (`RecrutadorHttpHandler` e `ApiServer`) + `RecrutadorHttpHandlerSpec` | Backend (API HTTP) | T-03 | Pendente | `feat: adiciona endpoint POST /api/recrutadores na API HTTP` |
@@ -70,7 +70,7 @@
 
 ### Tarefa T-02 — Models, Utilitário PBKDF2 (`SenhaHashUtil`), `RecrutadorRepository` e `RecrutadorDAO`
 
-- **Status:** Pendente
+- **Status:** Concluída
 - **Objetivo:** Implementar as classes de modelo (`Recrutador` e `RecrutadorResumo`), o utilitário de derivação de senha `SenhaHashUtil` (`PBKDF2WithHmacSHA256` com salt aleatório individual de 16 bytes e 65.536 iterações), a interface `RecrutadorRepository` e o `RecrutadorDAO` (JDBC com `PreparedStatement`), acompanhados de testes unitários em Spock.
 - **Camada afetada:** Backend (`model`, `repository`, `dao`, `service`, `src/test/groovy/daoTest`).
 - **Arquivos previstos:**

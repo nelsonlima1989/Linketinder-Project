@@ -7,6 +7,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). C
 ## [Não lançado]
 
 ### Adicionado
+- `Recrutador`, `RecrutadorResumo`, `SenhaHashUtil` (PBKDF2WithHmacSHA256 com salt individual), `RecrutadorRepository`, `RecrutadorDAO` e `RecrutadorDAOSpec` no backend Groovy (Tarefa T-02).
 - `database/database.sql` e `database/queries.sql`: tabela `recrutadores` (relacionamento 1:N com `empresas`, `ON DELETE CASCADE`, `UNIQUE` em `email` e `cpf` e índice em `empresa_id`), dados iniciais com hashes PBKDF2 e consulta de validação sem exposição de senha ou CPF (Tarefa T-01).
 - `docs/specs/recrutador/spec.md` e `docs/specs/recrutador/plano.md`: especificação funcional/técnica e plano de implementação incremental da feature Recrutador.
 - `AGENTS.md`: instruções do repositório para agentes de IA (stack, estrutura, arquitetura, comandos, convenções, restrições de segurança, Princípio do Anonimato, scripts de banco e fluxo SDD).
