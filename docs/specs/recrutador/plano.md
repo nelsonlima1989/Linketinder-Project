@@ -32,7 +32,7 @@
 | **T-02** | Models, utilitário PBKDF2 (`SenhaHashUtil`), `RecrutadorRepository` e `RecrutadorDAO` + `RecrutadorDAOSpec` | Backend (Groovy) | T-01 | Concluída | `feat: implementa model e DAO de recrutador com PBKDF2` |
 | **T-03** | `RecrutadorService` (validações, unicidade, 1:N, cascata e consultas anônimas) + `RecrutadorServiceSpec` | Backend (Groovy) | T-02 | Concluída | `feat: implementa RecrutadorService com validacoes e anonimato` |
 | **T-04** | `RecrutadorController`, `Menu` de terminal e `Main` + `RecrutadorControllerSpec` e `MenuSpec` | Backend (Groovy) | T-03 | Concluída | `feat: adiciona controller e opcoes de recrutador no menu` |
-| **T-05** | Endpoint HTTP `POST /api/recrutadores` (`RecrutadorHttpHandler` e `ApiServer`) + `RecrutadorHttpHandlerSpec` | Backend (API HTTP) | T-03 | Pendente | `feat: adiciona endpoint POST /api/recrutadores na API HTTP` |
+| **T-05** | Endpoint HTTP `POST /api/recrutadores` (`RecrutadorHttpHandler` e `ApiServer`) + `RecrutadorHttpHandlerSpec` | Backend (API HTTP) | T-03 | Concluída | `feat: adiciona endpoint POST /api/recrutadores na API HTTP` |
 | **T-06** | Model `Recrutador.ts`, seeds, `recrutadorService.ts`, `edicaoRecrutadorService.ts` e cascata em `exclusaoEmpresaService.ts` + testes Vitest | Frontend (TypeScript) | `spec.md` aprovada | Pendente | `feat: implementa servicos de recrutador e cascata no frontend` |
 | **T-07** | Componentes de UI (`renderizarCardsRecrutadoresEmpresa`, `renderizarFormularioRecrutador`) e integração no perfil da empresa + testes Vitest | Frontend (TypeScript) | T-06 | Pendente | `feat: adiciona componentes de listagem e formulario de recrutador` |
 | **T-08** | `recrutadorController.ts`, navegação (`navegacaoService`, `renderizarTela`, `main.ts`) e validação final ponta a ponta + testes Vitest | Frontend (TypeScript) | T-07 | Pendente | `feat: integra controller e navegacao de recrutador no frontend` |
@@ -159,7 +159,7 @@
 
 ### Tarefa T-05 — Endpoint HTTP `POST /api/recrutadores` (`RecrutadorHttpHandler` e `ApiServer`)
 
-- **Status:** Pendente
+- **Status:** Concluída
 - **Objetivo:** Implementar `RecrutadorHttpHandler` para atender `POST /api/recrutadores` e registrá-lo em `ApiServer.groovy`, com testes de integração HTTP real em `RecrutadorHttpHandlerSpec`.
 - **Camada afetada:** Backend (`api`, `src/test/groovy/apiTest`).
 - **Arquivos previstos:**
