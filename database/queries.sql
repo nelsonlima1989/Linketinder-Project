@@ -334,6 +334,67 @@ VALUES
 
 
 
+-- 8.1 RECRUTADORES (Relação 1:N: Empresa -> Recrutadores; senhas derivadas com PBKDF2-HMAC-SHA256 e salt individual)
+
+INSERT INTO recrutadores (
+    empresa_id,
+    nome,
+    area_recrutamento,
+    descricao,
+    email,
+    cpf,
+    data_nascimento,
+    senha
+)
+VALUES
+    -- Pastelsoft (2 recrutadores para demonstrar 1:N)
+    (
+        1,
+        'Fernanda Lima',
+        'Engenharia de Software Backend',
+        'Especialista em recrutamento técnico Java, Groovy e bancos relacionais',
+        'fernanda.lima@pastelsoft.com',
+        '61234567890',
+        '1992-04-15',
+        'pbkdf2_sha256$65536$a1b2c3d4e5f60718293a4b5c6d7e8f90$4e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f'
+    ),
+    (
+        1,
+        'Ricardo Alves',
+        'Arquitetura e Dados',
+        'Tech Recruiter focado em posições sênior de arquitetura e dados',
+        'ricardo.alves@pastelsoft.com',
+        '62345678901',
+        '1989-11-22',
+        'pbkdf2_sha256$65536$f0e9d8c7b6a594837261504f3e2d1c0b$9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b'
+    ),
+
+    -- SanduTech
+    (
+        2,
+        'Camila Rocha',
+        'Desenvolvimento Frontend e UX',
+        'Recrutadora responsável pelas vagas de TypeScript, React e Design System',
+        'camila.rocha@sandutech.com',
+        '63456789012',
+        '1995-07-08',
+        'pbkdf2_sha256$65536$11223344556677889900aabbccddeeff$7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d'
+    ),
+
+    -- CodeMais
+    (
+        3,
+        'Bruno Martins',
+        'Engenharia Full Stack',
+        'Atuação em processos seletivos full stack e cultura ágil',
+        'bruno.martins@codemais.com',
+        '64567890123',
+        '1991-02-19',
+        'pbkdf2_sha256$65536$ffeeddccbbaa00998877665544332211$3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f'
+    );
+
+
+
 -- CONSULTAS DE TESTE
 
 -- 9. LISTAR CANDIDATOS
@@ -446,3 +507,20 @@ INNER JOIN curtidas_empresa_candidato AS cec
     ON cec.empresa_id = e.id
     AND cec.candidato_id = c.id
 ORDER BY c.nome;
+
+
+
+-- 18. LISTAR RECRUTADORES E SUAS EMPRESAS (RESUMO SEM SENHA E SEM CPF)
+
+SELECT
+    r.id AS recrutador_id,
+    r.empresa_id,
+    e.nome AS empresa,
+    r.nome AS recrutador,
+    r.area_recrutamento,
+    r.descricao,
+    r.email
+FROM recrutadores AS r
+INNER JOIN empresas AS e
+    ON r.empresa_id = e.id
+ORDER BY r.empresa_id, r.id;

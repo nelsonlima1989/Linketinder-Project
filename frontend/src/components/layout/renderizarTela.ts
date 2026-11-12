@@ -6,15 +6,18 @@ import { renderizarPerfilCandidato } from "../candidatos/renderizarPerfilCandida
 import { renderizarFormularioCandidato } from "../candidatos/renderizarFormularioCandidato";
 import { renderizarFormularioEmpresa } from "../empresas/renderizarFormularioEmpresa";
 import { renderizarFormularioVaga } from "../vagas/renderizarFormularioVaga";
+import { renderizarFormularioRecrutador } from "../recrutadores/renderizarFormularioRecrutador";
 
 import { obterEmpresaPorId } from "../../services/empresa/empresaService";
 import { obterCandidatoPorId } from "../../services/candidato/candidatoService";
 import { obterVagaPorId } from "../../services/vaga/vagaService";
+import { obterRecrutadorPorId } from "../../services/recrutador/recrutadorService";
 
 type ContextoTela = {
     empresaId?: number;
     candidatoId?: number;
     vagaId?: number;
+    recrutadorId?: number;
 };
 
 type RenderizadorTela = (contexto: ContextoTela) => string;
@@ -96,23 +99,43 @@ function renderizarTelaCadastroVaga({
     return renderizarFormularioVaga(vaga);
 }
 
+function renderizarTelaCadastroRecrutador({
+    empresaId,
+    recrutadorId
+}: ContextoTela): string {
+    if (recrutadorId === undefined || empresaId === undefined) {
+        return renderizarFormularioRecrutador();
+    }
+
+    const recrutador = obterRecrutadorPorId(recrutadorId, empresaId);
+
+    if (!recrutador) {
+        return "<p>Recrutador não encontrado.</p>";
+    }
+
+    return renderizarFormularioRecrutador(recrutador);
+}
+
 const renderizadores: Record<Tela, RenderizadorTela> = {
     empresa: renderizarTelaEmpresa,
     candidato: renderizarTelaCandidato,
     "cadastro-candidato": renderizarTelaCadastroCandidato,
     "cadastro-empresa": renderizarTelaCadastroEmpresa,
-    "cadastro-vaga": renderizarTelaCadastroVaga
+    "cadastro-vaga": renderizarTelaCadastroVaga,
+    "cadastro-recrutador": renderizarTelaCadastroRecrutador
 };
 
 export function renderizarTela(
     tela: Tela,
     empresaId?: number,
     candidatoId?: number,
-    vagaId?: number
+    vagaId?: number,
+    recrutadorId?: number
 ): string {
     return renderizadores[tela]({
         empresaId,
         candidatoId,
-        vagaId
+        vagaId,
+        recrutadorId
     });
 }

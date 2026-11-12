@@ -4,12 +4,14 @@ package com.linketinder.api
 import com.linketinder.dao.CandidatoCompetenciaDAO
 import com.linketinder.dao.CandidatoDAO
 import com.linketinder.dao.EmpresaDAO
+import com.linketinder.dao.RecrutadorDAO
 import com.linketinder.dao.VagaDAO
 import com.linketinder.dao.VagaCompetenciaDAO
 import com.linketinder.database.ConexaoPostgresProvider
 import com.linketinder.database.ConexaoProvider
 import com.linketinder.service.CandidatoService
 import com.linketinder.service.EmpresaService
+import com.linketinder.service.RecrutadorService
 import com.linketinder.service.VagaService
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpHandler
@@ -42,6 +44,9 @@ class ApiServer {
         VagaCompetenciaDAO vagaCompetenciaDAO =
                 new VagaCompetenciaDAO(conexaoProvider)
 
+        RecrutadorDAO recrutadorDAO =
+                new RecrutadorDAO(conexaoProvider, empresaDAO)
+
         // Inicialização do Service de candidatos
         CandidatoService candidatoService =
                 new CandidatoService(
@@ -54,13 +59,22 @@ class ApiServer {
                 new EmpresaService(
                         empresaDAO,
                         vagaDAO,
-                        vagaCompetenciaDAO
+                        vagaCompetenciaDAO,
+                        recrutadorDAO
                 )
         // inicialização do service de vagas
         VagaService vagaService =
                 new VagaService(
                         vagaDAO,
                         empresaDAO
+                )
+
+        RecrutadorService recrutadorService =
+                new RecrutadorService(
+                        recrutadorDAO,
+                        empresaDAO,
+                        empresaService,
+                        candidatoService
                 )
 
         // Configuração do servidor HTTP
@@ -125,6 +139,12 @@ class ApiServer {
                 new VagaHttpHandler(vagaService)
         )
 
+        // Endpoint de cadastro de recrutadores
+        servidor.createContext(
+                "/api/recrutadores",
+                new RecrutadorHttpHandler(recrutadorService)
+        )
+
         // Inicialização do servidor
         servidor.start()
 
@@ -133,5 +153,6 @@ class ApiServer {
         println "POST /api/candidatos"
         println "POST /api/empresas"
         println "POST /api/vagas"
+        println "POST /api/recrutadores"
     }
 }

@@ -5,16 +5,27 @@ import { renderizarTela } from "./renderizarTela";
 import { obterEmpresaPorId } from "../../services/empresa/empresaService";
 import { obterCandidatoPorId } from "../../services/candidato/candidatoService";
 import { obterVagaPorId } from "../../services/vaga/vagaService";
+import { obterRecrutadorPorId } from "../../services/recrutador/recrutadorService";
 
 import { renderizarPerfilEmpresa } from "../empresas/renderizarPerfilEmpresa";
 import { renderizarPerfilCandidato } from "../candidatos/renderizarPerfilCandidato";
 import { renderizarFormularioCandidato } from "../candidatos/renderizarFormularioCandidato";
 import { renderizarFormularioEmpresa } from "../empresas/renderizarFormularioEmpresa";
 import { renderizarFormularioVaga } from "../vagas/renderizarFormularioVaga";
+import { renderizarFormularioRecrutador } from "../recrutadores/renderizarFormularioRecrutador";
 
 import type { Empresa } from "../../models/Empresa";
 import type { Candidato } from "../../models/Candidato";
 import type { Vaga } from "../../models/Vaga";
+import type { Recrutador } from "../../models/Recrutador";
+
+vi.mock("../../services/recrutador/recrutadorService", () => ({
+  obterRecrutadorPorId: vi.fn(),
+}));
+
+vi.mock("../recrutadores/renderizarFormularioRecrutador", () => ({
+  renderizarFormularioRecrutador: vi.fn(),
+}));
 
 vi.mock("../../services/empresa/empresaService", () => ({
   obterEmpresaPorId: vi.fn(),
@@ -261,5 +272,70 @@ describe("renderizarTela", () => {
 
     expect(obterVagaPorIdMock).not.toHaveBeenCalled();
     expect(renderizarFormularioVagaMock).toHaveBeenCalledWith();
+  });
+
+  describe("cadastro-recrutador", () => {
+    const obterRecrutadorPorIdMock = vi.mocked(obterRecrutadorPorId);
+    const renderizarFormularioRecrutadorMock = vi.mocked(
+      renderizarFormularioRecrutador,
+    );
+
+    function criarRecrutadorMock(): Recrutador {
+      return {
+        id: 5,
+        empresaId: 3,
+        nome: "Camila Ferreira",
+        areaRecrutamento: "Engenharia",
+        descricao: "Recrutadora técnica",
+        email: "camila@empresa.com",
+        cpf: "12345678909",
+        dataNascimento: "1992-04-15",
+      };
+    }
+
+    it("deve renderizar formulário vazio de cadastro de recrutador", () => {
+      renderizarFormularioRecrutadorMock.mockReturnValue("<form>Novo</form>");
+
+      expect(renderizarTela("cadastro-recrutador", 3)).toBe("<form>Novo</form>");
+
+      expect(obterRecrutadorPorIdMock).not.toHaveBeenCalled();
+      expect(renderizarFormularioRecrutadorMock).toHaveBeenCalledWith();
+    });
+
+    it("deve renderizar formulário de edição de recrutador da empresa", () => {
+      const recrutador = criarRecrutadorMock();
+
+      obterRecrutadorPorIdMock.mockReturnValue(recrutador);
+      renderizarFormularioRecrutadorMock.mockReturnValue("<form>Editar</form>");
+
+      expect(
+        renderizarTela("cadastro-recrutador", 3, undefined, undefined, 5),
+      ).toBe("<form>Editar</form>");
+
+      expect(obterRecrutadorPorIdMock).toHaveBeenCalledWith(5, 3);
+      expect(renderizarFormularioRecrutadorMock).toHaveBeenCalledWith(
+        recrutador,
+      );
+    });
+
+    it("deve informar quando o recrutador para edição não existir", () => {
+      obterRecrutadorPorIdMock.mockReturnValue(undefined);
+
+      expect(
+        renderizarTela("cadastro-recrutador", 3, undefined, undefined, 99),
+      ).toBe("<p>Recrutador não encontrado.</p>");
+
+      expect(renderizarFormularioRecrutadorMock).not.toHaveBeenCalled();
+    });
+
+    it("deve renderizar formulário vazio quando faltar o ID da empresa", () => {
+      renderizarFormularioRecrutadorMock.mockReturnValue("<form>Novo</form>");
+
+      expect(
+        renderizarTela("cadastro-recrutador", undefined, undefined, undefined, 5),
+      ).toBe("<form>Novo</form>");
+
+      expect(obterRecrutadorPorIdMock).not.toHaveBeenCalled();
+    });
   });
 });

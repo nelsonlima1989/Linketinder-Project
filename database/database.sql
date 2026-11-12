@@ -143,3 +143,29 @@ CREATE TABLE curtidas_empresa_candidato
         FOREIGN KEY (candidato_id)
             REFERENCES candidatos (id)
 );
+
+
+
+-- TABELA: recrutadores
+-- Relação 1:N entre empresas e recrutadores
+
+CREATE TABLE recrutadores
+(
+    id                SERIAL PRIMARY KEY,
+    empresa_id        INTEGER      NOT NULL,
+    nome              VARCHAR(150) NOT NULL,
+    area_recrutamento VARCHAR(100) NOT NULL,
+    descricao         TEXT         NOT NULL,
+    email             VARCHAR(150) NOT NULL UNIQUE,
+    cpf               VARCHAR(11)  NOT NULL UNIQUE,
+    data_nascimento   DATE         NOT NULL,
+    senha             VARCHAR(255) NOT NULL,
+
+    CONSTRAINT fk_recrutadores_empresa
+        FOREIGN KEY (empresa_id)
+            REFERENCES empresas (id)
+            ON DELETE CASCADE
+);
+
+CREATE INDEX idx_recrutadores_empresa_id
+    ON recrutadores (empresa_id);

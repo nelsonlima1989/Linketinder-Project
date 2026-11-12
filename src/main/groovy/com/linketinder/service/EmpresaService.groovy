@@ -5,6 +5,7 @@ import com.linketinder.model.Empresa
 import com.linketinder.model.EmpresaAnonima
 import com.linketinder.model.Vaga
 import com.linketinder.repository.EmpresaRepository
+import com.linketinder.repository.RecrutadorRepository
 import com.linketinder.repository.VagaCompetenciaRepository
 import com.linketinder.repository.VagaRepository
 
@@ -13,15 +14,18 @@ class EmpresaService {
     private final EmpresaRepository empresaDAO
     private final VagaRepository vagaDAO
     private final VagaCompetenciaRepository vagaCompetenciaDAO
+    private final RecrutadorRepository recrutadorDAO
 
     EmpresaService(
             EmpresaRepository empresaDAO,
             VagaRepository vagaDAO,
-            VagaCompetenciaRepository vagaCompetenciaDAO
+            VagaCompetenciaRepository vagaCompetenciaDAO,
+            RecrutadorRepository recrutadorDAO = null
     ) {
         this.empresaDAO = empresaDAO
         this.vagaDAO = vagaDAO
         this.vagaCompetenciaDAO = vagaCompetenciaDAO
+        this.recrutadorDAO = recrutadorDAO
     }
 
 
@@ -78,7 +82,15 @@ class EmpresaService {
 
 
     boolean excluirEmpresa(Long id) {
-       return empresaDAO.excluir(id)
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("Identificador da empresa inválido.")
+        }
+        // A exclusão dos recrutadores vinculados ocorre atomicamente no PostgreSQL
+        // via CONSTRAINT fk_recrutadores_empresa ... ON DELETE CASCADE quando o
+        // DELETE em empresas é efetivado. Não executamos exclusão manual antecipada
+        // em conexão JDBC separada para evitar exclusão parcial caso a remoção da
+        // empresa falhe por restrição de integridade (ex.: FK de vagas).
+        return empresaDAO.excluir(id)
     }
 
 

@@ -50,6 +50,16 @@ import {
 } from "./controllers/vagaController";
 import { listarEmpresas } from "./services/empresa/empresaService";
 
+import { obterRecrutadoresPorEmpresa } from "./services/recrutador/recrutadorService";
+import { liberarBloqueioRecrutador } from "./services/recrutador/edicaoRecrutadorService";
+import { renderizarCardsRecrutadoresEmpresa } from "./components/recrutadores/renderizarCardsRecrutadoresEmpresa";
+import {
+  configurarCriacaoRecrutador,
+  configurarEdicaoRecrutador,
+  configurarExclusaoRecrutador,
+  configurarFormularioRecrutador,
+} from "./controllers/recrutadorController";
+
 const app = document.querySelector<HTMLDivElement>("#app");
 
 let telaAtual: Tela = obterTelaInicial();
@@ -62,6 +72,7 @@ function atualizarConteudo(
   tela: Tela,
   empresaId?: number,
   vagaId?: number,
+  recrutadorId?: number,
 ): void {
   if (empresaId !== undefined) {
     empresaAtualId = empresaId;
@@ -84,6 +95,7 @@ function atualizarConteudo(
     empresaIdParaRenderizacao,
     candidatoAtualId,
     vagaId,
+    recrutadorId,
   );
 
   // Cadastro e edição de candidatos
@@ -159,6 +171,39 @@ function atualizarConteudo(
         atualizarConteudo("cadastro-vaga", empresaAtualId, vagaId),
     });
 
+    // Recrutadores da empresa
+
+    configurarCriacaoRecrutador({
+      abrirFormulario: () =>
+        atualizarConteudo("cadastro-recrutador", empresaAtualId),
+    });
+
+    const listaRecrutadoresEmpresa = document.querySelector<HTMLDivElement>(
+      "#lista-recrutadores-empresa",
+    );
+
+    if (listaRecrutadoresEmpresa) {
+      listaRecrutadoresEmpresa.innerHTML = renderizarCardsRecrutadoresEmpresa(
+        obterRecrutadoresPorEmpresa(empresaAtualId),
+      );
+    }
+
+    configurarEdicaoRecrutador({
+      empresaId: empresaAtualId,
+      abrirFormulario: (recrutadorId: number) =>
+        atualizarConteudo(
+          "cadastro-recrutador",
+          empresaAtualId,
+          undefined,
+          recrutadorId,
+        ),
+    });
+
+    configurarExclusaoRecrutador({
+      empresaId: empresaAtualId,
+      aoExcluir: () => atualizarConteudo("empresa", empresaAtualId),
+    });
+
     // Gráfico de skills
 
     const skillsAtualizadas = ordenarSkills(contarSkills(listarCandidatos()));
@@ -220,6 +265,16 @@ function atualizarConteudo(
       navegarParaEmpresa: () => atualizarConteudo("empresa", empresaAtualId),
     });
   }
+
+  // Cadastro e edição de recrutadores
+
+  if (tela === "cadastro-recrutador") {
+    configurarFormularioRecrutador({
+      empresaId: empresaAtualId,
+      recrutadorId,
+      navegarParaEmpresa: () => atualizarConteudo("empresa", empresaAtualId),
+    });
+  }
 }
 
 // Inicialização da aplicação
@@ -245,6 +300,7 @@ if (app) {
       liberarBloqueioCandidato();
       liberarBloqueioVaga();
       liberarBloqueioEmpresa();
+      liberarBloqueioRecrutador();
 
       telaAtual = tela;
 

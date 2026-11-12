@@ -4,10 +4,16 @@ import com.linketinder.controller.CandidatoController
 import com.linketinder.controller.CurtidaController
 import com.linketinder.controller.EmpresaController
 import com.linketinder.controller.MatchController
+import com.linketinder.controller.RecrutadorController
 import com.linketinder.model.Candidato
+import com.linketinder.model.CandidatoAnonimo
 import com.linketinder.model.Empresa
 import com.linketinder.model.Informacoes
+import com.linketinder.model.Recrutador
+import com.linketinder.model.RecrutadorResumo
+import com.linketinder.model.Skill
 import com.linketinder.model.Vaga
+import com.linketinder.service.ConflitoDadosException
 import com.linketinder.view.Menu
 import spock.lang.Specification
 
@@ -17,6 +23,7 @@ class MenuSpec extends Specification {
     EmpresaController empresaController = Mock()
     CurtidaController curtidaController = Mock()
     MatchController matchController = Mock()
+    RecrutadorController recrutadorController = Mock()
     ByteArrayOutputStream saida
     PrintStream saidaOriginal
     PrintStream saidaCapturada
@@ -579,9 +586,248 @@ class MenuSpec extends Specification {
         0 * matchController._
     }
 
+    void "CA-02 / CA-14: deve listar recrutadores por empresa exibindo apenas RecrutadorResumo sem expor senha, CPF ou dataNascimento"() {
 
+        given:
+        Empresa empresa = new Empresa(
+                id: 1L,
+                cnpj: "12345678000199",
+                senha: "SenhaSecretaEmpresa",
+                informacoes: new Informacoes(nome: "PastelSoft")
+        )
+        RecrutadorResumo resumo = new RecrutadorResumo(
+                id: 10L,
+                empresaId: 1L,
+                nome: "Fernanda Lima",
+                areaRecrutamento: "Engenharia de Software",
+                descricao: "Recrutadora técnica backend",
+                email: "fernanda.lima@pastelsoft.com"
+        )
 
+        Scanner scanner = new Scanner("6\n1\n0\n")
 
+        Menu menu = new Menu(
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController,
+                recrutadorController
+        )
 
+        when:
+        menu.iniciarPrograma()
+
+        then:
+        1 * empresaController.listarTodasEmpresas() >> [empresa]
+        1 * recrutadorController.listarRecrutadoresPorEmpresa(1L) >> [resumo]
+        0 * _
+
+        String resultado = saida.toString("UTF-8")
+
+        resultado.contains("ID: 10")
+        resultado.contains("Nome: Fernanda Lima")
+        resultado.contains("Área de recrutamento: Engenharia de Software")
+        resultado.contains("Descrição: Recrutadora técnica backend")
+        resultado.contains("E-mail: fernanda.lima@pastelsoft.com")
+        !resultado.contains("SenhaSecretaEmpresa")
+        !resultado.contains("12345678000199")
+        !resultado.contains("pbkdf2_sha256")
+        !resultado.contains("61234567890")
+    }
+
+    void "CA-12 / CA-13 / CA-14: deve analisar vagas da empresa e candidatos anonimos como recrutador sem expor dados sensiveis"() {
+
+        given:
+        RecrutadorResumo recrutador = new RecrutadorResumo(
+                id: 5L,
+                empresaId: 1L,
+                nome: "Fernanda Lima",
+                areaRecrutamento: "Engenharia de Software",
+                descricao: "Recrutadora técnica",
+                email: "fernanda.lima@pastelsoft.com"
+        )
+        Vaga vaga = new Vaga(
+                id: 100L,
+                titulo: "Desenvolvedor Groovy",
+                descricaoVaga: "APIs REST e PostgreSQL",
+                estado: "SP",
+                cidade: "São Paulo",
+                empresa: null,
+                skills: [new Skill(id: 1L, nome: "Groovy")]
+        )
+        CandidatoAnonimo candidatoAnonimo = new CandidatoAnonimo(
+                id: 20L,
+                estado: "MG",
+                descricaoPessoal: "Desenvolvedor Backend Pleno",
+                skills: [new Skill(id: 1L, nome: "Groovy")]
+        )
+
+        Scanner scanner = new Scanner("7\n1\n0\n")
+
+        Menu menu = new Menu(
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController,
+                recrutadorController
+        )
+
+        when:
+        menu.iniciarPrograma()
+
+        then:
+        1 * recrutadorController.listarTodosResumos() >> [recrutador]
+        1 * recrutadorController.listarVagasDaEmpresaDoRecrutador(5L) >> [vaga]
+        1 * recrutadorController.listarCandidatosAnonimosParaRecrutador(5L) >> [candidatoAnonimo]
+        0 * _
+
+        String resultado = saida.toString("UTF-8")
+
+        resultado.contains("Vagas da empresa do recrutador:")
+        resultado.contains("ID: 100 - Desenvolvedor Groovy")
+        resultado.contains("Candidatos disponíveis (anônimos):")
+        resultado.contains("ID: 20")
+        resultado.contains("Estado: MG")
+        resultado.contains("Descrição: Desenvolvedor Backend Pleno")
+        !resultado.contains("CPF:")
+        !resultado.contains("CEP:")
+        !resultado.contains("WhatsApp")
+    }
+
+    void "CA-01 / CA-04 / CA-05: deve cadastrar recrutador no submenu e tratar conflitos de CPF/email e entradas invalidas"() {
+
+        given:
+        String entradas = [
+                "8",
+                "1",
+                "1",
+                "Fernanda Lima",
+                "Engenharia de Software",
+                "Recrutamento backend",
+                "fernanda@empresa.com",
+                "61234567890",
+                "1992-04-15",
+                "SenhaForte@2026",
+                "1",
+                "1",
+                "Fernanda Duplicada",
+                "Engenharia",
+                "Descrição",
+                "fernanda@empresa.com",
+                "61234567890",
+                "1992-04-15",
+                "SenhaForte@2026",
+                "1",
+                "1",
+                "Data Invalida",
+                "Engenharia",
+                "Descrição",
+                "data@empresa.com",
+                "62345678901",
+                "data-invalida",
+                "SenhaForte@2026",
+                "0",
+                "0"
+        ].join("\n") + "\n"
+
+        Scanner scanner = new Scanner(entradas)
+
+        Menu menu = new Menu(
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController,
+                recrutadorController
+        )
+
+        when:
+        menu.iniciarPrograma()
+
+        then:
+        1 * recrutadorController.cadastrarRecrutador({ Recrutador r ->
+            r.nome == "Fernanda Lima" && r.cpf == "61234567890"
+        }, 1L) >> { Recrutador r, Long empId ->
+            r.id = 15L
+        }
+        1 * recrutadorController.cadastrarRecrutador({ Recrutador r ->
+            r.nome == "Fernanda Duplicada"
+        }, 1L) >> {
+            throw new ConflitoDadosException("CPF já cadastrado para outro recrutador.")
+        }
+        0 * _
+
+        String resultado = saida.toString("UTF-8")
+
+        resultado.contains("Recrutador cadastrado com sucesso (ID: 15).")
+        resultado.contains("Conflito de dados: CPF já cadastrado para outro recrutador.")
+        resultado.contains("Erro ao cadastrar recrutador: Data de nascimento em formato inválido. Use AAAA-MM-DD.")
+        !resultado.contains("SenhaForte@2026")
+    }
+
+    void "CA-09 / CA-10 / CA-14: deve buscar por ID, atualizar, excluir e tratar recrutador inexistente no submenu sem expor dados sensiveis"() {
+
+        given:
+        RecrutadorResumo resumo = new RecrutadorResumo(
+                id: 10L,
+                empresaId: 1L,
+                nome: "Fernanda Lima",
+                areaRecrutamento: "Engenharia",
+                descricao: "Recrutadora",
+                email: "fernanda@empresa.com"
+        )
+
+        String entradas = [
+                "8",
+                "2", "10",
+                "2", "999",
+                "3", "10", "Fernanda Editada", "Dados", "Nova descrição", "fernanda@empresa.com", "61234567890", "1992-04-15", "",
+                "3", "999", "Inexistente", "Dados", "Descrição", "inexistente@empresa.com", "61234567890", "1992-04-15", "",
+                "4", "10",
+                "4", "999",
+                "0",
+                "0"
+        ].join("\n") + "\n"
+
+        Scanner scanner = new Scanner(entradas)
+
+        Menu menu = new Menu(
+                scanner,
+                candidatoController,
+                empresaController,
+                curtidaController,
+                matchController,
+                recrutadorController
+        )
+
+        when:
+        menu.iniciarPrograma()
+
+        then:
+        1 * recrutadorController.buscarResumoPorId(10L) >> resumo
+        1 * recrutadorController.buscarResumoPorId(999L) >> null
+        1 * recrutadorController.atualizarRecrutador({ Recrutador r ->
+            r.id == 10L && r.nome == "Fernanda Editada" && r.senha == ""
+        }) >> true
+        1 * recrutadorController.atualizarRecrutador({ Recrutador r ->
+            r.id == 999L
+        }) >> false
+        1 * recrutadorController.excluirRecrutador(10L) >> true
+        1 * recrutadorController.excluirRecrutador(999L) >> false
+        0 * _
+
+        String resultado = saida.toString("UTF-8")
+
+        resultado.contains("ID: 10")
+        resultado.contains("Empresa ID: 1")
+        resultado.contains("Nome: Fernanda Lima")
+        resultado.contains("Recrutador atualizado com sucesso.")
+        resultado.contains("Recrutador excluído com sucesso.")
+        resultado.contains("Recrutador não encontrado.")
+        !resultado.contains("61234567890")
+        !resultado.contains("1992-04-15")
+    }
 
 }

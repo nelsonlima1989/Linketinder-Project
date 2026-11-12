@@ -1,6 +1,7 @@
 package serviceTest
 
 import com.linketinder.repository.EmpresaRepository
+import com.linketinder.repository.RecrutadorRepository
 import com.linketinder.model.Empresa
 import com.linketinder.model.EmpresaAnonima
 import com.linketinder.model.Skill
@@ -440,6 +441,62 @@ class EmpresaServiceSpec extends Specification {
         0 * _
 
         resultado.isEmpty()
+    }
+
+    void "CA-11: deve delegar exclusao em cascata de recrutadores ao ON DELETE CASCADE do PostgreSQL sem exclusao manual antecipada"() {
+
+        given:
+        RecrutadorRepository recrutadorDAO = Mock(RecrutadorRepository)
+        EmpresaService serviceComRecrutador = new EmpresaService(
+                empresaDAO,
+                vagaDAO,
+                vagaCompetenciaDAO,
+                recrutadorDAO
+        )
+
+        when:
+        boolean excluiu = serviceComRecrutador.excluirEmpresa(1L)
+
+        then:
+        1 * empresaDAO.excluir(1L) >> true
+        0 * recrutadorDAO._
+        0 * _
+
+        excluiu
+    }
+
+    void "CA-11: deve preservar recrutadores intactos quando a exclusao da empresa falhar por restricao de chave estrangeira"() {
+
+        given:
+        RecrutadorRepository recrutadorDAO = Mock(RecrutadorRepository)
+        EmpresaService serviceComRecrutador = new EmpresaService(
+                empresaDAO,
+                vagaDAO,
+                vagaCompetenciaDAO,
+                recrutadorDAO
+        )
+
+        when:
+        serviceComRecrutador.excluirEmpresa(1L)
+
+        then:
+        1 * empresaDAO.excluir(1L) >> {
+            throw new IllegalStateException("Não foi possível excluir a empresa.")
+        }
+        0 * recrutadorDAO._
+        0 * _
+
+        thrown(IllegalStateException)
+    }
+
+    void "deve rejeitar exclusao de empresa com id nulo ou menor ou igual a zero"() {
+
+        when:
+        empresaService.excluirEmpresa(0L)
+
+        then:
+        0 * empresaDAO._
+        thrown(IllegalArgumentException)
     }
 
 }

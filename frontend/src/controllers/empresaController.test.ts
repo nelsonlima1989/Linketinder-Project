@@ -10,7 +10,6 @@ import {
 import {
   criarEmpresa,
   editarEmpresa,
-  excluirEmpresa,
 } from "../services/empresa/empresaService";
 
 import {
@@ -19,22 +18,21 @@ import {
   liberarBloqueioEmpresa,
 } from "../services/empresa/edicaoEmpresaService";
 
-import { excluirVagasPorEmpresa } from "../services/vaga/vagaService";
+import { excluirEmpresaComVagas } from "../services/empresa/exclusaoEmpresaService";
+
+vi.mock("../services/empresa/exclusaoEmpresaService", () => ({
+  excluirEmpresaComVagas: vi.fn(),
+}));
 
 vi.mock("../services/empresa/empresaService", () => ({
   criarEmpresa: vi.fn(),
   editarEmpresa: vi.fn(),
-  excluirEmpresa: vi.fn(),
 }));
 
 vi.mock("../services/empresa/edicaoEmpresaService", () => ({
   bloquearEmpresa: vi.fn(),
   liberarBloqueioEmpresa: vi.fn(),
   empresaEstaBloqueada: vi.fn(),
-}));
-
-vi.mock("../services/vaga/vagaService", () => ({
-  excluirVagasPorEmpresa: vi.fn(),
 }));
 
 describe("empresaController - eventos do formulário", () => {
@@ -229,150 +227,106 @@ describe("extrairDadosEmpresa", () => {
 });
 
 describe("empresaController - exclusão de empresa", () => {
+  let botaoExcluir: { addEventListener: ReturnType<typeof vi.fn> };
+
   beforeEach(() => {
     vi.resetAllMocks();
+
+    botaoExcluir = { addEventListener: vi.fn() };
+
+    vi.stubGlobal("document", {
+      querySelector: vi.fn(() => botaoExcluir),
+    });
+
+    vi.stubGlobal("alert", vi.fn());
+    vi.stubGlobal("confirm", vi.fn(() => true));
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it("não deve excluir uma empresa bloqueada", () => {
-    const botaoExcluir = {
-      addEventListener: vi.fn(),
-    };
-
-    vi.stubGlobal("document", {
-      querySelector: vi.fn(() => botaoExcluir),
-    });
-
-    vi.stubGlobal("alert", vi.fn());
-    vi.stubGlobal("confirm", vi.fn());
-
-    vi.mocked(empresaEstaBloqueada).mockReturnValue(true);
-
-    configurarExclusaoEmpresa({ empresaId: 3 });
-
+  function clicar(): void {
     const registro = botaoExcluir.addEventListener.mock.calls.find(
       ([evento]) => evento === "click",
     );
 
     expect(registro).toBeDefined();
 
-    const aoClicar = registro![1] as () => void;
-    aoClicar();
+    (registro![1] as () => void)();
+  }
+
+  it("não deve excluir uma empresa bloqueada", () => {
+    vi.mocked(empresaEstaBloqueada).mockReturnValue(true);
+
+    configurarExclusaoEmpresa({ empresaId: 3 });
+
+    clicar();
 
     expect(empresaEstaBloqueada).toHaveBeenCalledWith(3);
-
     expect(confirm).not.toHaveBeenCalled();
-    expect(excluirEmpresa).not.toHaveBeenCalled();
-    expect(excluirVagasPorEmpresa).not.toHaveBeenCalled();
-
+    expect(excluirEmpresaComVagas).not.toHaveBeenCalled();
     expect(alert).toHaveBeenCalledWith(
       "Exclusão bloqueada: esta empresa está sendo editada em outra aba.",
     );
   });
 
   it("não deve excluir quando o usuário cancelar a confirmação", () => {
-    const botaoExcluir = { addEventListener: vi.fn() };
-
-    vi.stubGlobal("document", {
-      querySelector: vi.fn(() => botaoExcluir),
-    });
-
-    vi.stubGlobal(
-      "confirm",
-      vi.fn(() => false),
-    );
-
+    vi.stubGlobal("confirm", vi.fn(() => false));
     vi.mocked(empresaEstaBloqueada).mockReturnValue(false);
 
     configurarExclusaoEmpresa({ empresaId: 3 });
 
-    const aoClicar = botaoExcluir.addEventListener.mock.calls[0][1];
-    aoClicar();
+    clicar();
 
     expect(confirm).toHaveBeenCalledWith("Deseja realmente excluir sua conta?");
-    expect(excluirEmpresa).not.toHaveBeenCalled();
-    expect(excluirVagasPorEmpresa).not.toHaveBeenCalled();
+    expect(excluirEmpresaComVagas).not.toHaveBeenCalled();
   });
 
   it("deve informar quando a exclusão da empresa falhar", () => {
-    const botaoExcluir = { addEventListener: vi.fn() };
-
-    vi.stubGlobal("document", {
-      querySelector: vi.fn(() => botaoExcluir),
-    });
-    vi.stubGlobal(
-      "confirm",
-      vi.fn(() => true),
-    );
-    vi.stubGlobal("alert", vi.fn());
+    const aoExcluir = vi.fn<() => void>();
 
     vi.mocked(empresaEstaBloqueada).mockReturnValue(false);
-    vi.mocked(excluirEmpresa).mockReturnValue(false);
+    vi.mocked(excluirEmpresaComVagas).mockReturnValue(false);
 
-    configurarExclusaoEmpresa({ empresaId: 3 });
+    configurarExclusaoEmpresa({ empresaId: 3, aoExcluir });
 
-    const aoClicar = botaoExcluir.addEventListener.mock.calls[0][1];
-    aoClicar();
+    clicar();
 
-    expect(excluirEmpresa).toHaveBeenCalledWith(3);
-    expect(excluirVagasPorEmpresa).not.toHaveBeenCalled();
+    expect(excluirEmpresaComVagas).toHaveBeenCalledWith(3);
     expect(alert).toHaveBeenCalledWith("Não foi possível excluir a conta.");
+    expect(alert).not.toHaveBeenCalledWith("Conta excluída com sucesso!");
+    expect(aoExcluir).not.toHaveBeenCalled();
   });
 
-  it("deve excluir as vagas associadas após excluir a empresa", () => {
-    const botaoExcluir = { addEventListener: vi.fn() };
-
-    vi.stubGlobal("document", {
-      querySelector: vi.fn(() => botaoExcluir),
-    });
-    vi.stubGlobal(
-      "confirm",
-      vi.fn(() => true),
-    );
-    vi.stubGlobal("alert", vi.fn());
-
+  it("deve excluir empresa, vagas e recrutadores de forma atômica e informar o sucesso", () => {
     vi.mocked(empresaEstaBloqueada).mockReturnValue(false);
-    vi.mocked(excluirEmpresa).mockReturnValue(true);
+    vi.mocked(excluirEmpresaComVagas).mockReturnValue(true);
 
     configurarExclusaoEmpresa({ empresaId: 3 });
 
-    const aoClicar = botaoExcluir.addEventListener.mock.calls[0][1];
-    aoClicar();
+    clicar();
 
-    expect(excluirEmpresa).toHaveBeenCalledWith(3);
-    expect(excluirVagasPorEmpresa).toHaveBeenCalledWith(3);
+    expect(excluirEmpresaComVagas).toHaveBeenCalledOnce();
+    expect(excluirEmpresaComVagas).toHaveBeenCalledWith(3);
     expect(alert).toHaveBeenCalledWith("Conta excluída com sucesso!");
   });
 
-  it("não deve anunciar sucesso se a exclusão das vagas falhar", () => {
-    const botaoExcluir = { addEventListener: vi.fn() };
-
-    vi.stubGlobal("document", {
-      querySelector: vi.fn(() => botaoExcluir),
-    });
-    vi.stubGlobal(
-      "confirm",
-      vi.fn(() => true),
-    );
-    vi.stubGlobal("alert", vi.fn());
+  it("não deve anunciar sucesso nem navegar se a cascata falhar (estado restaurado pelo serviço)", () => {
+    const aoExcluir = vi.fn<() => void>();
 
     vi.mocked(empresaEstaBloqueada).mockReturnValue(false);
-    vi.mocked(excluirEmpresa).mockReturnValue(true);
-
-    vi.mocked(excluirVagasPorEmpresa).mockImplementation(() => {
+    vi.mocked(excluirEmpresaComVagas).mockImplementation(() => {
       throw new Error("Falha ao remover vagas");
     });
 
-    configurarExclusaoEmpresa({ empresaId: 3 });
+    configurarExclusaoEmpresa({ empresaId: 3, aoExcluir });
 
-    const aoClicar = botaoExcluir.addEventListener.mock.calls[0][1];
+    expect(() => clicar()).not.toThrow();
 
-    expect(() => aoClicar()).toThrow("Falha ao remover vagas");
-
+    expect(alert).toHaveBeenCalledWith("Não foi possível excluir a conta.");
     expect(alert).not.toHaveBeenCalledWith("Conta excluída com sucesso!");
+    expect(aoExcluir).not.toHaveBeenCalled();
   });
 
   it("não deve lançar erro quando o botão de exclusão não existir", () => {
@@ -382,39 +336,22 @@ describe("empresaController - exclusão de empresa", () => {
 
     expect(() => configurarExclusaoEmpresa({ empresaId: 3 })).not.toThrow();
 
-    expect(excluirEmpresa).not.toHaveBeenCalled();
+    expect(excluirEmpresaComVagas).not.toHaveBeenCalled();
   });
 
-  it("deve executar o callback após excluir a empresa e suas vagas", () => {
-  const botaoExcluir = {
-    addEventListener: vi.fn(),
-  };
+  it("deve executar o callback após excluir a empresa e seus dependentes", () => {
+    const aoExcluir = vi.fn<() => void>();
 
-  const aoExcluir = vi.fn<() => void>();
+    vi.mocked(empresaEstaBloqueada).mockReturnValue(false);
+    vi.mocked(excluirEmpresaComVagas).mockReturnValue(true);
 
-  vi.stubGlobal("document", {
-    querySelector: vi.fn(() => botaoExcluir),
+    configurarExclusaoEmpresa({ empresaId: 3, aoExcluir });
+
+    clicar();
+
+    expect(excluirEmpresaComVagas).toHaveBeenCalledWith(3);
+    expect(aoExcluir).toHaveBeenCalledOnce();
   });
-
-  vi.stubGlobal("confirm", vi.fn(() => true));
-  vi.stubGlobal("alert", vi.fn());
-
-  vi.mocked(empresaEstaBloqueada).mockReturnValue(false);
-  vi.mocked(excluirEmpresa).mockReturnValue(true);
-
-  configurarExclusaoEmpresa({
-    empresaId: 3,
-    aoExcluir,
-  });
-
-  const aoClicar = botaoExcluir.addEventListener.mock.calls[0][1];
-  aoClicar();
-
-  expect(excluirEmpresa).toHaveBeenCalledWith(3);
-  expect(excluirVagasPorEmpresa).toHaveBeenCalledWith(3);
-  expect(aoExcluir).toHaveBeenCalledOnce();
-});
-
 });
 
 
