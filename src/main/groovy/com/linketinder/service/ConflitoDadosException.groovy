@@ -10,7 +10,18 @@ package com.linketinder.service
  */
 class ConflitoDadosException extends RuntimeException {
 
+    String sqlState
+
     ConflitoDadosException(String mensagem) {
         super(mensagem)
+    }
+
+    ConflitoDadosException(String mensagem, Throwable cause) {
+        super(mensagem, cause)
+    }
+
+    ConflitoDadosException(String mensagem, Throwable cause, String sqlState) {
+        super(mensagem, cause)
+        this.sqlState = sqlState
     }
 }
