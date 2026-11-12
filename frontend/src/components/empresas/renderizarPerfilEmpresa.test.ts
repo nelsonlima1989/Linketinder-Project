@@ -73,6 +73,28 @@ describe("renderizarPerfilEmpresa", () => {
         expect(html).toContain('<div id="grafico-teste"></div>');
     });
 
+    it("deve renderizar o botão de novo recrutador", () => {
+        const html = renderizarPerfilEmpresa(criarEmpresa());
+
+        expect(html).toContain('id="botao-novo-recrutador"');
+        expect(html).toContain("Cadastrar novo recrutador");
+    });
+
+    it("deve renderizar a seção Meus recrutadores", () => {
+        const html = renderizarPerfilEmpresa(criarEmpresa());
+
+        expect(html).toContain('class="recrutadores-empresa"');
+        expect(html).toContain("Meus recrutadores");
+        expect(html).toContain('id="lista-recrutadores-empresa"');
+    });
+
+    it("deve renderizar apenas o contêiner de recrutadores, sem dados pessoais", () => {
+        const html = renderizarPerfilEmpresa(criarEmpresa());
+
+        expect(html).not.toContain("card-recrutador-empresa");
+        expect(html).not.toContain("cpf");
+    });
+
     it("não deve exibir o CNPJ da empresa", () => {
         const html = renderizarPerfilEmpresa(criarEmpresa());
 

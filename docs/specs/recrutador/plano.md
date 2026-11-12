@@ -217,7 +217,8 @@
 
 ### Tarefa T-07 — Frontend: Componentes de UI de Recrutador e Integração no Perfil da Empresa
 
-- **Status:** Pendente
+- **Status:** Concluída
+- **Pendência para T-08:** os componentes de recrutador não possuem estilos em `frontend/src/styles/style.css` (`.cadastro-recrutador`, `.card-recrutador-empresa`, `.acoes-recrutador`, `#lista-recrutadores-empresa`, `.recrutadores-empresa`, `.mensagem-erro`); adicionar estilos seguindo o padrão de `.cadastro-vaga` e `.card-vaga-empresa`. Além disso, a T-08 deve passar `mensagemErro` ao `renderizarFormularioRecrutador`.
 - **Objetivo:** Criar os componentes de apresentação `renderizarCardsRecrutadoresEmpresa.ts` e `renderizarFormularioRecrutador.ts`, e atualizar `renderizarPerfilEmpresa.ts` para exibir o botão `"Cadastrar novo recrutador"` (`#botao-novo-recrutador`) e a seção `"Meus recrutadores"` (`#lista-recrutadores-empresa`), mantendo intactos os componentes existentes.
 - **Camada afetada:** Frontend (`components`).
 - **Arquivos previstos:**

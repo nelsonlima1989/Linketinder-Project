@@ -22,6 +22,7 @@ export function renderizarPerfilEmpresa(
 
                 <div class="acoes-perfil">
                     <button id="botao-nova-vaga" type="button">Cadastrar nova vaga</button>
+                    <button id="botao-novo-recrutador" type="button">Cadastrar novo recrutador</button>
                     <button id="botao-editar-empresa" type="button">Editar Perfil</button>
                     <button id="botao-excluir-empresa" type="button">Excluir conta</button>
                 </div>
@@ -41,6 +42,14 @@ export function renderizarPerfilEmpresa(
                 <h2>Minhas vagas</h2>
 
                 <div id="lista-vagas-empresa"></div>
+
+            </section>
+
+            <section class="recrutadores-empresa">
+
+                <h2>Meus recrutadores</h2>
+
+                <div id="lista-recrutadores-empresa"></div>
 
             </section>
 
