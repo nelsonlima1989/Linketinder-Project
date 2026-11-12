@@ -3,14 +3,18 @@ package com.linketinder.api
 
 import com.linketinder.dao.CandidatoCompetenciaDAO
 import com.linketinder.dao.CandidatoDAO
+import com.linketinder.dao.CurtidaDAO
 import com.linketinder.dao.EmpresaDAO
+import com.linketinder.dao.MatchDAO
 import com.linketinder.dao.RecrutadorDAO
 import com.linketinder.dao.VagaDAO
 import com.linketinder.dao.VagaCompetenciaDAO
 import com.linketinder.database.ConexaoPostgresProvider
 import com.linketinder.database.ConexaoProvider
 import com.linketinder.service.CandidatoService
+import com.linketinder.service.CurtidaService
 import com.linketinder.service.EmpresaService
+import com.linketinder.service.MatchService
 import com.linketinder.service.RecrutadorService
 import com.linketinder.service.VagaService
 import com.sun.net.httpserver.HttpExchange
@@ -47,6 +51,12 @@ class ApiServer {
         RecrutadorDAO recrutadorDAO =
                 new RecrutadorDAO(conexaoProvider, empresaDAO)
 
+        CurtidaDAO curtidaDAO =
+                new CurtidaDAO(conexaoProvider)
+
+        MatchDAO matchDAO =
+                new MatchDAO(conexaoProvider, candidatoCompetenciaDAO)
+
         // Inicialização do Service de candidatos
         CandidatoService candidatoService =
                 new CandidatoService(
@@ -76,6 +86,16 @@ class ApiServer {
                         empresaService,
                         candidatoService
                 )
+
+        CurtidaService curtidaService =
+                new CurtidaService(
+                        curtidaDAO,
+                        matchDAO,
+                        conexaoProvider
+                )
+
+        MatchService matchService =
+                new MatchService(matchDAO)
 
         // Configuração do servidor HTTP
         InetSocketAddress endereco =
@@ -145,6 +165,26 @@ class ApiServer {
                 new RecrutadorHttpHandler(recrutadorService)
         )
 
+        CurtidaHttpHandler curtidaHttpHandler =
+                new CurtidaHttpHandler(curtidaService)
+
+        // Endpoints de curtidas
+        servidor.createContext(
+                "/api/curtidas/candidato-vaga",
+                curtidaHttpHandler
+        )
+
+        servidor.createContext(
+                "/api/curtidas/empresa-candidato",
+                curtidaHttpHandler
+        )
+
+        // Endpoint de consulta de matches sob anonimato estrito
+        servidor.createContext(
+                "/api/matches",
+                new MatchHttpHandler(matchService)
+        )
+
         // Inicialização do servidor
         servidor.start()
 
@@ -154,5 +194,8 @@ class ApiServer {
         println "POST /api/empresas"
         println "POST /api/vagas"
         println "POST /api/recrutadores"
+        println "POST /api/curtidas/candidato-vaga"
+        println "POST /api/curtidas/empresa-candidato"
+        println "GET  /api/matches"
     }
 }

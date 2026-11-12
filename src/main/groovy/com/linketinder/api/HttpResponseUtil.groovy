@@ -13,6 +13,22 @@ class HttpResponseUtil {
             int status,
             Map conteudo
     ) throws IOException {
+        responderObjeto(exchange, status, conteudo)
+    }
+
+    static void responder(
+            HttpExchange exchange,
+            int status,
+            List conteudo
+    ) throws IOException {
+        responderObjeto(exchange, status, conteudo)
+    }
+
+    static void responderObjeto(
+            HttpExchange exchange,
+            int status,
+            Object conteudo
+    ) throws IOException {
 
         byte[] resposta = JsonOutput.toJson(conteudo)
                 .getBytes(StandardCharsets.UTF_8)
