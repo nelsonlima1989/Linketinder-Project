@@ -33,6 +33,12 @@ describe("navegacaoService", () => {
       expect(obterTelaDoMenu(elemento)).toBeNull();
     });
 
+    it("deve rejeitar cadastro-recrutador no menu", () => {
+      const elemento = criarElemento("cadastro-recrutador");
+
+      expect(obterTelaDoMenu(elemento)).toBeNull();
+    });
+
     it("deve rejeitar uma tela desconhecida", () => {
       const elemento = criarElemento("configuracoes");
 

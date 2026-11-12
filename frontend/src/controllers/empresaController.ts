@@ -1,7 +1,6 @@
 import {
   criarEmpresa,
   editarEmpresa,
-  excluirEmpresa,
   type DadosFormularioEmpresa,
 } from "../services/empresa/empresaService";
 
@@ -10,7 +9,7 @@ import {
   empresaEstaBloqueada,
   liberarBloqueioEmpresa,
 } from "../services/empresa/edicaoEmpresaService";
-import { excluirVagasPorEmpresa } from "../services/vaga/vagaService";
+import { excluirEmpresaComVagas } from "../services/empresa/exclusaoEmpresaService";
 
 type ConfiguracaoFormularioEmpresa = {
   empresaId?: number;
@@ -107,14 +106,21 @@ export function configurarExclusaoEmpresa(
       return;
     }
 
-    const excluiu = excluirEmpresa(empresaId);
+    // Exclusão atômica: empresa, vagas e recrutadores são removidos juntos
+    // ou o estado anterior é restaurado.
+    let excluiu = false;
+
+    try {
+      excluiu = excluirEmpresaComVagas(empresaId);
+    } catch {
+      alert("Não foi possível excluir a conta.");
+      return;
+    }
 
     if (!excluiu) {
       alert("Não foi possível excluir a conta.");
       return;
     }
-
-    excluirVagasPorEmpresa(empresaId);
 
     alert("Conta excluída com sucesso!");
 

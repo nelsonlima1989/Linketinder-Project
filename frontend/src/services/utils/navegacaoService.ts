@@ -3,7 +3,8 @@ export type Tela =
   | "candidato"
   | "cadastro-candidato"
   | "cadastro-empresa"
-  | "cadastro-vaga";
+  | "cadastro-vaga"
+  | "cadastro-recrutador";
 
 export const ITENS_MENU = [
   { tela: "empresa", titulo: "Empresa" },

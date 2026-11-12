@@ -1069,3 +1069,123 @@ body {
     }
 
 }
+
+
+
+/* Recrutadores */
+
+.cadastro-recrutador {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 30px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.cadastro-recrutador h1 {
+    margin: 0 0 30px;
+    font-size: 28px;
+}
+
+.mensagem-erro {
+    margin: 0 0 20px;
+    padding: 12px 16px;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #b91c1c;
+    font-size: 14px;
+}
+
+.recrutadores-empresa {
+    margin-top: 40px;
+    padding: 30px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.recrutadores-empresa h2 {
+    margin: 0 0 20px;
+    font-size: 24px;
+    color: #111827;
+}
+
+#lista-recrutadores-empresa {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.card-recrutador-empresa {
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.card-recrutador-empresa h3 {
+    margin: 0 0 14px;
+    font-size: 18px;
+}
+
+.card-recrutador-empresa p {
+    margin: 8px 0;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.card-recrutador-empresa strong {
+    font-weight: 600;
+}
+
+.acoes-recrutador {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.acoes-recrutador button {
+    padding: 9px 14px;
+    border: none;
+    border-radius: 7px;
+    background: #2563eb;
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.acoes-recrutador button:hover {
+    background: #1d4ed8;
+}
+
+.acoes-recrutador .botao-excluir-recrutador {
+    background: #dc2626;
+}
+
+.acoes-recrutador .botao-excluir-recrutador:hover {
+    background: #b91c1c;
+}
+
+@media (max-width: 768px) {
+    .cadastro-recrutador,
+    .recrutadores-empresa {
+        padding: 25px;
+    }
+}
+
+@media (max-width: 600px) {
+    .cadastro-recrutador,
+    .recrutadores-empresa {
+        padding: 20px;
+    }
+}

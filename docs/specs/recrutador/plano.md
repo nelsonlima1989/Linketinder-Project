@@ -247,7 +247,7 @@
 
 ### Tarefa T-08 — Frontend: `recrutadorController.ts`, Navegação, `main.ts` e Validação Final
 
-- **Status:** Pendente
+- **Status:** Concluída — exclusão de empresa tornada atômica (`excluirEmpresaComVagas` com restauração em caso de falha) após auditoria; validação final do backend (`./gradlew clean test jacocoTestReport`: 277 testes, 0 falhas) e do frontend (`tsc`, `npm test`, `npm run build`) executada.
 - **Objetivo:** Implementar `recrutadorController.ts`, atualizar `empresaController.ts` (para acionar `excluirRecrutadoresPorEmpresa` na exclusão da empresa), adicionar a tela `"cadastro-recrutador"` em `navegacaoService.ts`, `contextoTelaService.ts` e `renderizarTela.ts`, conectar os fluxos em `main.ts` e realizar a validação completa da suíte (backend + frontend).
 - **Camada afetada:** Frontend (`controllers`, `services/utils`, `components/layout`, `main.ts`).
 - **Arquivos previstos:**
