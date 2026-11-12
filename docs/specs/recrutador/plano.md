@@ -185,7 +185,8 @@
 
 ### Tarefa T-06 — Frontend: Model `Recrutador.ts`, Seeds, `recrutadorService.ts`, `edicaoRecrutadorService.ts` e Cascata
 
-- **Status:** Pendente
+- **Status:** Concluída
+- **Pendência para T-08:** `empresaController.configurarExclusaoEmpresa` ainda chama `excluirEmpresa` + `excluirVagasPorEmpresa` diretamente e não aciona `excluirRecrutadoresPorEmpresa`; `excluirEmpresaComVagas` (que já aciona a cascata) não é usada em produção. A T-08 deve integrar a cascata no controller, avaliando também a ordem (excluir filhos somente após a empresa ser excluída com sucesso).
 - **Objetivo:** Implementar no frontend o modelo `Recrutador`, os dados iniciais em `dados.ts`, o serviço de persistência e validação `recrutadorService.ts` (chave `"recrutadores"` no `localStorage`, sem persistir senha/hash), o serviço de bloqueio entre abas `edicaoRecrutadorService.ts` (`"recrutador-em-edicao"`) e a exclusão em cascata de recrutadores em `exclusaoEmpresaService.ts`.
 - **Camada afetada:** Frontend (`models`, `data`, `services`).
 - **Arquivos previstos:**

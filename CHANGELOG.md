@@ -7,6 +7,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/). C
 ## [Não lançado]
 
 ### Adicionado
+- `Recrutador.ts`, dados iniciais `recrutadores` em `dados.ts`, `recrutadorService.ts` (CRUD em `localStorage` sem persistir senha ou hash e validações `VAL-01` a `VAL-09`), `edicaoRecrutadorService.ts` (bloqueio entre abas `"recrutador-em-edicao"`), exclusão em cascata de recrutadores em `exclusaoEmpresaService.ts` e suítes Vitest `recrutadorService.test.ts`, `edicaoRecrutadorService.test.ts` e `exclusaoEmpresaService.test.ts` no frontend (Tarefa T-06).
 - `RecrutadorHttpHandler` (`POST /api/recrutadores`), registro do contexto em `ApiServer.groovy` e suíte de testes de integração HTTP real `RecrutadorHttpHandlerSpec` (Tarefa T-05).
 - `RecrutadorController`, integração de opções de recrutador no `Menu` de terminal (listagem por empresa, painel de análise de vagas da empresa e candidatos anônimos e submenu de gerenciamento), injeção manual de dependências em `Main.groovy` e testes Spock `RecrutadorControllerSpec` e `MenuSpec` (Tarefa T-04).
 - `RecrutadorService` e `ConflitoDadosException` (validações `VAL-01` a `VAL-09`, unicidade de CPF/e-mail, derivação PBKDF2, consultas de vagas por empresa e candidatos anônimos), suporte a exclusão em cascata em `EmpresaService` e `RecrutadorServiceSpec` (Tarefa T-03).
