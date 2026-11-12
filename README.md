@@ -44,7 +44,7 @@ O projeto atualmente possui:
 - sistema de Skills;
 - gráfico de Skills;
 - cálculo de afinidade entre candidato e vaga com regras formais de interseção;
-- persistência relacional completa de curtidas e matches no PostgreSQL (com triggers de reciprocidade e integridade); a integração JDBC dessas operações no `CurtidaService`/`MatchService` do backend e na interface web faz parte das próximas evoluções das camadas de aplicação.
+- persistência relacional completa de curtidas e matches no PostgreSQL (com triggers de reciprocidade e integridade), integrada via JDBC no `CurtidaService`/`MatchService` com transações atômicas e exposta via endpoints REST sob anonimato estrito; a interface web segue desacoplada utilizando `localStorage`.
 
 ---
 
@@ -1765,8 +1765,11 @@ A API utiliza **injeção manual de dependências por construtor**: o servidor m
 | `POST` | `/api/candidatos` | Cadastra candidato sem Skills na requisição inicial | `201 Created` |
 | `POST` | `/api/empresas` | Cadastra empresa sem vagas na requisição inicial | `201 Created` |
 | `POST` | `/api/vagas` | Cadastra vaga associada a uma empresa existente | `201 Created` |
+| `POST` | `/api/curtidas/candidato-vaga` | Registra curtida do candidato em vaga; avalia match automaticamente | `201 Created` |
+| `POST` | `/api/curtidas/empresa-candidato` | Registra curtida da empresa no candidato com recrutador; avalia match | `201 Created` |
+| `GET` | `/api/matches` | Lista matches mútuos sob anonimato estrito (filtros opcionais `candidatoId` e `empresaId`) | `200 OK` |
 
-O `201 Created` inclui `Location: /api/<recurso>/<id>` e um JSON com o ID criado. **Os caminhos individuais informados por `Location` ainda não oferecem operações GET**; a implementação desta etapa é focada nos três cadastros exigidos.
+O `201 Created` inclui `Location: /api/<recurso>/<id>` (para cadastros de entidades) e um JSON com o resultado da operação. Para as curtidas, o JSON informa se houve formação imediata de match recíproco através dos triggers PostgreSQL. O endpoint `GET /api/matches` opera sob a política de **Anonimato Estrito**: enquanto não houver autenticação no sistema, não retorna nomes, contatos pessoais (e-mail, WhatsApp, telefone, CEP), documentos (CPF, CNPJ) ou senhas.
 
 ### Exemplo 1 — Cadastrar candidato
 
@@ -1850,18 +1853,125 @@ Content-Type: application/json; charset=UTF-8
 {"id":6,"empresaId":6,"mensagem":"Vaga cadastrada com sucesso."}
 ```
 
+### Exemplo 4 — Registrar curtida de candidato em vaga
+
+O candidato manifesta interesse em uma vaga específica. A transação JDBC insere a curtida e consulta atomicamente se houve formação de match mútuo.
+
+```bash
+curl -i -X POST http://localhost:8080/api/curtidas/candidato-vaga \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "candidatoId": 1,
+    "vagaId": 1
+  }'
+```
+
+Resposta de referência (sem match mútuo inicial):
+
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json; charset=UTF-8
+
+{
+  "candidatoId": 1,
+  "vagaId": 1,
+  "dataCurtida": "2026-11-12T16:00:00Z",
+  "match": false,
+  "matchId": null,
+  "mensagem": "Curtida registrada com sucesso."
+}
+```
+
+### Exemplo 5 — Registrar curtida de empresa em candidato
+
+A empresa manifesta interesse em um candidato, informando obrigatoriamente o `recrutadorId` responsável pelo processo seletivo (o recrutador deve pertencer à empresa).
+
+```bash
+curl -i -X POST http://localhost:8080/api/curtidas/empresa-candidato \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "empresaId": 1,
+    "candidatoId": 1,
+    "recrutadorId": 1
+  }'
+```
+
+Resposta de referência quando a curtida recíproca forma match:
+
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json; charset=UTF-8
+
+{
+  "empresaId": 1,
+  "candidatoId": 1,
+  "recrutadorId": 1,
+  "dataCurtida": "2026-11-12T16:05:00Z",
+  "match": true,
+  "matchId": 1,
+  "mensagem": "Curtida registrada com sucesso."
+}
+```
+
+### Exemplo 6 — Consultar matches consolidados (Anonimato Estrito)
+
+Lista os matches ativos registrados no banco de dados. Suporta filtros opcionais via query parameters `?candidatoId=1`, `?empresaId=1` ou combinados `?candidatoId=1&empresaId=1`.
+
+```bash
+curl -i http://localhost:8080/api/matches
+```
+
+Com filtro de candidato:
+
+```bash
+curl -i http://localhost:8080/api/matches?candidatoId=1
+```
+
+Resposta de referência (observe a ausência rigorosa de nomes, contatos e credenciais):
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+[
+  {
+    "id": 1,
+    "dataMatch": "2026-11-12T16:05:00Z",
+    "empresa": {
+      "id": 1,
+      "pais": "Brasil",
+      "estado": "SP",
+      "descricao": "Empresa de tecnologia"
+    },
+    "candidato": {
+      "id": 1,
+      "estado": "SP",
+      "descricaoPessoal": "Desenvolvedor Backend",
+      "skills": ["Java", "Groovy", "PostgreSQL"]
+    },
+    "recrutador": {
+      "id": 1,
+      "areaRecrutamento": "Tecnologia"
+    }
+  }
+]
+```
+
+> **Nota sobre Anonimato:** Em conformidade com o Princípio do Anonimato do Linketinder, campos como `nome`, `sobrenome`, `email`, `whatsapp`, `telefone`, `cep`, `cpf`, `cnpj` e `senha` são expressamente omitidos. Caso o recrutador tenha sido desvinculado (`ON DELETE SET NULL`), o campo `recrutador` é retornado como `null`.
+
 ### Códigos HTTP tratados
 
 | Status | Contexto |
 |---|---|
-| `200 OK` | Health check |
-| `201 Created` | Cadastro realizado |
-| `400 Bad Request` | JSON inválido, campos obrigatórios incorretos ou ID de empresa inválido |
-| `404 Not Found` | Caminho inexistente nos handlers ou empresa da vaga não encontrada |
-| `405 Method Not Allowed` | Método diferente do permitido (`Allow` é informado) |
-| `413 Content Too Large` | Corpo superior a 16 KiB |
+| `200 OK` | Health check ou consulta de matches realizada com sucesso |
+| `201 Created` | Cadastro de entidade ou registro de curtida realizado |
+| `400 Bad Request` | JSON inválido, campos obrigatórios ausentes, IDs não positivos ou recrutador de outra empresa |
+| `404 Not Found` | Caminho inexistente ou recurso referenciado não encontrado (candidato, empresa, vaga, recrutador) |
+| `405 Method Not Allowed` | Método HTTP diferente do permitido (`Allow` é informado no cabeçalho) |
+| `409 Conflict` | Curtida já registrada anteriormente (violação de chave primária duplicada) |
+| `413 Content Too Large` | Corpo da requisição superior a 16 KiB |
 | `415 Unsupported Media Type` | `Content-Type` diferente de `application/json` |
-| `500 Internal Server Error` | Falha na execução do cadastro |
+| `500 Internal Server Error` | Falha inesperada no servidor ou na camada de persistência (sem vazamento de SQL ou stacktrace) |
 
 ## Como configurar e executar a API
 
@@ -1902,16 +2012,28 @@ Os testes utilizam **Spock** com Services/Repositories simulados, sem conexão c
 | `apiTest.CandidatoHttpHandlerSpec` | `201`, `400`, `405`, `415`, `500` e `Location` |
 | `apiTest.EmpresaHttpHandlerSpec` | `201`, `400`, `405`, `415`, `500` e `Location` |
 | `apiTest.VagaHttpHandlerSpec` | `201`, `400`, `404`, `405`, `413`, `415`, `500`, validações de `empresaId` e `Location` |
-| `serviceTest.VagaServiceSpec` | Associação com empresa existente, rejeição de ID inválido/empresa inexistente e falha simulada no Repository |
+| `apiTest.CurtidaHttpHandlerSpec` | `POST /api/curtidas/*`: validações de corpo, tipos, 201 com match/matchId, 400, 404, 409 e 500 |
+| `apiTest.MatchHttpHandlerSpec` | `GET /api/matches`: filtros de busca, 200 OK e anonimato estrito (sem nomes, contatos ou senhas) |
+| `daoTest.CurtidaDAOSpec` | Mapeamento JDBC parametrizado, integridade de constraints, tipos Groovy e suporte transacional |
+| `daoTest.MatchDAOSpec` | Mapeamento anônimo parametrizado, busca por ID, listagem com filtros e ordenação temporal |
+| `serviceTest.CurtidaServiceSpec` | Transação atômica coordenada (commit/rollback), detecção de match, duplicidade e integridade |
+| `serviceTest.MatchServiceSpec` | Regras de negócio, consultas filtradas e tratamento de falhas em matches |
+| `serviceTest.VagaServiceSpec` | Associação com empresa existente, rejeição de ID inválido/empresa inexistente e falha simulada |
+| `integrationTest.CurtidaMatchApiIntegrationSpec` | Ciclo ponta a ponta com `ApiServer` real, PostgreSQL real, triggers e concorrência multithread |
 
 ```bash
-# Executar apenas os testes REST
+# Executar apenas os testes REST de candidatos, vagas, empresas, curtidas e matches
 ./gradlew test --tests 'apiTest.*' --console=plain
 
-# Testar especificamente o serviço de vagas
-./gradlew test --tests 'serviceTest.VagaServiceSpec' --console=plain
+# Executar os testes de integração ponta a ponta com PostgreSQL descartável (pg_virtualenv)
+pg_virtualenv bash -c '
+  export DB_URL="jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}" DB_USER="${PGUSER}" DB_PASSWORD="${PGPASSWORD}"
+  psql -v ON_ERROR_STOP=1 -f database/database.sql > /dev/null && \
+  psql -v ON_ERROR_STOP=1 -f database/queries.sql > /dev/null && \
+  ./gradlew test --tests "integrationTest.CurtidaMatchApiIntegrationSpec" --console=plain
+'
 
-# Executar toda a suíte e gerar o JaCoCo
+# Executar toda a suíte de testes do backend e gerar o relatório JaCoCo
 ./gradlew clean test jacocoTestReport --console=plain
 ```
 
