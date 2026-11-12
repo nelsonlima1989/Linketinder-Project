@@ -44,7 +44,7 @@ O projeto atualmente possui:
 - sistema de Skills;
 - gráfico de Skills;
 - cálculo de afinidade entre candidato e vaga com regras formais de interseção;
-- estrutura de banco preparada para curtidas; a integração JDBC das curtidas e a lógica de Match fazem parte da próxima evolução do backend.
+- persistência relacional completa de curtidas e matches no PostgreSQL (com triggers de reciprocidade e integridade); a integração JDBC dessas operações no `CurtidaService`/`MatchService` do backend e na interface web faz parte das próximas evoluções das camadas de aplicação.
 
 ---
 
@@ -69,7 +69,7 @@ O objetivo do projeto é construir uma plataforma de recrutamento capaz de:
 - permitir a visualização das vagas;
 - calcular o índice de afinidade percentual entre candidato e vaga;
 - manter a estrutura relacional necessária para curtidas entre candidatos, vagas e empresas;
-- evoluir a integração JDBC para a persistência de curtidas e detecção de Match em uma etapa posterior;
+- persistir curtidas e registrar matches automaticamente no PostgreSQL via triggers e constraints relacionais;
 - validar a integridade dos dados carregados;
 - manter uma arquitetura preparada para futuras evoluções.
 
@@ -299,31 +299,34 @@ candidatos
 empresas
 competencias
 vagas
+recrutadores
 ```
 
-Também são utilizadas tabelas associativas:
+Também são utilizadas tabelas associativas e de interação:
 
 ```text
 candidato_competencias
 vaga_competencias
+curtidas_candidato_vaga
+curtidas_empresa_candidato
+matches
 ```
 
 A modelagem representa:
 
 ```text
-Candidato N:N Competência
-Vaga      N:N Competência
-Empresa   1:N Vaga
+Candidato   N:N Competência
+Vaga        N:N Competência
+Empresa     1:N Vaga
+Empresa     1:N Recrutadores
+Candidato   N:N Vaga            (curtidas_candidato_vaga)
+Empresa     N:N Candidato       (curtidas_empresa_candidato, identificando recrutador_id)
+Empresa     1:0..1 Candidato    (matches, único por par empresa/candidato)
 ```
 
-O banco também possui as estruturas:
+O esquema completo, incluindo chaves primárias, chaves estrangeiras com `ON DELETE CASCADE` / `ON DELETE SET NULL`, índices e triggers está detalhado no diagrama MER disponível em [`docs/der-linketinder.png`](docs/der-linketinder.png).
 
-```text
-curtidas_candidato_vaga
-curtidas_empresa_candidato
-```
-
-que serão utilizadas na próxima etapa para persistir curtidas e implementar a lógica de Match via JDBC.
+> **Nota de escopo e arquitetura:** A persistência relacional de curtidas, recrutadores e matches está totalmente implementada e testada no PostgreSQL (`database/database.sql` e `database/queries.sql`). A integração dessas operações nas camadas de aplicação (DAOs JDBC em Groovy e frontend TypeScript) permanece independente e planejada para evoluções específicas de cada camada.
 
 ## Integração JDBC e DAO
 
@@ -567,30 +570,16 @@ Ao listar as empresas, as vagas correspondentes são associadas através de `emp
 
 ---
 
-## CurtidaService
+## CurtidaService e MatchService no Backend
 
-O projeto já possui a lógica de curtidas desenvolvida nas etapas anteriores em memória.
+No backend Groovy (`src/main/groovy/com/linketinder/service/`), `CurtidaService` e `MatchService` foram construídos nas etapas iniciais mantendo o histórico de curtidas e matches em coleções em memória.
 
-O banco de dados também já contém as tabelas necessárias para representar:
+No banco de dados PostgreSQL (`database/database.sql`), a persistência relacional já está plenamente consolidada com:
+- `curtidas_candidato_vaga`: chave composta `(candidato_id, vaga_id)` e `ON DELETE CASCADE`;
+- `curtidas_empresa_candidato`: chave composta `(empresa_id, candidato_id)`, `recrutador_id` obrigatório na criação com validação de pertencimento à empresa e `ON DELETE SET NULL`;
+- `matches`: tabela relacional com unicidade estrita por `(empresa_id, candidato_id)` e triggers de reciprocidade automática em ambas as ordens de curtida.
 
-- candidato curtindo uma vaga;
-- empresa curtindo um candidato.
-
-A integração dessas operações com JDBC será realizada no próximo desafio.
-
----
-
-## MatchService
-
-A lógica de Match já existe como conceito no domínio da aplicação e será evoluída na próxima etapa para trabalhar com as curtidas persistidas via JDBC.
-
-Um Match ocorre conceitualmente quando:
-
-1. o candidato curte uma vaga;
-2. a vaga pertence a uma determinada empresa;
-3. essa mesma empresa curte o candidato.
-
-A persistência e integração completa dessa regra com o banco fazem parte do próximo desafio.
+A substituição das coleções em memória por DAOs JDBC dedicados (`CurtidaDAO`, `MatchDAO`) no backend Groovy segue o planejamento de evolução das regras de negócio do backend.
 
 ---
 
@@ -978,7 +967,7 @@ Empresa
    └── Like ──► Candidato 3
 ```
 
-Na versão atual do primeiro desafio, a estrutura relacional das curtidas já existe no PostgreSQL. A persistência das ações do `CurtidaService` via JDBC será implementada na etapa seguinte.
+Na versão atual, a estrutura relacional das curtidas está implementada e testada no PostgreSQL, registrando `(empresa_id, candidato_id, recrutador_id)` com validação obrigatória de que o recrutador pertence à empresa no momento da ação, e suporte a `ON DELETE SET NULL` para preservar o histórico caso o recrutador seja excluído.
 
 ---
 
@@ -986,33 +975,36 @@ Na versão atual do primeiro desafio, a estrutura relacional das curtidas já ex
 
 O Match acontece quando existe **interesse mútuo entre um candidato e uma empresa**.
 
+### Regras de Negócio e Reciprocidade
+
+1. **Atores das curtidas:** O candidato curte vagas de interesse (`curtidas_candidato_vaga`); o recrutador curte candidatos em nome da sua empresa (`curtidas_empresa_candidato`).
+2. **Independência da ordem:** O match é formado automaticamente quer o candidato curta a vaga primeiro e a empresa curta o candidato depois, quer a empresa curta o candidato primeiro e o candidato curta a vaga depois.
+3. **Unicidade de Match:** Há no máximo 1 match ativo por par `(empresa_id, candidato_id)`. Se o candidato curtir múltiplas vagas da mesma empresa, o match não é duplicado.
+4. **Remoção seletiva e recriação:** Caso uma vaga curtida seja excluída (ou o candidato desfaça a curtida), o match permanece ativo se ainda restar outra vaga daquela empresa curtida pelo candidato. Se a última vaga for desfeita/excluída, o match é removido automaticamente, podendo ser recriado caso haja uma nova curtida mútua.
+5. **Preservação de histórico (`ON DELETE SET NULL`):** A exclusão de um recrutador não desfaz a curtida nem o match da empresa, passando `recrutador_id` para `NULL`.
+6. **Exclusão em cascata (`ON DELETE CASCADE`):** A exclusão de uma empresa ou de um candidato remove automaticamente suas respectivas curtidas e matches.
+
+### Automação via Triggers no PostgreSQL
+
+No PostgreSQL (`database/database.sql`), essa inteligência é garantida no nível do banco por triggers PL/pgSQL dedicados:
+
+- `trg_validar_curtida_empresa_recrutador`: exige `recrutador_id` e valida pertencimento à empresa.
+- `trg_validar_match`: impede inserção manual direta sem reciprocidade mútua ativa.
+- `trg_registrar_match_apos_curtida_candidato`: detecta reciprocidade e cria match quando candidato curte vaga.
+- `trg_registrar_match_apos_curtida_empresa`: detecta reciprocidade e cria match quando empresa curte candidato.
+- `trg_remover_match_sem_reciprocidade`: remove o match quando desaparece a última vaga curtida daquela empresa.
+- `trg_sincronizar_matches_apos_update_vaga`: reavalia matches se uma vaga for transferida de empresa via `UPDATE`.
+- Bloqueios consultivos com `pg_advisory_xact_lock` e `FOR KEY SHARE` evitam *race conditions* e deadlocks em transações concorrentes.
+
 O fluxo de negócio previsto é:
 
 ```text
-Candidato
-    │
-    │ curte uma vaga
-    ▼
-  Vaga
-    │
-    │ pertence à
-    ▼
-  Empresa
-    │
-    │ curte o candidato
-    ▼
- Candidato
-    ↓
-  MATCH (Candidato ↔ Vaga ↔ Empresa)
+Candidato (curte Vaga) ────┐
+                           ├──► Triggers PL/pgSQL ──► Tabela MATCHES (1 por Empresa/Candidato)
+Recrutador (curte Candidato)─┘
 ```
 
-Na próxima etapa, o `MatchService` será integrado às curtidas persistidas para:
-
-1. verificar a curtida do candidato;
-2. verificar a curtida da empresa;
-3. identificar a reciprocidade;
-4. registrar ou disponibilizar o Match;
-5. liberar os dados previstos pela regra de negócio.
+> **Nota de escopo:** A persistência e os triggers de Match estão 100% implementados no banco de dados. A camada de serviços em Groovy (`src/main/groovy/**`) e a interface web em TypeScript (`frontend/**`) mantêm suas regras locais e serão integradas a essas tabelas em etapas específicas de backend e frontend.
 
 ---
 
@@ -1020,20 +1012,43 @@ Na próxima etapa, o `MatchService` será integrado às curtidas persistidas par
 
 ## Banco de Dados
 
-1. Crie um banco PostgreSQL para o projeto.
-2. Execute o script de estrutura e dados iniciais:
+1. Crie um banco PostgreSQL para o projeto (ou utilize um container Docker/instância local).
+2. Execute o script de estrutura DDL (tabelas, índices e triggers de curtidas/matches):
 
    ```bash
    psql -h localhost -U seu_usuario -d linketinder -f database/database.sql
    ```
 
-3. Para executar as consultas de validação:
+3. Execute o script de carga inicial de seeds e suite de demonstração SQL:
 
    ```bash
    psql -h localhost -U seu_usuario -d linketinder -f database/queries.sql
    ```
 
-4. Configure as variáveis de ambiente `DB_URL`, `DB_USER` e `DB_PASSWORD`. A classe `ConexaoDB.groovy` lê essas variáveis com `System.getenv()`, sem credenciais fixas no código.
+   **O que esperar ao executar `queries.sql`:**
+   - Carga inicial de 10 competências, 5 candidatos, 5 empresas, 5 vagas, 6 recrutadores (com senhas derivadas em PBKDF2), 8 curtidas de candidatos e 8 curtidas de empresas;
+   - Os triggers registram automaticamente **7 matches únicos** na tabela `matches`, demonstrando reciprocidade nas duas ordens de curtida e integridade referencial com os recrutadores responsáveis;
+   - Execução de testes automatizados com `ROLLBACK` cobrindo unicidade, exclusão parcial/total, `SET NULL`, `CASCADE` e idempotência de migração incremental (todos com status `[OK]`).
+
+4. Para consultar diretamente os matches registrados na tabela física:
+
+   ```sql
+   SELECT
+       m.id AS match_id,
+       e.nome AS empresa,
+       c.nome AS candidato,
+       COALESCE(r.nome, '[RECRUTADOR EXCLUIDO]') AS recrutador,
+       m.data_match
+   FROM matches m
+   INNER JOIN empresas e ON e.id = m.empresa_id
+   INNER JOIN candidatos c ON c.id = m.candidato_id
+   LEFT JOIN recrutadores r ON r.id = m.recrutador_id
+   ORDER BY m.id;
+   ```
+
+5. O Diagrama Entidade-Relacionamento atualizado e consolidado com as 10 tabelas, colunas `estado`, relacionamentos e regras `ON DELETE` está disponível em [`docs/der-linketinder.png`](docs/der-linketinder.png).
+
+6. Configure as variáveis de ambiente `DB_URL`, `DB_USER` e `DB_PASSWORD`. A classe `ConexaoDB.groovy` lê essas variáveis com `System.getenv()`, sem credenciais fixas no código.
 
    Exemplo de arquivo `.env` na raiz do projeto (substitua os valores pelos de seu ambiente):
 
@@ -1365,8 +1380,8 @@ O novo `ConexaoFactorySpec` possui **4 testes unitários com Spock**, cobrindo s
 | Dados iniciais pré-cadastrados | ✅ Implementado |
 | CandidatoService | ✅ Implementado |
 | EmpresaService | ✅ Implementado |
-| Estrutura SQL para curtidas | ✅ Implementado |
-| Integração JDBC de curtidas e Match | ⏳ Próximo desafio |
+| Estrutura SQL para curtidas e matches | ✅ Implementado com triggers e constraints relacionais no PostgreSQL |
+| Integração JDBC de curtidas e Match | ⏳ Evolução futura do backend Groovy |
 | Refatoração Clean Code e SOLID do backend | ✅ Concluída nesta etapa |
 | Testes automatizados do backend (Spock) | ✅ Suíte executada com sucesso após a adição dos testes REST; total atual deve ser consultado no relatório |
 | API REST sem framework web — candidatos, empresas e vagas | ✅ Três POSTs testados com `201 Created` |
@@ -1390,8 +1405,9 @@ O novo `ConexaoFactorySpec` possui **4 testes unitários com Spock**, cobrindo s
 | Gráfico de Skills | ✅ Implementado |
 | Índice de afinidade candidato/vaga | ✅ Implementado |
 | Exibição da afinidade no card da vaga | ✅ Implementado |
-| Likes/Matches em memória (legado da etapa anterior) | ✅ Implementado |
-| Match persistido via JDBC | ⏳ Próximo desafio |
+| Likes/Matches em memória (legado da etapa anterior no backend) | ✅ Implementado |
+| Persistência e triggers de Match no PostgreSQL | ✅ Implementado (`database.sql`, `queries.sql` e MER atualizado) |
+| Match persistido via JDBC no backend | ⏳ Evolução futura do backend Groovy |
 
 ---
 
